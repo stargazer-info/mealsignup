@@ -13,3 +13,54 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Family {
+  id          String   @id @default(cuid())
+  name        String
+  inviteCode  String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members     User[]
+  mealSignups MealSignup[]
+
+  @@map("families")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  familyId    String?
+  family      Family?      @relation(fields: [familyId], references: [id])
+  mealSignups MealSignup[]
+
+  @@map("users")
+}
+
+model MealSignup {
+  id        String   @id @default(cuid())
+  date      DateTime
+  breakfast Boolean  @default(false)
+  lunch     Boolean  @default(false)
+  dinner    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  familyId String
+  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  // Ensure one signup per user per date per family
+  @@unique([userId, familyId, date])
+  @@map("meal_signups")
+}
