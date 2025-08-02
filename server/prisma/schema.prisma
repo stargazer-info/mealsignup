@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -15,32 +8,28 @@ datasource db {
 }
 
 model Family {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
-  inviteCode  String   @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  members     User[]
+  inviteCode  String       @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   mealSignups MealSignup[]
+  members     User[]
 
   @@map("families")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String   @unique
-  name      String
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
+  id          String       @id @default(cuid())
+  clerkId     String       @unique
+  email       String       @unique
+  name        String
+  avatar      String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   familyId    String?
-  family      Family?      @relation(fields: [familyId], references: [id])
   mealSignups MealSignup[]
+  family      Family?      @relation(fields: [familyId], references: [id])
 
   @@map("users")
 }
@@ -53,14 +42,11 @@ model MealSignup {
   dinner    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  userId    String
+  familyId  String
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  familyId String
-  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
-
-  // Ensure one signup per user per date per family
   @@unique([userId, familyId, date])
   @@map("meal_signups")
 }
