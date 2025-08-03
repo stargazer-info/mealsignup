@@ -12,6 +12,11 @@ function App() {
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [organizations, setOrganizations] = useState([])
+  const [currentOrganization, setCurrentOrganization] = useState(null)
+  const [showOrgSelector, setShowOrgSelector] = useState(false)
+  const [showCreateOrg, setShowCreateOrg] = useState(false)
+  const [showJoinOrg, setShowJoinOrg] = useState(false)
 
   // Format date for display
   const formatDate = (date: Date) => {
@@ -28,8 +33,68 @@ function App() {
     return date.toISOString().split('T')[0]
   }
 
+  // Register user if needed, then load organizations
+  const loadUserOrganizations = async () => {
+    try {
+      const token = await getToken()
+      
+      // Try to get organizations first
+      let response = await fetch('http://localhost:3001/api/organizations/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      // If user not found, register them first
+      if (response.status === 404) {
+        setMessage('🔄 初回登録中...')
+        
+        const registerResponse = await fetch('http://localhost:3001/api/auth/register', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        
+        if (registerResponse.ok) {
+          setMessage('✅ 登録完了')
+          // Try getting organizations again after registration
+          response = await fetch('http://localhost:3001/api/organizations/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        } else {
+          const registerError = await registerResponse.json()
+          if (registerResponse.status === 400 && registerError.error === 'User already exists') {
+            // User exists but organizations call failed - retry
+            response = await fetch('http://localhost:3001/api/organizations/me', {
+              headers: { 'Authorization': `Bearer ${token}` }
+            })
+          } else {
+            setMessage(`❌ 登録エラー: ${registerError.error}`)
+            return
+          }
+        }
+      }
+      
+      if (response.ok) {
+        const data = await response.json()
+        setOrganizations(data.organizations)
+        setCurrentOrganization(data.lastSelectedOrganization)
+        
+        if (data.organizations.length === 0) {
+          setShowOrgSelector(true)
+        }
+        setMessage('') // Clear any registration messages
+      } else {
+        const errorData = await response.json()
+        setMessage(`❌ エラー: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('Error loading organizations:', error)
+      setMessage('❌ 接続エラーが発生しました')
+    }
+  }
+
   // Load existing meal signup for current date
   const loadMealSignup = async () => {
+    if (!currentOrganization) return
+    
     try {
       const token = await getToken()
       const dateStr = formatDateForAPI(currentDate)
@@ -61,6 +126,11 @@ function App() {
 
   // Save meal signup
   const saveMealSignup = async () => {
+    if (!currentOrganization) {
+      setMessage('❌ 組織が選択されていません')
+      return
+    }
+    
     setLoading(true)
     setMessage('')
     
@@ -76,7 +146,8 @@ function App() {
           date: formatDateForAPI(currentDate),
           breakfast: mealSignup.breakfast,
           lunch: mealSignup.lunch,
-          dinner: mealSignup.dinner
+          dinner: mealSignup.dinner,
+          organizationId: currentOrganization.id
         })
       })
 
@@ -95,6 +166,22 @@ function App() {
     }
   }
 
+  // Switch organization
+  const switchOrganization = async (organizationId: string) => {
+    try {
+      const token = await getToken()
+      await fetch(`http://localhost:3001/api/organizations/select/${organizationId}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      const selectedOrg = organizations.find(org => org.id === organizationId)
+      setCurrentOrganization(selectedOrg)
+    } catch (error) {
+      console.error('Error switching organization:', error)
+    }
+  }
+
   // Navigate dates
   const changeDate = (days: number) => {
     const newDate = new Date(currentDate)
@@ -102,10 +189,17 @@ function App() {
     setCurrentDate(newDate)
   }
 
-  // Load meal signup when date changes
+  // Load organizations on mount
   useEffect(() => {
-    loadMealSignup()
-  }, [currentDate])
+    loadUserOrganizations()
+  }, [])
+
+  // Load meal signup when date or organization changes
+  useEffect(() => {
+    if (currentOrganization) {
+      loadMealSignup()
+    }
+  }, [currentDate, currentOrganization])
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,6 +209,17 @@ function App() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-primary">MealSignup</h1>
             <div className="flex items-center space-x-2">
+              {organizations.length > 1 && currentOrganization && (
+                <select 
+                  value={currentOrganization?.id || ''}
+                  onChange={(e) => switchOrganization(e.target.value)}
+                  className="ml-2 p-1 border rounded text-sm"
+                >
+                  {organizations.map(org => (
+                    <option key={org.id} value={org.id}>{org.name}</option>
+                  ))}
+                </select>
+              )}
               <SignedOut>
                 <SignInButton />
               </SignedOut>
@@ -141,8 +246,40 @@ function App() {
         </SignedOut>
 
         <SignedIn>
+          {/* Organization Selection */}
+          {showOrgSelector && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-4">組織を選択してください</h2>
+              <div className="space-y-3">
+                <button 
+                  onClick={() => setShowCreateOrg(true)}
+                  className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  新しい組織を作成
+                </button>
+                <button 
+                  onClick={() => setShowJoinOrg(true)}
+                  className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  招待コードで参加
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Current Organization Display */}
+          {currentOrganization && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+              <div className="text-center">
+                <h2 className="text-lg font-semibold text-text">{currentOrganization.name}</h2>
+                <p className="text-sm text-gray-600">{currentOrganization.type === 'FAMILY' ? '家族' : '店舗'}</p>
+              </div>
+            </div>
+          )}
+
           {/* Date Navigation */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          {currentOrganization && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
             <div className="flex items-center justify-between mb-4">
               <button 
                 onClick={() => changeDate(-1)}
@@ -161,9 +298,11 @@ function App() {
               </button>
             </div>
           </div>
+	  )}
 
           {/* Meal Signup Form */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          {currentOrganization && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-semibold text-text mb-6">今日の食事予定：</h2>
             
             <div className="space-y-4">
@@ -236,14 +375,17 @@ function App() {
               </div>
             )}
           </div>
-
-          {/* Family Overview Link */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <button className="w-full flex items-center justify-center space-x-2 text-secondary hover:text-teal-600 font-medium transition-colors">
-              <span>👨‍👩‍👧‍👦</span>
-              <span>家族の予定を見る</span>
-            </button>
-          </div>
+	  )}
+	  
+          {/* Organization Overview Link */}
+          {currentOrganization && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <button className="w-full flex items-center justify-center space-x-2 text-secondary hover:text-teal-600 font-medium transition-colors">
+                <span>{currentOrganization.type === 'FAMILY' ? '👨‍👩‍👧‍👦' : '🏪'}</span>
+                <span>{currentOrganization.type === 'FAMILY' ? '家族の予定を見る' : '店舗の予定を見る'}</span>
+              </button>
+            </div>
+          )}
         </SignedIn>
       </main>
     </div>

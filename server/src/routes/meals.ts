@@ -4,44 +4,71 @@ import { prisma } from '../app';
 
 const router = Router();
 
-// Get meal signups for a specific date
+// Get meal signups for a specific date or month
 router.get('/', requireAuth, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const { date } = req.query;
+    const { date, month, organizationId } = req.query;
 
-    if (!date || typeof date !== 'string') {
-      return res.status(400).json({ error: 'Date parameter is required (YYYY-MM-DD format)' });
-    }
-
-    // Parse date
-    const targetDate = new Date(date);
-    if (isNaN(targetDate.getTime())) {
-      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
-    }
-
-    // Get user's family
+    // Get user and determine organization
     const user = await prisma.user.findUnique({
       where: { clerkId: req.user.id },
-      include: { family: true }
+      include: {
+        memberships: {
+          include: { organization: true }
+        },
+        lastSelectedOrganization: true
+      }
     });
 
-    if (!user?.family) {
-      return res.status(404).json({ error: 'User does not belong to any family' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get meal signups for the family on the specified date
+    // Determine which organization to use
+    let targetOrganizationId = organizationId as string;
+    if (!targetOrganizationId) {
+      targetOrganizationId = user.lastSelectedOrganizationId || '';
+    }
+
+    // Verify user has access to this organization
+    const membership = user.memberships.find(m => m.organizationId === targetOrganizationId);
+    if (!membership) {
+      return res.status(403).json({ error: 'User does not have access to this organization' });
+    }
+
+    let whereClause: any = {
+      organizationId: targetOrganizationId
+    };
+
+    // Handle date vs month queries
+    if (date && typeof date === 'string') {
+      const targetDate = new Date(date);
+      if (isNaN(targetDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+      }
+      whereClause.date = {
+        gte: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
+        lt: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1)
+      };
+    } else if (month && typeof month === 'string') {
+      const [year, monthNum] = month.split('-').map(Number);
+      if (!year || !monthNum || monthNum < 1 || monthNum > 12) {
+        return res.status(400).json({ error: 'Invalid month format. Use YYYY-MM' });
+      }
+      whereClause.date = {
+        gte: new Date(year, monthNum - 1, 1),
+        lt: new Date(year, monthNum, 1)
+      };
+    } else {
+      return res.status(400).json({ error: 'Either date (YYYY-MM-DD) or month (YYYY-MM) parameter is required' });
+    }
+
     const mealSignups = await prisma.mealSignup.findMany({
-      where: {
-        familyId: user.family.id,
-        date: {
-          gte: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
-          lt: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1)
-        }
-      },
+      where: whereClause,
       include: {
         user: {
           select: {
@@ -52,14 +79,18 @@ router.get('/', requireAuth, async (req, res) => {
           }
         }
       },
-      orderBy: {
-        user: {
-          name: 'asc'
-        }
-      }
+      orderBy: [
+        { date: 'asc' },
+        { user: { name: 'asc' } }
+      ]
     });
 
-    res.json({ mealSignups, date: date });
+    res.json({ 
+      mealSignups, 
+      date: date || null,
+      month: month || null,
+      organizationId: targetOrganizationId
+    });
   } catch (error) {
     console.error('Get meal signups error:', error);
     res.status(500).json({ error: 'Failed to get meal signups' });
@@ -73,7 +104,7 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const { date, breakfast, lunch, dinner } = req.body;
+    const { date, breakfast, lunch, dinner, organizationId } = req.body;
 
     if (!date) {
       return res.status(400).json({ error: 'Date is required' });
@@ -85,22 +116,43 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    // Get user's family
+    // Get user and determine organization
     const user = await prisma.user.findUnique({
       where: { clerkId: req.user.id },
-      include: { family: true }
+      include: {
+        memberships: {
+          include: { organization: true }
+        },
+        lastSelectedOrganization: true
+      }
     });
 
-    if (!user?.family) {
-      return res.status(404).json({ error: 'User does not belong to any family' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Determine which organization to use
+    let targetOrganizationId = organizationId;
+    if (!targetOrganizationId) {
+      targetOrganizationId = user.lastSelectedOrganizationId;
+    }
+
+    if (!targetOrganizationId) {
+      return res.status(400).json({ error: 'No organization selected' });
+    }
+
+    // Verify user has access to this organization
+    const membership = user.memberships.find(m => m.organizationId === targetOrganizationId);
+    if (!membership) {
+      return res.status(403).json({ error: 'User does not have access to this organization' });
     }
 
     // Create or update meal signup
     const mealSignup = await prisma.mealSignup.upsert({
       where: {
-        userId_familyId_date: {
+        userId_organizationId_date: {
           userId: user.id,
-          familyId: user.family.id,
+          organizationId: targetOrganizationId,
           date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
         }
       },
@@ -111,7 +163,7 @@ router.post('/', requireAuth, async (req, res) => {
       },
       create: {
         userId: user.id,
-        familyId: user.family.id,
+        organizationId: targetOrganizationId,
         date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
         breakfast: Boolean(breakfast),
         lunch: Boolean(lunch),
@@ -136,66 +188,90 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// Get meal signups for a date range (for calendar view)
-router.get('/range', requireAuth, async (req, res) => {
+// Bulk update meal signups for multiple dates
+router.post('/bulk', requireAuth, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const { startDate, endDate } = req.query;
+    const { dates, breakfast, lunch, dinner, organizationId } = req.body;
 
-    if (!startDate || !endDate || typeof startDate !== 'string' || typeof endDate !== 'string') {
-      return res.status(400).json({ error: 'startDate and endDate parameters are required (YYYY-MM-DD format)' });
+    if (!dates || !Array.isArray(dates) || dates.length === 0) {
+      return res.status(400).json({ error: 'Dates array is required' });
     }
 
-    // Parse dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
-    }
-
-    // Get user's family
+    // Get user and determine organization
     const user = await prisma.user.findUnique({
       where: { clerkId: req.user.id },
-      include: { family: true }
+      include: {
+        memberships: {
+          include: { organization: true }
+        },
+        lastSelectedOrganization: true
+      }
     });
 
-    if (!user?.family) {
-      return res.status(404).json({ error: 'User does not belong to any family' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get meal signups for the family in the date range
-    const mealSignups = await prisma.mealSignup.findMany({
-      where: {
-        familyId: user.family.id,
-        date: {
-          gte: start,
-          lte: end
-        }
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true
+    // Determine which organization to use
+    let targetOrganizationId = organizationId;
+    if (!targetOrganizationId) {
+      targetOrganizationId = user.lastSelectedOrganizationId;
+    }
+
+    if (!targetOrganizationId) {
+      return res.status(400).json({ error: 'No organization selected' });
+    }
+
+    // Verify user has access to this organization
+    const membership = user.memberships.find(m => m.organizationId === targetOrganizationId);
+    if (!membership) {
+      return res.status(403).json({ error: 'User does not have access to this organization' });
+    }
+
+    // Bulk upsert meal signups
+    const operations = dates.map(dateStr => {
+      const targetDate = new Date(dateStr);
+      if (isNaN(targetDate.getTime())) {
+        throw new Error(`Invalid date format: ${dateStr}`);
+      }
+
+      return prisma.mealSignup.upsert({
+        where: {
+          userId_organizationId_date: {
+            userId: user.id,
+            organizationId: targetOrganizationId,
+            date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
           }
+        },
+        update: {
+          ...(breakfast !== undefined && { breakfast: Boolean(breakfast) }),
+          ...(lunch !== undefined && { lunch: Boolean(lunch) }),
+          ...(dinner !== undefined && { dinner: Boolean(dinner) })
+        },
+        create: {
+          userId: user.id,
+          organizationId: targetOrganizationId,
+          date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
+          breakfast: Boolean(breakfast),
+          lunch: Boolean(lunch),
+          dinner: Boolean(dinner)
         }
-      },
-      orderBy: [
-        { date: 'asc' },
-        { user: { name: 'asc' } }
-      ]
+      });
     });
 
-    res.json({ mealSignups, startDate, endDate });
+    const results = await prisma.$transaction(operations);
+
+    res.json({ 
+      message: `Updated ${results.length} meal signups`,
+      count: results.length
+    });
   } catch (error) {
-    console.error('Get meal signups range error:', error);
-    res.status(500).json({ error: 'Failed to get meal signups' });
+    console.error('Bulk update meal signups error:', error);
+    res.status(500).json({ error: 'Failed to bulk update meal signups' });
   }
 });
 

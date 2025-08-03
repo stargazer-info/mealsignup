@@ -4,6 +4,38 @@ import { prisma } from '../app';
 
 const router = Router();
 
+// Create user on registration
+router.post('/register', requireAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { clerkId: req.user.id }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Create new user
+    const user = await prisma.user.create({
+      data: {
+        clerkId: req.user.id,
+        email: req.user.email,
+        name: req.user.name
+      }
+    });
+
+    res.status(201).json({ user });
+  } catch (error) {
+    console.error('User registration error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
 // Get current user profile
 router.get('/me', requireAuth, async (req, res) => {
   try {
