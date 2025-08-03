@@ -1,12 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-
-// Load environment variables
-dotenv.config();
+import { clerkMiddleware } from '@clerk/express';
 
 // Initialize Prisma client
 export const prisma = new PrismaClient();
@@ -25,6 +23,9 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Add Clerk middleware
+app.use(clerkMiddleware());
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -38,10 +39,12 @@ app.get('/health', (req, res) => {
 import authRoutes from './routes/auth';
 import familiesRoutes from './routes/families';
 import mealsRoutes from './routes/meals';
+import testRoutes from './routes/test';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/families', familiesRoutes);
 app.use('/api/meals', mealsRoutes);
+app.use('/api/test', testRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@clerk/express": "^1.7.15",
     "nanoid": "^5.1.5"
   }
 }

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { clerkClient } from '@clerk/backend';
+import { clerkClient, getAuth } from '@clerk/express';
 
 // Extend Express Request type to include user
 declare global {
@@ -16,23 +16,15 @@ declare global {
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const authHeader = req.headers.authorization;
+    // Use getAuth from @clerk/express to get the authenticated user
+    const { userId } = getAuth(req);
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!userId) {
       return res.status(401).json({ error: 'No authorization token provided' });
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
-    // Verify the token with Clerk
-    const payload = await clerkClient.verifyToken(token);
-    
-    if (!payload || !payload.sub) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
     // Get user details from Clerk
-    const clerkUser = await clerkClient.users.getUser(payload.sub);
+    const clerkUser = await clerkClient.users.getUser(userId);
     
     if (!clerkUser) {
       return res.status(401).json({ error: 'User not found' });
@@ -56,27 +48,22 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 
 export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const authHeader = req.headers.authorization;
+    const { userId } = getAuth(req);
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!userId) {
       return next(); // Continue without user
     }
 
-    const token = authHeader.substring(7);
-    const payload = await clerkClient.verifyToken(token);
+    const clerkUser = await clerkClient.users.getUser(userId);
     
-    if (payload && payload.sub) {
-      const clerkUser = await clerkClient.users.getUser(payload.sub);
-      
-      if (clerkUser) {
-        req.user = {
-          id: clerkUser.id,
-          email: clerkUser.emailAddresses[0]?.emailAddress || '',
-          name: clerkUser.firstName && clerkUser.lastName 
-            ? `${clerkUser.firstName} ${clerkUser.lastName}`
-            : clerkUser.username || 'Unknown User'
-        };
-      }
+    if (clerkUser) {
+      req.user = {
+        id: clerkUser.id,
+        email: clerkUser.emailAddresses[0]?.emailAddress || '',
+        name: clerkUser.firstName && clerkUser.lastName 
+          ? `${clerkUser.firstName} ${clerkUser.lastName}`
+          : clerkUser.username || 'Unknown User'
+      };
     }
 
     next();
