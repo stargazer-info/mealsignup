@@ -333,9 +333,7 @@ function App() {
 
         {/* Monthly Summary Table */}
         {currentOrganization && monthlySummary && (
-          <div className="w-full mb-6">
-            <MonthlySummary monthlySummary={monthlySummary} />
-          </div>
+          <MonthlySummary monthlySummary={monthlySummary} />
         )}
 
         <div className="max-w-md mx-auto">
