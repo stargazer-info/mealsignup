@@ -13,6 +13,8 @@ interface MealSignupFormProps {
   onCancel: () => void;
   loading: boolean;
   message: string;
+  currentDate: Date;
+  changeDate: (days: number) => void;
 }
 
 export const MealSignupForm: React.FC<MealSignupFormProps> = ({
@@ -22,9 +24,41 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   onCancel,
   loading,
   message,
+  currentDate,
+  changeDate,
 }) => {
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    const weekday = weekdays[date.getDay()];
+    return `${year}年${month}月${day}日（${weekday}）`;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <button 
+            onClick={() => changeDate(-1)}
+            className="p-2 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <span className="text-lg">←</span>
+          </button>
+          <div className="text-center">
+            <div className="text-lg font-semibold text-text">
+              📅 {formatDate(currentDate)}
+            </div>
+          </div>
+          <button 
+            onClick={() => changeDate(1)}
+            className="p-2 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <span className="text-lg">→</span>
+          </button>
+        </div>
+      </div>
       <h2 className="text-lg font-semibold text-text mb-6">今日の食事予定：</h2>
       <div className="space-y-4">
         {/* Breakfast */}

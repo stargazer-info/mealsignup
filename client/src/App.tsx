@@ -349,28 +349,6 @@ function App() {
 
         <div className="max-w-md mx-auto">
 
-          {/* Date Navigation */}
-          {currentOrganization && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <button 
-                onClick={() => changeDate(-1)}
-                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <span className="text-lg">←</span>
-              </button>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-text">📅 {formatDate(currentDate)}</div>
-              </div>
-              <button 
-                onClick={() => changeDate(1)}
-                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <span className="text-lg">→</span>
-              </button>
-            </div>
-          </div>
-	  )}
 
           {/* 編集モードの食事予約フォーム */}
           {currentOrganization && isEditingMealSignup && (
@@ -387,6 +365,8 @@ function App() {
               }}
               loading={loading}
               message={message}
+              currentDate={currentDate}
+              changeDate={changeDate}
             />
           )}
 	  
