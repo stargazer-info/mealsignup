@@ -15,7 +15,7 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary }
       <h2 className="text-lg font-semibold text-text mb-4">
         {monthlySummary.year}年 {monthlySummary.month}月
       </h2>
-      <table className="w-full text-sm border-collapse border border-gray-300">
+      <table className="w-full table-fixed text-sm border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
             <th className="border border-gray-300 px-2 py-1 text-left">日付</th>
@@ -29,18 +29,18 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary }
             <tr key={row.day}>
               <td className="border border-gray-300 px-2 py-1">{row.day}日</td>
               <td className="border border-gray-300 px-2 py-1 text-center">
-                <span className={`text-2xl ${row.breakfast ? 'text-green-600' : 'text-gray-300'}`}>
-                  ✅
+                <span className={`text-2xl ${row.breakfast > 0 ? 'text-green-600' : 'text-gray-300'}`}>
+                  {row.breakfast}
                 </span>
               </td>
               <td className="border border-gray-300 px-2 py-1 text-center">
-                <span className={`text-2xl ${row.lunch ? 'text-green-600' : 'text-gray-300'}`}>
-                  ✅
+                <span className={`text-2xl ${row.lunch > 0 ? 'text-green-600' : 'text-gray-300'}`}>
+                  {row.lunch}
                 </span>
               </td>
               <td className="border border-gray-300 px-2 py-1 text-center">
-                <span className={`text-2xl ${row.dinner ? 'text-green-600' : 'text-gray-300'}`}>
-                  ✅
+                <span className={`text-2xl ${row.dinner > 0 ? 'text-green-600' : 'text-gray-300'}`}>
+                  {row.dinner}
                 </span>
               </td>
             </tr>
