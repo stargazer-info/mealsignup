@@ -29,17 +29,17 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary }
             <tr key={row.day}>
               <td className="border border-gray-300 px-2 py-1">{row.day}日</td>
               <td className="border border-gray-300 px-2 py-1 text-center">
-                <span className={`text-2xl ${row.breakfast > 0 ? 'text-green-600' : 'text-gray-300'}`}>
+                <span className={`text-lg font-semibold ${row.breakfast > 0 ? 'text-green-600' : 'text-gray-300'}`}>
                   {row.breakfast !== undefined ? row.breakfast : 0}
                 </span>
               </td>
               <td className="border border-gray-300 px-2 py-1 text-center">
-                <span className={`text-2xl ${row.lunch > 0 ? 'text-green-600' : 'text-gray-300'}`}>
+                <span className={`text-lg font-semibold ${row.lunch > 0 ? 'text-green-600' : 'text-gray-300'}`}>
                   {row.lunch !== undefined ? row.lunch : 0}
                 </span>
               </td>
               <td className="border border-gray-300 px-2 py-1 text-center">
-                <span className={`text-2xl ${row.dinner > 0 ? 'text-green-600' : 'text-gray-300'}`}>
+                <span className={`text-lg font-semibold ${row.dinner > 0 ? 'text-green-600' : 'text-gray-300'}`}>
                   {row.dinner !== undefined ? row.dinner : 0}
                 </span>
               </td>
