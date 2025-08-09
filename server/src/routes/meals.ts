@@ -328,10 +328,11 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
       return existing || { day: dayNumber, breakfast: false, lunch: false, dinner: false };
     });
     
+    console.log('API Response Data:', finalResult); // デバッグ用ログ追加
     res.json(finalResult);
     
   } catch (error) {
-    console.error(error);
+    console.error('API Error:', error);
     res.status(500).json({ error: 'Failed to get self monthly meal signups' });
   }
 });

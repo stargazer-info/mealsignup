@@ -62,9 +62,15 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
         const response = await fetch(
           `/api/meals/self/monthly?year=${validMonth.getFullYear()}&month=${validMonth.getMonth() + 1}`
         );
-	console.log('response', response)
+        console.log('response', response)
         if (!response.ok) throw new Error('データ取得エラー');
-        const data: DailyMealSignup[] = await response.json();
+        
+        // 追加：生のレスポンスをテキストで確認する
+        const text = await response.text();
+        console.log('Raw API Response:', text);
+        
+        // JSONパース
+        const data: DailyMealSignup[] = JSON.parse(text);
         
         // APIのレスポンスが期待する形式であることを確認し、状態を更新
         if (data && data.length > 0) {
