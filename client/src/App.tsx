@@ -1,5 +1,6 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
 import { useState, useEffect } from 'react'
+import { CreateOrganizationForm, JoinOrganizationForm } from './components/OrganizationForm'
 import './App.css'
 
 function App() {
@@ -247,24 +248,50 @@ function App() {
 
         <SignedIn>
           {/* Organization Selection */}
-          {showOrgSelector && (
+          {showOrgSelector && !showCreateOrg && !showJoinOrg && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
               <h2 className="text-lg font-semibold mb-4">組織を選択してください</h2>
               <div className="space-y-3">
                 <button 
                   onClick={() => setShowCreateOrg(true)}
-                  className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center space-x-2"
                 >
-                  新しい組織を作成
+                  <span>➕</span>
+                  <span>新しい組織を作成</span>
                 </button>
                 <button 
                   onClick={() => setShowJoinOrg(true)}
-                  className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center space-x-2"
                 >
-                  招待コードで参加
+                  <span>🔗</span>
+                  <span>招待コードで参加</span>
                 </button>
               </div>
             </div>
+          )}
+
+          {/* Create Organization Form */}
+          {showCreateOrg && (
+            <CreateOrganizationForm
+              onSuccess={() => {
+                setShowCreateOrg(false)
+                setShowOrgSelector(false)
+                loadUserOrganizations()
+              }}
+              onCancel={() => setShowCreateOrg(false)}
+            />
+          )}
+
+          {/* Join Organization Form */}
+          {showJoinOrg && (
+            <JoinOrganizationForm
+              onSuccess={() => {
+                setShowJoinOrg(false)
+                setShowOrgSelector(false)
+                loadUserOrganizations()
+              }}
+              onCancel={() => setShowJoinOrg(false)}
+            />
           )}
 
           {/* Current Organization Display */}
