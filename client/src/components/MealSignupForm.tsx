@@ -24,6 +24,7 @@ interface MealSignupFormProps {
   message: string;
   currentMonth: Date;
   changeMonth: (offset: number) => void;
+  organizationId: string;
 }
 
 export const MealSignupForm: React.FC<MealSignupFormProps> = ({
@@ -35,6 +36,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   message,
   currentMonth,
   changeMonth,
+  organizationId,
 }) => {
   const validMonth = currentMonth || new Date();
   console.log('monthlyMealSignup', monthlyMealSignup)
@@ -53,13 +55,34 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
     }));
   };
 
-  // monthlyMealSignupが空の場合、初期値を設定
+  // 月が変更されたタイミングでAPIから月次予約データを取得
   useEffect(() => {
-    if (monthlyMealSignup.length === 0) {
-      const initialData = generateInitialMonthlyData(validMonth);
-      setMonthlyMealSignup(initialData);
-    }
-  }, [monthlyMealSignup.length, validMonth, setMonthlyMealSignup]);
+    const fetchMonthlyData = async () => {
+      try {
+        const response = await fetch(
+          `/api/organization/${organizationId}/monthly-summary?year=${validMonth.getFullYear()}&month=${validMonth.getMonth() + 1}`
+        );
+        if (!response.ok) throw new Error('データ取得エラー');
+        const data: DailyMealSignup[] = await response.json();
+        
+        // APIのレスポンスが期待する形式であることを確認し、状態を更新
+        if (data && data.length > 0) {
+          setMonthlyMealSignup(data);
+        } else {
+          // APIの結果が空の場合は初期値（各日の予約なし）を生成する
+          const initialData = generateInitialMonthlyData(validMonth);
+          setMonthlyMealSignup(initialData);
+        }
+      } catch (error) {
+        console.error('月次データの取得に失敗しました', error);
+        // エラー時は初期状態を設定
+        const initialData = generateInitialMonthlyData(validMonth);
+        setMonthlyMealSignup(initialData);
+      }
+    };
+
+    fetchMonthlyData();
+  }, [validMonth, setMonthlyMealSignup, organizationId]);
   const updateDay = (updatedDay: DailyMealSignup) => {
     setMonthlyMealSignup((prev) =>
       prev.map((day) => (day.day === updatedDay.day ? updatedDay : day))
