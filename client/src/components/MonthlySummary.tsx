@@ -15,7 +15,7 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary }
       <h2 className="text-lg font-semibold text-text mb-4">
         {monthlySummary.year}年 {monthlySummary.month}月
       </h2>
-      <table className="w-full text-sm border-collapse">
+      <table className="w-full text-sm border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
             <th className="border px-2 py-1 text-left">日付</th>

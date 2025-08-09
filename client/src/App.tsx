@@ -256,7 +256,8 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-4 py-6">
+      <main className="px-4 py-6">
+        <div className="max-w-md mx-auto">
         <SignedOut>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
             <h2 className="text-xl font-semibold mb-4">Welcome to MealSignup</h2>
@@ -327,10 +328,16 @@ function App() {
             </div>
           )}
 
-          {/* Monthly Summary Table */}
-          {currentOrganization && monthlySummary && (
+        </div>
+
+        {/* Monthly Summary Table */}
+        {currentOrganization && monthlySummary && (
+          <div className="w-full mb-6">
             <MonthlySummary monthlySummary={monthlySummary} />
-          )}
+          </div>
+        )}
+
+        <div className="max-w-md mx-auto">
 
           {/* Date Navigation */}
           {currentOrganization && (
@@ -442,6 +449,7 @@ function App() {
             </div>
           )}
         </SignedIn>
+        </div>
       </main>
     </div>
   )
