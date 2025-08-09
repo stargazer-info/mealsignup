@@ -1,6 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
 import { useState, useEffect } from 'react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './components/OrganizationForm'
+import { MonthlySummary } from './components/MonthlySummary'
 import './App.css'
 
 function App() {
@@ -18,13 +19,6 @@ function App() {
   const [showOrgSelector, setShowOrgSelector] = useState(false)
   const [showCreateOrg, setShowCreateOrg] = useState(false)
   const [showJoinOrg, setShowJoinOrg] = useState(false)
-  interface DailyData {
-    day: number;
-    breakfast: boolean;
-    lunch: boolean;
-    dinner: boolean;
-  }
-
   const [monthlySummary, setMonthlySummary] = useState<{
     year: number;
     month: number;
@@ -349,31 +343,7 @@ function App() {
 
           {/* Monthly Summary Table */}
           {currentOrganization && monthlySummary && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-              <h2 className="text-lg font-semibold text-text mb-4">
-                {monthlySummary.year}年 {monthlySummary.month}月
-              </h2>
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border px-2 py-1 text-left">日付</th>
-                    <th className="border px-2 py-1 text-center">朝食</th>
-                    <th className="border px-2 py-1 text-center">昼食</th>
-                    <th className="border px-2 py-1 text-center">夕食</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monthlySummary.dailyData.map(row => (
-                    <tr key={row.day}>
-                      <td className="border px-2 py-1">{row.day}日</td>
-                      <td className="border px-2 py-1 text-center">{row.breakfast ? '☑️' : '❌'}</td>
-                      <td className="border px-2 py-1 text-center">{row.lunch ? '☑️' : '❌'}</td>
-                      <td className="border px-2 py-1 text-center">{row.dinner ? '☑️' : '❌'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <MonthlySummary monthlySummary={monthlySummary} />
           )}
 
           {/* Date Navigation */}
