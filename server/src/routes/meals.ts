@@ -275,4 +275,151 @@ router.post('/bulk', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/meals/self/monthly?year=2025&month=8
+router.get('/self/monthly', requireAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
+    const { year, month } = req.query;
+    const yearNum = Number(year);
+    const monthNum = Number(month);
+    if (!yearNum || !monthNum || monthNum < 1 || monthNum > 12) {
+      return res.status(400).json({ error: 'Invalid year or month' });
+    }
+    
+    // Get user
+    const user = await prisma.user.findUnique({
+      where: { clerkId: req.user.id }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = new Date(yearNum, monthNum, 1);
+    
+    const mealSignups = await prisma.mealSignup.findMany({
+      where: {
+        userId: user.id,
+        date: {
+          gte: startDate,
+          lt: endDate,
+        },
+      },
+      orderBy: { date: 'asc' },
+    });
+    
+    // マッピング：各レコードの日付から「日」を抽出
+    const dailySignups = mealSignups.map(signup => ({
+      day: signup.date.getDate(),
+      breakfast: signup.breakfast,
+      lunch: signup.lunch,
+      dinner: signup.dinner,
+    }));
+    
+    // 存在しない日があれば初期状態で埋める
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
+    const finalResult = Array.from({ length: daysInMonth }, (_, i) => {
+      const dayNumber = i + 1;
+      const existing = dailySignups.find(ds => ds.day === dayNumber);
+      return existing || { day: dayNumber, breakfast: false, lunch: false, dinner: false };
+    });
+    
+    res.json(finalResult);
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get self monthly meal signups' });
+  }
+});
+
+// POST /api/meals/self/bulk
+// リクエストボディ例:
+// { monthlyMealSignup: [{ day: 1, breakfast: true, lunch: false, dinner: true }, ...], year: 2025, month: 8 }
+router.post('/self/bulk', requireAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
+    const { monthlyMealSignup, year, month, organizationId } = req.body;
+    if (!Array.isArray(monthlyMealSignup) || monthlyMealSignup.length === 0) {
+      return res.status(400).json({ error: 'monthlyMealSignup array is required' });
+    }
+    
+    const yearNum = Number(year);
+    const monthNum = Number(month);
+    if (!yearNum || !monthNum || monthNum < 1 || monthNum > 12) {
+      return res.status(400).json({ error: 'Invalid year or month' });
+    }
+
+    // Get user and determine organization
+    const user = await prisma.user.findUnique({
+      where: { clerkId: req.user.id },
+      include: {
+        memberships: {
+          include: { organization: true }
+        },
+        lastSelectedOrganization: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Determine which organization to use
+    let targetOrganizationId = organizationId;
+    if (!targetOrganizationId) {
+      targetOrganizationId = user.lastSelectedOrganizationId;
+    }
+
+    if (!targetOrganizationId) {
+      return res.status(400).json({ error: 'No organization selected' });
+    }
+
+    // Verify user has access to this organization
+    const membership = user.memberships.find(m => m.organizationId === targetOrganizationId);
+    if (!membership) {
+      return res.status(403).json({ error: 'User does not have access to this organization' });
+    }
+    
+    const operations = monthlyMealSignup.map(daySignup => {
+      const { day, breakfast, lunch, dinner } = daySignup;
+      const targetDate = new Date(yearNum, monthNum - 1, day);
+      return prisma.mealSignup.upsert({
+        where: {
+          userId_organizationId_date: {
+            userId: user.id,
+            organizationId: targetOrganizationId,
+            date: targetDate,
+          },
+        },
+        update: {
+          breakfast: Boolean(breakfast),
+          lunch: Boolean(lunch),
+          dinner: Boolean(dinner),
+        },
+        create: {
+          userId: user.id,
+          organizationId: targetOrganizationId,
+          date: targetDate,
+          breakfast: Boolean(breakfast),
+          lunch: Boolean(lunch),
+          dinner: Boolean(dinner),
+        },
+      });
+    });
+    
+    await prisma.$transaction(operations);
+    res.json({ message: 'Meal signups updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update meal signups' });
+  }
+});
+
 export default router;

@@ -60,7 +60,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
     const fetchMonthlyData = async () => {
       try {
         const response = await fetch(
-          `/api/organization/${organizationId}/monthly-summary?year=${validMonth.getFullYear()}&month=${validMonth.getMonth() + 1}`
+          `/api/meals/self/monthly?year=${validMonth.getFullYear()}&month=${validMonth.getMonth() + 1}`
         );
 	console.log('response', response)
         if (!response.ok) throw new Error('データ取得エラー');
@@ -169,7 +169,24 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
 
       <div className="mt-6">
         <button
-          onClick={onSave}
+          onClick={async () => {
+            try {
+              const response = await fetch('/api/meals/self/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  monthlyMealSignup,
+                  year: validMonth.getFullYear(),
+                  month: validMonth.getMonth() + 1,
+                  organizationId,
+                }),
+              });
+              if (!response.ok) throw new Error('保存に失敗しました');
+              onSave();
+            } catch (error) {
+              console.error(error);
+            }
+          }}
           disabled={loading}
           className="w-full bg-primary hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex justify-center items-center"
         >
