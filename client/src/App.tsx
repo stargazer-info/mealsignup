@@ -4,6 +4,7 @@ import { CreateOrganizationForm, JoinOrganizationForm } from './components/Organ
 import { MonthlySummary } from './components/MonthlySummary'
 import { MealSignupForm } from './components/MealSignupForm'
 import type { DailyData } from './types/DailyData';
+import type { DailyMealSignup } from './components/MealSignupForm';
 import { fetchMonthlySummary } from './api/monthlySummary'
 import './App.css'
 
@@ -28,6 +29,8 @@ function App() {
     dailyData: DailyData[];
   } | null>(null)
   const [isEditingMealSignup, setIsEditingMealSignup] = useState(false)
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [monthlyMealSignup, setMonthlyMealSignup] = useState<DailyMealSignup[]>([])
 
   // Format date for display
   const formatDate = (date: Date) => {
@@ -201,6 +204,12 @@ function App() {
     setCurrentDate(newDate)
   }
 
+  // Navigate months
+  const changeMonth = (offset: number) => {
+    const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1)
+    setCurrentMonth(newMonth)
+  }
+
   // Load organizations on mount
   useEffect(() => {
     loadUserOrganizations()
@@ -353,8 +362,8 @@ function App() {
           {/* 編集モードの食事予約フォーム */}
           {currentOrganization && isEditingMealSignup && (
             <MealSignupForm 
-              mealSignup={mealSignup}
-              setMealSignup={setMealSignup}
+              monthlyMealSignup={monthlyMealSignup}
+              setMonthlyMealSignup={setMonthlyMealSignup}
               onSave={() => {
                 saveMealSignup();
                 setIsEditingMealSignup(false);
@@ -365,8 +374,8 @@ function App() {
               }}
               loading={loading}
               message={message}
-              currentDate={currentDate}
-              changeDate={changeDate}
+              currentMonth={currentMonth}
+              changeMonth={changeMonth}
             />
           )}
 	  

@@ -35,6 +35,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   currentMonth,
   changeMonth,
 }) => {
+  const validMonth = currentMonth || new Date();
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -48,7 +49,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
           </button>
           <div className="text-center">
             <div className="text-lg font-semibold text-text">
-              📅 {currentMonth.getFullYear()}年{currentMonth.getMonth() + 1}月
+              📅 {validMonth.getFullYear()}年{validMonth.getMonth() + 1}月
             </div>
           </div>
           <button 
