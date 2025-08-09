@@ -1,4 +1,5 @@
 import React from 'react';
+import type { DailyMealSignup } from './types/DailyData';
 
 interface MealSignup {
   breakfast: boolean;
@@ -6,13 +7,13 @@ interface MealSignup {
   dinner: number;
 }
 
-// 各日の食事予約状態を表す型
-export interface DailyMealSignup {
-  day: number;
-  breakfast: boolean;
-  lunch: boolean;
-  dinner: boolean;
-}
+// // 各日の食事予約状態を表す型
+// export interface DailyMealSignup {
+//   day: number;
+//   breakfast: boolean;
+//   lunch: boolean;
+//   dinner: boolean;
+// }
 
 interface MealSignupFormProps {
   monthlyMealSignup: DailyMealSignup[];
@@ -36,7 +37,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   changeMonth,
 }) => {
   const validMonth = currentMonth || new Date();
-
+  console.log('monthlyMealSignup', monthlyMealSignup)
   const updateDay = (updatedDay: DailyMealSignup) => {
     setMonthlyMealSignup((prev) =>
       prev.map((day) => (day.day === updatedDay.day ? updatedDay : day))
