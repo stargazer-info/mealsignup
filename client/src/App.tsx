@@ -2,6 +2,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/c
 import { useState, useEffect } from 'react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './components/OrganizationForm'
 import { MonthlySummary } from './components/MonthlySummary'
+import { fetchMonthlySummary } from './api/monthlySummary'
 import './App.css'
 
 function App() {
@@ -131,29 +132,6 @@ function App() {
     }
   }
 
-  // Load monthly summary
-  const loadMonthlySummary = async () => {
-    if (!currentOrganization) return
-    
-    try {
-      const token = await getToken()
-      const year = currentDate.getFullYear()
-      const month = currentDate.getMonth() + 1 // 月は 1～12 の形式
-      const url = `http://localhost:3001/api/organizations/${currentOrganization.id}/monthly-summary?year=${year}&month=${month}`
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      
-      if (response.ok) {
-        const data = await response.json();
-        setMonthlySummary({ year: data.year, month: data.month, dailyData: data.dailyData });
-      } else {
-        console.error('Error fetching monthly summary')
-      }
-    } catch (error) {
-      console.error('Error in loadMonthlySummary:', error)
-    }
-  }
 
   // Save meal signup
   const saveMealSignup = async () => {
@@ -232,12 +210,19 @@ function App() {
     }
   }, [currentDate, currentOrganization])
 
-  // Load monthly summary when organization or date changes
+  // Monthly Summary の読み込み
   useEffect(() => {
     if (currentOrganization) {
-      loadMonthlySummary()
+      (async () => {
+        try {
+          const summary = await fetchMonthlySummary(currentOrganization, currentDate, getToken);
+          setMonthlySummary(summary);
+        } catch (error) {
+          console.error('Error fetching monthly summary:', error);
+        }
+      })();
     }
-  }, [currentOrganization, currentDate])
+  }, [currentOrganization, currentDate, getToken]);
 
   return (
     <div className="min-h-screen bg-background">
