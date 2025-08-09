@@ -10,6 +10,7 @@ interface MealSignupFormProps {
   mealSignup: MealSignup;
   setMealSignup: React.Dispatch<React.SetStateAction<MealSignup>>;
   onSave: () => void;
+  onCancel: () => void;
   loading: boolean;
   message: string;
 }
@@ -18,6 +19,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   mealSignup,
   setMealSignup,
   onSave,
+  onCancel,
   loading,
   message,
 }) => {
@@ -85,6 +87,15 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
       >
         <span>💾</span>
         <span>{loading ? '保存中...' : '保存する'}</span>
+      </button>
+
+      {/* Cancel Button */}
+      <button
+        onClick={onCancel}
+        disabled={loading}
+        className="w-full mt-2 bg-gray-300 hover:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+      >
+        キャンセル
       </button>
 
       {/* Message */}

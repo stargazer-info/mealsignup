@@ -27,6 +27,7 @@ function App() {
     month: number;
     dailyData: DailyData[];
   } | null>(null)
+  const [isEditingMealSignup, setIsEditingMealSignup] = useState(false)
 
   // Format date for display
   const formatDate = (date: Date) => {
@@ -331,9 +332,19 @@ function App() {
 
         </SignedIn>
 
-        {/* Monthly Summary Table */}
-        {currentOrganization && monthlySummary && (
-          <MonthlySummary monthlySummary={monthlySummary} />
+        {/* 月間サマリー表示と編集ボタン */}
+        {currentOrganization && monthlySummary && !isEditingMealSignup && (
+          <div className="w-full mb-6">
+            <MonthlySummary monthlySummary={monthlySummary} />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => setIsEditingMealSignup(true)}
+                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                編集
+              </button>
+            </div>
+          </div>
         )}
 
         <div className="max-w-md mx-auto">
@@ -361,12 +372,19 @@ function App() {
           </div>
 	  )}
 
-          {/* Meal Signup Form */}
-          {currentOrganization && (
+          {/* 編集モードの食事予約フォーム */}
+          {currentOrganization && isEditingMealSignup && (
             <MealSignupForm 
               mealSignup={mealSignup}
               setMealSignup={setMealSignup}
-              onSave={saveMealSignup}
+              onSave={() => {
+                saveMealSignup();
+                setIsEditingMealSignup(false);
+              }}
+              onCancel={() => {
+                setIsEditingMealSignup(false);
+                loadMealSignup(); // 保存せずに元の状態に戻す
+              }}
               loading={loading}
               message={message}
             />
