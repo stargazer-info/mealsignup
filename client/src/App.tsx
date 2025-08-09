@@ -2,6 +2,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/c
 import { useState, useEffect } from 'react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './components/OrganizationForm'
 import { MonthlySummary } from './components/MonthlySummary'
+import type { DailyData } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
 import './App.css'
 

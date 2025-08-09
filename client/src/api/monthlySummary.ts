@@ -1,4 +1,4 @@
-import { DailyData } from '../components/MonthlySummary';
+import type { DailyData } from '../types/DailyData';
 
 interface MonthlySummaryResponse {
   year: number;

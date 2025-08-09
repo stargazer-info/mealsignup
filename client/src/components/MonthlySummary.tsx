@@ -1,11 +1,5 @@
 import React from 'react';
-
-export interface DailyData {
-  day: number;
-  breakfast: boolean;
-  lunch: boolean;
-  dinner: boolean;
-}
+import type { DailyData } from '../types/DailyData';
 
 interface MonthlySummaryProps {
   monthlySummary: {
