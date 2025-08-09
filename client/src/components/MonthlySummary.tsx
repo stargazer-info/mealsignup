@@ -11,7 +11,7 @@ interface MonthlySummaryProps {
 
 export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 w-full">
       <h2 className="text-lg font-semibold text-text mb-4">
         {monthlySummary.year}年 {monthlySummary.month}月
       </h2>
@@ -28,9 +28,21 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary }
           {monthlySummary.dailyData.map((row) => (
             <tr key={row.day}>
               <td className="border px-2 py-1">{row.day}日</td>
-              <td className="border px-2 py-1 text-center">{row.breakfast ? '☑️' : '❌'}</td>
-              <td className="border px-2 py-1 text-center">{row.lunch ? '☑️' : '❌'}</td>
-              <td className="border px-2 py-1 text-center">{row.dinner ? '☑️' : '❌'}</td>
+              <td className="border px-2 py-1 text-center">
+                <span className={`text-2xl ${row.breakfast ? 'text-green-600' : 'text-gray-300'}`}>
+                  ✓
+                </span>
+              </td>
+              <td className="border px-2 py-1 text-center">
+                <span className={`text-2xl ${row.lunch ? 'text-green-600' : 'text-gray-300'}`}>
+                  ✓
+                </span>
+              </td>
+              <td className="border px-2 py-1 text-center">
+                <span className={`text-2xl ${row.dinner ? 'text-green-600' : 'text-gray-300'}`}>
+                  ✓
+                </span>
+              </td>
             </tr>
           ))}
         </tbody>
