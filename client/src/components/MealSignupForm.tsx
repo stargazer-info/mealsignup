@@ -3,7 +3,7 @@ import React from 'react';
 interface MealSignup {
   breakfast: boolean;
   lunch: boolean;
-  dinner: boolean;
+  dinner: number;
 }
 
 // 各日の食事予約状態を表す型
