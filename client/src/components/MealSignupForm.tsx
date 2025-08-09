@@ -62,6 +62,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
         const response = await fetch(
           `/api/organization/${organizationId}/monthly-summary?year=${validMonth.getFullYear()}&month=${validMonth.getMonth() + 1}`
         );
+	console.log('response', response)
         if (!response.ok) throw new Error('データ取得エラー');
         const data: DailyMealSignup[] = await response.json();
         
