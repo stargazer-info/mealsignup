@@ -228,6 +228,7 @@ function App() {
       (async () => {
         try {
           const summary = await fetchMonthlySummary(currentOrganization, currentDate, getToken);
+	  console.log('summary', summary)
           setMonthlySummary(summary);
         } catch (error) {
           console.error('Error fetching monthly summary:', error);
