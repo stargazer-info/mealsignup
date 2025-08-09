@@ -18,6 +18,12 @@ function App() {
   const [showOrgSelector, setShowOrgSelector] = useState(false)
   const [showCreateOrg, setShowCreateOrg] = useState(false)
   const [showJoinOrg, setShowJoinOrg] = useState(false)
+  const [monthlySummary, setMonthlySummary] = useState<{
+    totalBreakfast: number;
+    totalLunch: number;
+    totalDinner: number;
+    byUser: Record<string, { breakfast: number; lunch: number; dinner: number }>;
+  } | null>(null)
 
   // Format date for display
   const formatDate = (date: Date) => {
@@ -125,6 +131,30 @@ function App() {
     }
   }
 
+  // Load monthly summary
+  const loadMonthlySummary = async () => {
+    if (!currentOrganization) return
+    
+    try {
+      const token = await getToken()
+      const year = currentDate.getFullYear()
+      const month = currentDate.getMonth() + 1 // 月は 1～12 の形式
+      const url = `http://localhost:3001/api/organizations/${currentOrganization.id}/monthly-summary?year=${year}&month=${month}`
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setMonthlySummary(data.summary)
+      } else {
+        console.error('Error fetching monthly summary')
+      }
+    } catch (error) {
+      console.error('Error in loadMonthlySummary:', error)
+    }
+  }
+
   // Save meal signup
   const saveMealSignup = async () => {
     if (!currentOrganization) {
@@ -201,6 +231,13 @@ function App() {
       loadMealSignup()
     }
   }, [currentDate, currentOrganization])
+
+  // Load monthly summary when organization or date changes
+  useEffect(() => {
+    if (currentOrganization) {
+      loadMonthlySummary()
+    }
+  }, [currentOrganization, currentDate])
 
   return (
     <div className="min-h-screen bg-background">
@@ -300,6 +337,30 @@ function App() {
               <div className="text-center">
                 <h2 className="text-lg font-semibold text-text">{currentOrganization.name}</h2>
                 <p className="text-sm text-gray-600">{currentOrganization.type === 'FAMILY' ? '家族' : '店舗'}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Monthly Summary */}
+          {currentOrganization && monthlySummary && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+              <h2 className="text-lg font-semibold text-text mb-4">📊 今月の食事サマリー</h2>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-3 bg-orange-50 rounded-lg">
+                  <div className="text-2xl mb-1">🌅</div>
+                  <div className="text-sm text-gray-600">朝食</div>
+                  <div className="text-lg font-semibold text-orange-600">{monthlySummary.totalBreakfast}回</div>
+                </div>
+                <div className="p-3 bg-yellow-50 rounded-lg">
+                  <div className="text-2xl mb-1">🌞</div>
+                  <div className="text-sm text-gray-600">昼食</div>
+                  <div className="text-lg font-semibold text-yellow-600">{monthlySummary.totalLunch}回</div>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl mb-1">🌙</div>
+                  <div className="text-sm text-gray-600">夕食</div>
+                  <div className="text-lg font-semibold text-blue-600">{monthlySummary.totalDinner}回</div>
+                </div>
               </div>
             </div>
           )}
