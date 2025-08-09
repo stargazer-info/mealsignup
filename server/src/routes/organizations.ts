@@ -288,7 +288,8 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
     const targetMonth = month ? parseInt(month as string) : currentDate.getMonth() + 1;
     
     const startDate = new Date(targetYear, targetMonth - 1, 1);
-    const endDate = new Date(targetYear, targetMonth, 0);
+    // endDate: 最終日（23:59:59 で含めるため翌月の1日の前を指定）
+    const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
 
     // Verify user is member of organization
     const user = await prisma.user.findUnique({
@@ -319,24 +320,25 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
       }
     });
 
-    const summary = {
-      totalBreakfast: mealSignups.filter(m => m.breakfast).length,
-      totalLunch: mealSignups.filter(m => m.lunch).length,
-      totalDinner: mealSignups.filter(m => m.dinner).length,
-      byUser: {}
-    };
+    // 新たに、今月の日数分の日別データを作成する
+    const lastDay = new Date(targetYear, targetMonth, 0).getDate();
+    const dailyData = Array.from({ length: lastDay }, (_, idx) => ({
+      day: idx + 1,
+      breakfast: false,
+      lunch: false,
+      dinner: false
+    }));
 
+    // 各日のフラグを更新（該当日のどれかの signup が true なら true とする）
     mealSignups.forEach(signup => {
-      const userName = signup.user.name;
-      if (!summary.byUser[userName]) {
-        summary.byUser[userName] = { breakfast: 0, lunch: 0, dinner: 0 };
-      }
-      if (signup.breakfast) summary.byUser[userName].breakfast++;
-      if (signup.lunch) summary.byUser[userName].lunch++;
-      if (signup.dinner) summary.byUser[userName].dinner++;
+      const signupDate = new Date(signup.date);
+      const day = signupDate.getDate();
+      if (signup.breakfast) dailyData[day - 1].breakfast = true;
+      if (signup.lunch) dailyData[day - 1].lunch = true;
+      if (signup.dinner) dailyData[day - 1].dinner = true;
     });
 
-    res.json({ summary, month: targetMonth, year: targetYear });
+    res.json({ year: targetYear, month: targetMonth, dailyData });
   } catch (error) {
     console.error('Get monthly summary error:', error);
     res.status(500).json({ error: 'Failed to get monthly summary' });

@@ -18,11 +18,17 @@ function App() {
   const [showOrgSelector, setShowOrgSelector] = useState(false)
   const [showCreateOrg, setShowCreateOrg] = useState(false)
   const [showJoinOrg, setShowJoinOrg] = useState(false)
+  interface DailyData {
+    day: number;
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+  }
+
   const [monthlySummary, setMonthlySummary] = useState<{
-    totalBreakfast: number;
-    totalLunch: number;
-    totalDinner: number;
-    byUser: Record<string, { breakfast: number; lunch: number; dinner: number }>;
+    year: number;
+    month: number;
+    dailyData: DailyData[];
   } | null>(null)
 
   // Format date for display
@@ -145,8 +151,8 @@ function App() {
       })
       
       if (response.ok) {
-        const data = await response.json()
-        setMonthlySummary(data.summary)
+        const data = await response.json();
+        setMonthlySummary({ year: data.year, month: data.month, dailyData: data.dailyData });
       } else {
         console.error('Error fetching monthly summary')
       }
@@ -341,27 +347,32 @@ function App() {
             </div>
           )}
 
-          {/* Monthly Summary */}
+          {/* Monthly Summary Table */}
           {currentOrganization && monthlySummary && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-              <h2 className="text-lg font-semibold text-text mb-4">📊 今月の食事サマリー</h2>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-3 bg-orange-50 rounded-lg">
-                  <div className="text-2xl mb-1">🌅</div>
-                  <div className="text-sm text-gray-600">朝食</div>
-                  <div className="text-lg font-semibold text-orange-600">{monthlySummary.totalBreakfast}回</div>
-                </div>
-                <div className="p-3 bg-yellow-50 rounded-lg">
-                  <div className="text-2xl mb-1">🌞</div>
-                  <div className="text-sm text-gray-600">昼食</div>
-                  <div className="text-lg font-semibold text-yellow-600">{monthlySummary.totalLunch}回</div>
-                </div>
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl mb-1">🌙</div>
-                  <div className="text-sm text-gray-600">夕食</div>
-                  <div className="text-lg font-semibold text-blue-600">{monthlySummary.totalDinner}回</div>
-                </div>
-              </div>
+              <h2 className="text-lg font-semibold text-text mb-4">
+                {monthlySummary.year}年 {monthlySummary.month}月
+              </h2>
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border px-2 py-1 text-left">日付</th>
+                    <th className="border px-2 py-1 text-center">朝食</th>
+                    <th className="border px-2 py-1 text-center">昼食</th>
+                    <th className="border px-2 py-1 text-center">夕食</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlySummary.dailyData.map(row => (
+                    <tr key={row.day}>
+                      <td className="border px-2 py-1">{row.day}日</td>
+                      <td className="border px-2 py-1 text-center">{row.breakfast ? '☑️' : '❌'}</td>
+                      <td className="border px-2 py-1 text-center">{row.lunch ? '☑️' : '❌'}</td>
+                      <td className="border px-2 py-1 text-center">{row.dinner ? '☑️' : '❌'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
