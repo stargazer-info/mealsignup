@@ -328,7 +328,7 @@ function App() {
             </div>
           )}
 
-        </div>
+        </SignedIn>
 
         {/* Monthly Summary Table */}
         {currentOrganization && monthlySummary && (
@@ -448,7 +448,7 @@ function App() {
               </button>
             </div>
           )}
-        </SignedIn>
+        </div>
         </div>
       </main>
     </div>
