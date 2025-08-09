@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { DailyMealSignup } from './types/DailyData';
 
 interface MealSignup {
@@ -38,6 +38,28 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
 }) => {
   const validMonth = currentMonth || new Date();
   console.log('monthlyMealSignup', monthlyMealSignup)
+
+  // 月の日数を取得して初期値を生成する関数
+  const generateInitialMonthlyData = (month: Date): DailyMealSignup[] => {
+    const year = month.getFullYear();
+    const monthIndex = month.getMonth();
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    
+    return Array.from({ length: daysInMonth }, (_, index) => ({
+      day: index + 1,
+      breakfast: false,
+      lunch: false,
+      dinner: false,
+    }));
+  };
+
+  // monthlyMealSignupが空の場合、初期値を設定
+  useEffect(() => {
+    if (monthlyMealSignup.length === 0) {
+      const initialData = generateInitialMonthlyData(validMonth);
+      setMonthlyMealSignup(initialData);
+    }
+  }, [monthlyMealSignup.length, validMonth, setMonthlyMealSignup]);
   const updateDay = (updatedDay: DailyMealSignup) => {
     setMonthlyMealSignup((prev) =>
       prev.map((day) => (day.day === updatedDay.day ? updatedDay : day))
