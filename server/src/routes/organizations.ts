@@ -320,22 +320,22 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
       }
     });
 
-    // 新たに、今月の日数分の日別データを作成する
+    // 今月の日数分の日別データを作成 (デフォルトは予約数 0)
     const lastDay = new Date(targetYear, targetMonth, 0).getDate();
     const dailyData = Array.from({ length: lastDay }, (_, idx) => ({
       day: idx + 1,
-      breakfast: false,
-      lunch: false,
-      dinner: false
+      breakfast: 0,
+      lunch: 0,
+      dinner: 0
     }));
 
-    // 各日のフラグを更新（該当日のどれかの signup が true なら true とする）
+    // 各日の予約数を更新（各登録が true ならカウントをインクリメント）
     mealSignups.forEach(signup => {
       const signupDate = new Date(signup.date);
       const day = signupDate.getDate();
-      if (signup.breakfast) dailyData[day - 1].breakfast = true;
-      if (signup.lunch) dailyData[day - 1].lunch = true;
-      if (signup.dinner) dailyData[day - 1].dinner = true;
+      if (signup.breakfast) dailyData[day - 1].breakfast += 1;
+      if (signup.lunch) dailyData[day - 1].lunch += 1;
+      if (signup.dinner) dailyData[day - 1].dinner += 1;
     });
 
     res.json({ year: targetYear, month: targetMonth, dailyData });
