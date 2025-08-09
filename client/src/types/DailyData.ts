@@ -8,3 +8,11 @@ export interface DailyData {
   lunch: number;
   dinner: number;
 }
+
+// 各日の食事予約状態を表す型
+export interface DailyMealSignup {
+  day: number;
+  breakfast: boolean;
+  lunch: boolean;
+  dinner: boolean;
+}

@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './components/OrganizationForm'
 import { MonthlySummary } from './components/MonthlySummary'
 import { MealSignupForm } from './components/MealSignupForm'
-import type { DailyData } from './types/DailyData';
-import type { DailyMealSignup } from './components/MealSignupForm';
+import type { DailyData, DailyMealSignup } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
 import './App.css'
 
@@ -228,7 +227,6 @@ function App() {
       (async () => {
         try {
           const summary = await fetchMonthlySummary(currentOrganization, currentDate, getToken);
-	  console.log('summary', summary)
           setMonthlySummary(summary);
         } catch (error) {
           console.error('Error fetching monthly summary:', error);
