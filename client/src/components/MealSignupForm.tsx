@@ -37,6 +37,12 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
 }) => {
   const validMonth = currentMonth || new Date();
 
+  const updateDay = (updatedDay: DailyMealSignup) => {
+    setMonthlyMealSignup((prev) =>
+      prev.map((day) => (day.day === updatedDay.day ? updatedDay : day))
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
       <div className="mb-6">
@@ -76,40 +82,37 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
               <tr key={index}>
                 <td className="border border-gray-300 px-2 py-1 text-center">{daily.day}日</td>
                 <td className="border border-gray-300 px-2 py-1 text-center">
-                  <button
-                    onClick={() => {
-                      const updated = [...monthlyMealSignup];
-                      updated[index].breakfast = !updated[index].breakfast;
-                      setMonthlyMealSignup(updated);
+                  <input
+                    type="checkbox"
+                    checked={daily.breakfast}
+                    onChange={(e) => {
+                      const updatedDay = { ...daily, breakfast: e.target.checked };
+                      updateDay(updatedDay);
                     }}
-                    className={`text-2xl ${daily.breakfast ? 'text-green-600' : 'text-gray-300'}`}
-                  >
-                    ✔
-                  </button>
+                    className="transform scale-125"
+                  />
                 </td>
                 <td className="border border-gray-300 px-2 py-1 text-center">
-                  <button
-                    onClick={() => {
-                      const updated = [...monthlyMealSignup];
-                      updated[index].lunch = !updated[index].lunch;
-                      setMonthlyMealSignup(updated);
+                  <input
+                    type="checkbox"
+                    checked={daily.lunch}
+                    onChange={(e) => {
+                      const updatedDay = { ...daily, lunch: e.target.checked };
+                      updateDay(updatedDay);
                     }}
-                    className={`text-2xl ${daily.lunch ? 'text-green-600' : 'text-gray-300'}`}
-                  >
-                    ✔
-                  </button>
+                    className="transform scale-125"
+                  />
                 </td>
                 <td className="border border-gray-300 px-2 py-1 text-center">
-                  <button
-                    onClick={() => {
-                      const updated = [...monthlyMealSignup];
-                      updated[index].dinner = !updated[index].dinner;
-                      setMonthlyMealSignup(updated);
+                  <input
+                    type="checkbox"
+                    checked={daily.dinner}
+                    onChange={(e) => {
+                      const updatedDay = { ...daily, dinner: e.target.checked };
+                      updateDay(updatedDay);
                     }}
-                    className={`text-2xl ${daily.dinner ? 'text-green-600' : 'text-gray-300'}`}
-                  >
-                    ✔
-                  </button>
+                    className="transform scale-125"
+                  />
                 </td>
               </tr>
             ))}
