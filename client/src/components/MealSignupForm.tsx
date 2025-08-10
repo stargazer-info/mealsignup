@@ -60,7 +60,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
     const fetchMonthlyData = async () => {
       try {
         const response = await fetch(
-          `/api/meals/self/monthly?year=${validMonth.getFullYear()}&month=${validMonth.getMonth() + 1}`
+          `http://localhost:3001/api/meals/self/monthly?year=${validMonth.getFullYear()}&month=${validMonth.getMonth() + 1}`
         );
         console.log('response', response)
         if (!response.ok) throw new Error('データ取得エラー');
