@@ -5,7 +5,8 @@ import { MonthlySummary } from './components/MonthlySummary'
 import { MealSignupForm } from './components/MealSignupForm'
 import type { DailyData, DailyMealSignup } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
-import { fetchUserOrganizations, registerUserIfNeeded, fetchMealSignup, saveMealSignupApi, switchOrganizationApi } from './api'
+import { fetchUserOrganizations, registerUserIfNeeded, switchOrganizationApi } from './api/organizations'
+import { fetchMealSignup, saveMealSignupApi } from './api/meals'
 import './App.css'
 
 function App() {
