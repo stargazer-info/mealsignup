@@ -9,6 +9,27 @@ import { fetchUserOrganizations, registerUserIfNeeded, switchOrganizationApi } f
 import { fetchMealSignup, saveMealSignupApi } from './api/meals'
 import './App.css'
 
+// ヘルパー関数
+export const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  return `${year}年${month}月${day}日（${weekdays[date.getDay()]}）`;
+};
+
+export const formatDateForAPI = (date: Date): string => date.toISOString().split('T')[0];
+
+export const updateDate = (date: Date, days: number): Date => {
+  const newDate = new Date(date);
+  newDate.setDate(newDate.getDate() + days);
+  return newDate;
+};
+
+export const updateMonth = (date: Date, offset: number): Date => {
+  return new Date(date.getFullYear(), date.getMonth() + offset, 1);
+};
+
 function App() {
   const { getToken } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -33,20 +54,6 @@ function App() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [monthlyMealSignup, setMonthlyMealSignup] = useState<DailyMealSignup[]>([])
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    const day = date.getDate()
-    const weekdays = ['日', '月', '火', '水', '木', '金', '土']
-    const weekday = weekdays[date.getDay()]
-    return `${year}年${month}月${day}日（${weekday}）`
-  }
-
-  // Format date for API (YYYY-MM-DD)
-  const formatDateForAPI = (date: Date) => {
-    return date.toISOString().split('T')[0]
-  }
 
   // Register user if needed, then load organizations
   const loadUserOrganizations = async () => {
@@ -149,18 +156,32 @@ function App() {
     }
   }
 
-  // Navigate dates
-  const changeDate = (days: number) => {
-    const newDate = new Date(currentDate)
-    newDate.setDate(newDate.getDate() + days)
-    setCurrentDate(newDate)
-  }
+  // 月間サマリーの取得
+  const loadMonthlySummary = async () => {
+    if (!currentOrganization) return;
+    try {
+      const summary = await fetchMonthlySummary(currentOrganization, currentDate, getToken);
+      setMonthlySummary(summary);
+    } catch (error) {
+      console.error('Error fetching monthly summary:', error);
+    }
+  };
 
-  // Navigate months
-  const changeMonth = (offset: number) => {
-    const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1)
-    setCurrentMonth(newMonth)
-  }
+  // イベントハンドラー
+  const handleMealSignupSave = async () => {
+    try {
+      await saveMealSignup();
+      setIsEditingMealSignup(false);
+      await loadMonthlySummary(); // 最新の月間サマリーを再取得
+    } catch (error) {
+      console.error('Error updating monthly summary:', error);
+    }
+  };
+
+  const handleMealSignupCancel = () => {
+    setIsEditingMealSignup(false);
+    loadMealSignup();
+  };
 
   // Load organizations on mount
   useEffect(() => {
@@ -174,18 +195,8 @@ function App() {
     }
   }, [currentDate, currentOrganization])
 
-  // Monthly Summary の読み込み
   useEffect(() => {
-    if (currentOrganization) {
-      (async () => {
-        try {
-          const summary = await fetchMonthlySummary(currentOrganization, currentDate, getToken);
-          setMonthlySummary(summary);
-        } catch (error) {
-          console.error('Error fetching monthly summary:', error);
-        }
-      })();
-    }
+    loadMonthlySummary();
   }, [currentOrganization, currentDate, getToken]);
 
   return (
@@ -316,25 +327,12 @@ function App() {
             <MealSignupForm 
               monthlyMealSignup={monthlyMealSignup}
               setMonthlyMealSignup={setMonthlyMealSignup}
-              onSave={async () => {
-                try {
-                  await saveMealSignup();
-                  setIsEditingMealSignup(false);
-                  // 月間サマリーを更新
-                  const summary = await fetchMonthlySummary(currentOrganization, currentDate, getToken);
-                  setMonthlySummary(summary);
-                } catch (error) {
-                  console.error('Error updating monthly summary:', error);
-                }
-              }}
-              onCancel={() => {
-                setIsEditingMealSignup(false);
-                loadMealSignup(); // 保存せずに元の状態に戻す
-              }}
+              onSave={handleMealSignupSave}
+              onCancel={handleMealSignupCancel}
               loading={loading}
               message={message}
               currentMonth={currentMonth}
-              changeMonth={changeMonth}
+              changeMonth={(offset) => setCurrentMonth(updateMonth(currentMonth, offset))}
               organizationId={currentOrganization.id}
               getToken={getToken}
             />
