@@ -278,6 +278,9 @@ router.post('/bulk', requireAuth, async (req, res) => {
 // GET /api/meals/self/monthly?year=2025&month=8
 router.get('/self/monthly', requireAuth, async (req, res) => {
   try {
+    // キャッシュを無効にして常に最新データを返す
+    res.setHeader('Cache-Control', 'no-store');
+    
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
