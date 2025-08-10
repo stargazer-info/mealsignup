@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import type { DailyMealSignup } from './types/DailyData';
+import type { DailyMealSignup } from '../types/DailyData';
+import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup } from '../api/mealSignup';
 
 interface MealSignup {
   breakfast: boolean;
