@@ -316,9 +316,16 @@ function App() {
             <MealSignupForm 
               monthlyMealSignup={monthlyMealSignup}
               setMonthlyMealSignup={setMonthlyMealSignup}
-              onSave={() => {
-                saveMealSignup();
-                setIsEditingMealSignup(false);
+              onSave={async () => {
+                try {
+                  await saveMealSignup();
+                  setIsEditingMealSignup(false);
+                  // 月間サマリーを更新
+                  const summary = await fetchMonthlySummary(currentOrganization, currentDate, getToken);
+                  setMonthlySummary(summary);
+                } catch (error) {
+                  console.error('Error updating monthly summary:', error);
+                }
               }}
               onCancel={() => {
                 setIsEditingMealSignup(false);
