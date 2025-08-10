@@ -5,6 +5,7 @@ import { MonthlySummary } from './components/MonthlySummary'
 import { MealSignupForm } from './components/MealSignupForm'
 import type { DailyData, DailyMealSignup } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
+import { fetchUserOrganizations, registerUserIfNeeded, fetchMealSignup, saveMealSignupApi, switchOrganizationApi } from './api'
 import './App.css'
 
 function App() {
@@ -49,91 +50,59 @@ function App() {
   // Register user if needed, then load organizations
   const loadUserOrganizations = async () => {
     try {
-      const token = await getToken()
+      const token = await getToken();
+      let data;
       
-      // Try to get organizations first
-      let response = await fetch('http://localhost:3001/api/organizations/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      
-      // If user not found, register them first
-      if (response.status === 404) {
-        setMessage('🔄 初回登録中...')
-        
-        const registerResponse = await fetch('http://localhost:3001/api/auth/register', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        
-        if (registerResponse.ok) {
-          setMessage('✅ 登録完了')
-          // Try getting organizations again after registration
-          response = await fetch('http://localhost:3001/api/organizations/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          })
+      try {
+        data = await fetchUserOrganizations(token);
+      } catch (err) {
+        // 404 だった場合は登録を試みる
+        if (err.message.includes('404') || err.message.includes('User not found')) {
+          setMessage('🔄 初回登録中...');
+          await registerUserIfNeeded(token);
+          setMessage('✅ 登録完了');
+          data = await fetchUserOrganizations(token);
         } else {
-          const registerError = await registerResponse.json()
-          if (registerResponse.status === 400 && registerError.error === 'User already exists') {
-            // User exists but organizations call failed - retry
-            response = await fetch('http://localhost:3001/api/organizations/me', {
-              headers: { 'Authorization': `Bearer ${token}` }
-            })
-          } else {
-            setMessage(`❌ 登録エラー: ${registerError.error}`)
-            return
-          }
+          throw err;
         }
       }
       
-      if (response.ok) {
-        const data = await response.json()
-        setOrganizations(data.organizations)
-        setCurrentOrganization(data.lastSelectedOrganization)
-        
-        if (data.organizations.length === 0) {
-          setShowOrgSelector(true)
-        }
-        setMessage('') // Clear any registration messages
-      } else {
-        const errorData = await response.json()
-        setMessage(`❌ エラー: ${errorData.error}`)
+      setOrganizations(data.organizations);
+      setCurrentOrganization(data.lastSelectedOrganization);
+      
+      if (data.organizations.length === 0) {
+        setShowOrgSelector(true);
       }
+      setMessage(''); // Clear any registration messages
     } catch (error) {
-      console.error('Error loading organizations:', error)
-      setMessage('❌ 接続エラーが発生しました')
+      console.error('Error loading organizations:', error);
+      setMessage(`❌ エラー: ${error.message || '接続エラーが発生しました'}`);
     }
   }
 
   // Load existing meal signup for current date
   const loadMealSignup = async () => {
-    if (!currentOrganization) return
+    if (!currentOrganization) return;
     
     try {
-      const token = await getToken()
-      const dateStr = formatDateForAPI(currentDate)
-      const response = await fetch(`http://localhost:3001/api/meals?date=${dateStr}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const token = await getToken();
+      const dateStr = formatDateForAPI(currentDate);
+      const data = await fetchMealSignup(dateStr, token);
       
-      if (response.ok) {
-        const data = await response.json()
-        // Find current user's meal signup for this date
-        const userSignup = data.mealSignups.find((signup: any) => signup.user)
-        if (userSignup) {
-          setMealSignup({
-            breakfast: userSignup.breakfast,
-            lunch: userSignup.lunch,
-            dinner: userSignup.dinner
-          })
-        } else {
-          // Reset to default if no signup found
-          setMealSignup({ breakfast: false, lunch: false, dinner: false })
-        }
+      // Find current user's meal signup for this date
+      const userSignup = data.mealSignups.find((signup: any) => signup.user);
+      if (userSignup) {
+        setMealSignup({
+          breakfast: userSignup.breakfast,
+          lunch: userSignup.lunch,
+          dinner: userSignup.dinner
+        });
+      } else {
+        // Reset to default if no signup found
+        setMealSignup({ breakfast: false, lunch: false, dinner: false });
       }
     } catch (error) {
-      console.error('Error loading meal signup:', error)
+      console.error('Error loading meal signup:', error);
     }
   }
 
@@ -141,58 +110,41 @@ function App() {
   // Save meal signup
   const saveMealSignup = async () => {
     if (!currentOrganization) {
-      setMessage('❌ 組織が選択されていません')
-      return
+      setMessage('❌ 組織が選択されていません');
+      return;
     }
     
-    setLoading(true)
-    setMessage('')
+    setLoading(true);
+    setMessage('');
     
     try {
-      const token = await getToken()
-      const response = await fetch('http://localhost:3001/api/meals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          date: formatDateForAPI(currentDate),
-          breakfast: mealSignup.breakfast,
-          lunch: mealSignup.lunch,
-          dinner: mealSignup.dinner,
-          organizationId: currentOrganization.id
-        })
-      })
-
-      if (response.ok) {
-        setMessage('✅ 食事予定を保存しました')
-        setTimeout(() => setMessage(''), 3000)
-      } else {
-        const error = await response.json()
-        setMessage(`❌ エラー: ${error.error}`)
-      }
+      const token = await getToken();
+      await saveMealSignupApi(
+        formatDateForAPI(currentDate),
+        mealSignup,
+        currentOrganization.id,
+        token
+      );
+      setMessage('✅ 食事予定を保存しました');
+      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      setMessage('❌ 保存に失敗しました')
-      console.error('Error saving meal signup:', error)
+      setMessage(`❌ エラー: ${error.message}`);
+      console.error('Error saving meal signup:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   // Switch organization
   const switchOrganization = async (organizationId: string) => {
     try {
-      const token = await getToken()
-      await fetch(`http://localhost:3001/api/organizations/select/${organizationId}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const token = await getToken();
+      await switchOrganizationApi(organizationId, token);
       
-      const selectedOrg = organizations.find(org => org.id === organizationId)
-      setCurrentOrganization(selectedOrg)
+      const selectedOrg = organizations.find((org: any) => org.id === organizationId);
+      setCurrentOrganization(selectedOrg);
     } catch (error) {
-      console.error('Error switching organization:', error)
+      console.error('Error switching organization:', error);
     }
   }
 
