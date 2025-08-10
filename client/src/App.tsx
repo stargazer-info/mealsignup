@@ -1,6 +1,6 @@
-import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
+import { useAuth } from '@clerk/clerk-react'
 import { useState, useEffect } from 'react'
-import { CreateOrganizationForm, JoinOrganizationForm } from './components/OrganizationForm'
+import Layout from './components/Layout'
 import { MonthlySummary } from './components/MonthlySummary'
 import { MealSignupForm } from './components/MealSignupForm'
 import type { DailyData, DailyMealSignup } from './types/DailyData';
@@ -200,127 +200,37 @@ function App() {
   }, [currentOrganization, currentDate, getToken]);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-md mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-primary">MealSignup</h1>
-            <div className="flex items-center space-x-2">
-              {organizations.length > 1 && currentOrganization && (
-                <select 
-                  value={currentOrganization?.id || ''}
-                  onChange={(e) => switchOrganization(e.target.value)}
-                  className="ml-2 p-1 border rounded text-sm"
-                >
-                  {organizations.map(org => (
-                    <option key={org.id} value={org.id}>{org.name}</option>
-                  ))}
-                </select>
-              )}
-              <SignedOut>
-                <SignInButton />
-              </SignedOut>
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="px-4 py-6">
+    <>
+      <Layout
+        organizations={organizations}
+        currentOrganization={currentOrganization}
+        showOrgSelector={showOrgSelector}
+        showCreateOrg={showCreateOrg}
+        showJoinOrg={showJoinOrg}
+        loadUserOrganizations={loadUserOrganizations}
+        setShowCreateOrg={setShowCreateOrg}
+        setShowJoinOrg={setShowJoinOrg}
+        setShowOrgSelector={setShowOrgSelector}
+        switchOrganization={switchOrganization}
+      />
+      
+      {/* App固有のコンテンツ */}
+      <div className="px-4 py-6">
         <div className="max-w-md mx-auto">
-        <SignedOut>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-            <h2 className="text-xl font-semibold mb-4">Welcome to MealSignup</h2>
-            <p className="text-gray-600 mb-4">Please sign in to manage your family's meal planning.</p>
-            <SignInButton>
-              <button className="bg-primary text-white py-2 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors">
-                Sign In
-              </button>
-            </SignInButton>
-          </div>
-        </SignedOut>
-
-        <SignedIn>
-          {/* Organization Selection */}
-          {showOrgSelector && !showCreateOrg && !showJoinOrg && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-              <h2 className="text-lg font-semibold mb-4">組織を選択してください</h2>
-              <div className="space-y-3">
-                <button 
-                  onClick={() => setShowCreateOrg(true)}
-                  className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center space-x-2"
+          {/* 月間サマリー表示と編集ボタン */}
+          {currentOrganization && monthlySummary && !isEditingMealSignup && (
+            <div className="w-full mb-6">
+              <MonthlySummary monthlySummary={monthlySummary} />
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => setIsEditingMealSignup(true)}
+                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
                 >
-                  <span>➕</span>
-                  <span>新しい組織を作成</span>
-                </button>
-                <button 
-                  onClick={() => setShowJoinOrg(true)}
-                  className="w-full p-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center space-x-2"
-                >
-                  <span>🔗</span>
-                  <span>招待コードで参加</span>
+                  編集
                 </button>
               </div>
             </div>
           )}
-
-          {/* Create Organization Form */}
-          {showCreateOrg && (
-            <CreateOrganizationForm
-              onSuccess={() => {
-                setShowCreateOrg(false)
-                setShowOrgSelector(false)
-                loadUserOrganizations()
-              }}
-              onCancel={() => setShowCreateOrg(false)}
-            />
-          )}
-
-          {/* Join Organization Form */}
-          {showJoinOrg && (
-            <JoinOrganizationForm
-              onSuccess={() => {
-                setShowJoinOrg(false)
-                setShowOrgSelector(false)
-                loadUserOrganizations()
-              }}
-              onCancel={() => setShowJoinOrg(false)}
-            />
-          )}
-
-          {/* Current Organization Display */}
-          {currentOrganization && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-              <div className="text-center">
-                <h2 className="text-lg font-semibold text-text">{currentOrganization.name}</h2>
-                <p className="text-sm text-gray-600">{currentOrganization.type === 'FAMILY' ? '家族' : '店舗'}</p>
-              </div>
-            </div>
-          )}
-
-        </SignedIn>
-
-        {/* 月間サマリー表示と編集ボタン */}
-        {currentOrganization && monthlySummary && !isEditingMealSignup && (
-          <div className="w-full mb-6">
-            <MonthlySummary monthlySummary={monthlySummary} />
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={() => setIsEditingMealSignup(true)}
-                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                編集
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="max-w-md mx-auto">
-
 
           {/* 編集モードの食事予約フォーム */}
           {currentOrganization && isEditingMealSignup && (
@@ -337,11 +247,9 @@ function App() {
               getToken={getToken}
             />
           )}
-	  
         </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </>
   )
 }
 
