@@ -340,15 +340,6 @@ function App() {
             />
           )}
 	  
-          {/* Organization Overview Link */}
-          {currentOrganization && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <button className="w-full flex items-center justify-center space-x-2 text-secondary hover:text-teal-600 font-medium transition-colors">
-                <span>{currentOrganization.type === 'FAMILY' ? '👨‍👩‍👧‍👦' : '🏪'}</span>
-                <span>{currentOrganization.type === 'FAMILY' ? '家族の予定を見る' : '店舗の予定を見る'}</span>
-              </button>
-            </div>
-          )}
         </div>
         </div>
       </main>
