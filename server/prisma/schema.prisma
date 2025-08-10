@@ -7,11 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum OrganizationType {
-  FAMILY
-  STORE
-}
-
 enum UserRole {
   ADMIN
   MEMBER
@@ -20,7 +15,6 @@ enum UserRole {
 model Organization {
   id         String           @id @default(cuid())
   name       String
-  type       OrganizationType
   inviteCode String           @unique
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt

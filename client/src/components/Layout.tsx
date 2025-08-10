@@ -124,7 +124,7 @@ export const Layout = ({
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
               <div className="text-center">
                 <h2 className="text-lg font-semibold text-text">{currentOrganization.name}</h2>
-                <p className="text-sm text-gray-600">{currentOrganization.type === 'FAMILY' ? '家族' : '店舗'}</p>
+                <p className="text-sm text-gray-600">家族/店舗</p>
               </div>
             </div>
           )}

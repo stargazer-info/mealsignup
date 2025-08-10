@@ -53,10 +53,10 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const { name, type } = req.body;
+    const { name } = req.body;
 
-    if (!name || !type || !['FAMILY', 'STORE'].includes(type)) {
-      return res.status(400).json({ error: 'Valid name and type (FAMILY/STORE) are required' });
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
     }
 
     // Generate unique invite code
@@ -76,7 +76,6 @@ router.post('/', requireAuth, async (req, res) => {
       const organization = await tx.organization.create({
         data: {
           name: name.trim(),
-          type,
           inviteCode
         }
       });
