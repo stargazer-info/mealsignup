@@ -167,6 +167,10 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
         <button
           onClick={async () => {
             try {
+              console.log('Saving monthlyMealSignup:', monthlyMealSignup);
+              console.log('Year:', validMonth.getFullYear());
+              console.log('Month:', validMonth.getMonth() + 1);
+              console.log('OrganizationId:', organizationId);
               const token = await getToken();
               await saveSelfMonthlyMealSignup(
                 monthlyMealSignup,

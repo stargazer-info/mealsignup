@@ -342,6 +342,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
 // { monthlyMealSignup: [{ day: 1, breakfast: true, lunch: false, dinner: true }, ...], year: 2025, month: 8 }
 router.post('/self/bulk', requireAuth, async (req, res) => {
   try {
+    console.log('Bulk update request body:', req.body);
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
