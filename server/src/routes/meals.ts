@@ -153,7 +153,7 @@ router.post('/', requireAuth, async (req, res) => {
         userId_organizationId_date: {
           userId: user.id,
           organizationId: targetOrganizationId,
-          date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
+          date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0)
         }
       },
       update: {
@@ -245,7 +245,7 @@ router.post('/bulk', requireAuth, async (req, res) => {
           userId_organizationId_date: {
             userId: user.id,
             organizationId: targetOrganizationId,
-            date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
+            date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0)
           }
         },
         update: {
@@ -302,8 +302,9 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const startDate = new Date(yearNum, monthNum - 1, 1);
-    const endDate = new Date(yearNum, monthNum, 1);
+    // 日付を正規化（時刻部分を00:00:00に設定）
+    const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0);
+    const endDate = new Date(yearNum, monthNum, 1, 0, 0, 0, 0);
     
     const mealSignups = await prisma.mealSignup.findMany({
       where: {
@@ -395,7 +396,10 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
     
     const operations = monthlyMealSignup.map(daySignup => {
       const { day, breakfast, lunch, dinner } = daySignup;
-      const targetDate = new Date(yearNum, monthNum - 1, day);
+      // 日付を正規化（時刻部分を00:00:00に設定）
+      const targetDate = new Date(yearNum, monthNum - 1, day, 0, 0, 0, 0);
+      console.log(`Processing day ${day}: targetDate = ${targetDate.toISOString()}`);
+      
       return prisma.mealSignup.upsert({
         where: {
           userId_organizationId_date: {
