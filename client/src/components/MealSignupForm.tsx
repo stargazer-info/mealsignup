@@ -25,6 +25,7 @@ interface MealSignupFormProps {
   currentMonth: Date;
   changeMonth: (offset: number) => void;
   organizationId: string;
+  getToken: () => Promise<string>;
 }
 
 export const MealSignupForm: React.FC<MealSignupFormProps> = ({
@@ -37,6 +38,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   currentMonth,
   changeMonth,
   organizationId,
+  getToken,
 }) => {
   const validMonth = currentMonth || new Date();
   console.log('monthlyMealSignup', monthlyMealSignup)
@@ -59,18 +61,14 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   useEffect(() => {
     const fetchMonthlyData = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:3001/api/meals/self/monthly?year=${validMonth.getFullYear()}&month=${validMonth.getMonth() + 1}`
+        const token = await getToken();
+        const data = await fetchSelfMonthlyMealSignup(
+          validMonth.getFullYear(),
+          validMonth.getMonth() + 1,
+          token
         );
-        console.log('response', response)
-        if (!response.ok) throw new Error('データ取得エラー');
         
-        // 追加：生のレスポンスをテキストで確認する
-        const text = await response.text();
-        console.log('Raw API Response:', text);
-        
-        // JSONパース
-        const data: DailyMealSignup[] = JSON.parse(text);
+        console.log('API Response Data:', data);
         
         // APIのレスポンスが期待する形式であることを確認し、状態を更新
         if (data && data.length > 0) {
@@ -89,7 +87,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
     };
 
     fetchMonthlyData();
-  }, [validMonth, setMonthlyMealSignup, organizationId]);
+  }, [validMonth, setMonthlyMealSignup, organizationId, getToken]);
   const updateDay = (updatedDay: DailyMealSignup) => {
     setMonthlyMealSignup((prev) =>
       prev.map((day) => (day.day === updatedDay.day ? updatedDay : day))
@@ -177,17 +175,14 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
         <button
           onClick={async () => {
             try {
-              const response = await fetch('/api/meals/self/bulk', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  monthlyMealSignup,
-                  year: validMonth.getFullYear(),
-                  month: validMonth.getMonth() + 1,
-                  organizationId,
-                }),
-              });
-              if (!response.ok) throw new Error('保存に失敗しました');
+              const token = await getToken();
+              await saveSelfMonthlyMealSignup(
+                monthlyMealSignup,
+                validMonth.getFullYear(),
+                validMonth.getMonth() + 1,
+                organizationId,
+                token
+              );
               onSave();
             } catch (error) {
               console.error(error);

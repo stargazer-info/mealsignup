@@ -327,6 +327,8 @@ function App() {
               message={message}
               currentMonth={currentMonth}
               changeMonth={changeMonth}
+              organizationId={currentOrganization.id}
+              getToken={getToken}
             />
           )}
 	  
