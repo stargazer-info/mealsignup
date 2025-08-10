@@ -9,8 +9,7 @@ interface OrganizationFormProps {
 export function CreateOrganizationForm({ onSuccess, onCancel }: OrganizationFormProps) {
   const { getToken } = useAuth()
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'FAMILY' as 'FAMILY' | 'STORE'
+    name: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -61,27 +60,13 @@ export function CreateOrganizationForm({ onSuccess, onCancel }: OrganizationForm
           <input
             type="text"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(e) => setFormData({ name: e.target.value })}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="例: 田中家"
             disabled={loading}
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            組織タイプ
-          </label>
-          <select
-            value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value as 'FAMILY' | 'STORE' })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-            disabled={loading}
-          >
-            <option value="FAMILY">👨‍👩‍👧‍👦 家族</option>
-            <option value="STORE">🏪 店舗</option>
-          </select>
-        </div>
 
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
