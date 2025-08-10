@@ -191,12 +191,13 @@ router.post('/', requireAuth, async (req, res) => {
 // Bulk update meal signups for multiple dates
 router.post('/bulk', requireAuth, async (req, res) => {
   try {
+    console.log(req)
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
     const { dates, breakfast, lunch, dinner, organizationId } = req.body;
-
+    console.log(dates, breakfast, lunch, dinner, organizationId)
     if (!dates || !Array.isArray(dates) || dates.length === 0) {
       return res.status(400).json({ error: 'Dates array is required' });
     }
