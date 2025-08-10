@@ -8,14 +8,6 @@ interface MealSignup {
   dinner: number;
 }
 
-// // 各日の食事予約状態を表す型
-// export interface DailyMealSignup {
-//   day: number;
-//   breakfast: boolean;
-//   lunch: boolean;
-//   dinner: boolean;
-// }
-
 interface MealSignupFormProps {
   monthlyMealSignup: DailyMealSignup[];
   setMonthlyMealSignup: React.Dispatch<React.SetStateAction<DailyMealSignup[]>>;
@@ -42,7 +34,6 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   getToken,
 }) => {
   const validMonth = currentMonth || new Date();
-  console.log('monthlyMealSignup', monthlyMealSignup)
 
   // 月の日数を取得して初期値を生成する関数
   const generateInitialMonthlyData = (month: Date): DailyMealSignup[] => {
