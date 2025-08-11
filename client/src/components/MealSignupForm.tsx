@@ -88,18 +88,13 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
     );
   };
 
-  // 全選択/全解除ボタン用ハンドラ
-  const handleToggleAll = async () => {
-    // 全ての行で朝食・昼食・夕食がtrueの場合は全解除、それ以外は全選択
-    const areAllSelected =
-      monthlyMealSignup.length > 0 &&
-      monthlyMealSignup.every(item => item.breakfast && item.lunch && item.dinner);
-    const newValue = !areAllSelected;
+  // 全選択ボタン用ハンドラ
+  const handleSelectAll = async () => {
     const updatedMonthlyMealSignup = monthlyMealSignup.map(item => ({
       ...item,
-      breakfast: newValue,
-      lunch: newValue,
-      dinner: newValue,
+      breakfast: true,
+      lunch: true,
+      dinner: true,
     }));
 
     try {
@@ -111,10 +106,33 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
         organizationId,
         token
       );
-      // 更新完了後、stateを更新して画面を再描画する
       setMonthlyMealSignup(updatedMonthlyMealSignup);
     } catch (error) {
-      console.error("全選択/全解除の更新に失敗しました:", error);
+      console.error("全選択の更新に失敗しました:", error);
+    }
+  };
+
+  // 全解除ボタン用ハンドラ
+  const handleDeselectAll = async () => {
+    const updatedMonthlyMealSignup = monthlyMealSignup.map(item => ({
+      ...item,
+      breakfast: false,
+      lunch: false,
+      dinner: false,
+    }));
+
+    try {
+      const token = await getToken();
+      await saveSelfMonthlyMealSignup(
+        updatedMonthlyMealSignup,
+        validMonth.getFullYear(),
+        validMonth.getMonth() + 1,
+        organizationId,
+        token
+      );
+      setMonthlyMealSignup(updatedMonthlyMealSignup);
+    } catch (error) {
+      console.error("全解除の更新に失敗しました:", error);
     }
   };
 
@@ -141,13 +159,19 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
           </button>
         </div>
       </div>
-      {/* 全選択/全解除ボタン */}
-      <div className="flex justify-end mb-4">
+      {/* 全選択・全解除ボタン */}
+      <div className="flex justify-end mb-4 space-x-2">
         <button
-          onClick={handleToggleAll}
+          onClick={handleSelectAll}
           className="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
         >
-          {monthlyMealSignup.every(item => item.breakfast && item.lunch && item.dinner) ? "全解除" : "全選択"}
+          全選択
+        </button>
+        <button
+          onClick={handleDeselectAll}
+          className="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+        >
+          全解除
         </button>
       </div>
 
