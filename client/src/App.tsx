@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Layout from './components/Layout'
 import { MonthlySummary } from './components/MonthlySummary'
 import { MealSignupForm } from './components/MealSignupForm'
+import { MonthlySummary } from './components/MonthlySummary'
 import type { DailyData, DailyMealSignup } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
 import { fetchUserOrganizations, registerUserIfNeeded, switchOrganizationApi } from './api/organizations'
@@ -170,8 +171,8 @@ function App() {
   // イベントハンドラー
   const handleMealSignupSave = async () => {
     try {
-      setIsEditingMealSignup(false);
       await loadMonthlySummary(); // 最新の月間サマリーを再取得
+      setIsEditingMealSignup(false);
     } catch (error) {
       console.error('Error updating monthly summary:', error);
     }
@@ -217,7 +218,7 @@ function App() {
       <div className="px-4 py-6">
         <div className="max-w-md mx-auto">
           {/* 食事予約フォーム */}
-          {currentOrganization && (
+          {currentOrganization && isEditingMealSignup && (
             <MealSignupForm 
               monthlyMealSignup={monthlyMealSignup}
               setMonthlyMealSignup={setMonthlyMealSignup}
@@ -229,6 +230,14 @@ function App() {
               changeMonth={(offset) => setCurrentMonth(updateMonth(currentMonth, offset))}
               organizationId={currentOrganization.id}
               getToken={getToken}
+            />
+          )}
+
+          {/* 月間サマリー表示 */}
+          {currentOrganization && !isEditingMealSignup && monthlySummary && (
+            <MonthlySummary 
+              monthlySummary={monthlySummary} 
+              onEdit={() => setIsEditingMealSignup(true)}
             />
           )}
         </div>
