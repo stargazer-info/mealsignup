@@ -50,7 +50,7 @@ function App() {
     month: number;
     dailyData: DailyData[];
   } | null>(null)
-  const [isEditingMealSignup, setIsEditingMealSignup] = useState(false)
+  const [isEditingMealSignup, setIsEditingMealSignup] = useState(true)
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [monthlyMealSignup, setMonthlyMealSignup] = useState<DailyMealSignup[]>([])
 
@@ -216,23 +216,8 @@ function App() {
       {/* App固有のコンテンツ */}
       <div className="px-4 py-6">
         <div className="max-w-md mx-auto">
-          {/* 月間サマリー表示と編集ボタン */}
-          {currentOrganization && monthlySummary && !isEditingMealSignup && (
-            <div className="w-full mb-6">
-              <MonthlySummary monthlySummary={monthlySummary} />
-              <div className="flex justify-end mt-2">
-                <button
-                  onClick={() => setIsEditingMealSignup(true)}
-                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  編集
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 編集モードの食事予約フォーム */}
-          {currentOrganization && isEditingMealSignup && (
+          {/* 食事予約フォーム */}
+          {currentOrganization && (
             <MealSignupForm 
               monthlyMealSignup={monthlyMealSignup}
               setMonthlyMealSignup={setMonthlyMealSignup}
