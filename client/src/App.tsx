@@ -170,10 +170,15 @@ function App() {
   // イベントハンドラー
   const handleMealSignupSave = async () => {
     try {
-      await loadMonthlySummary(); // 最新の月間サマリーを再取得
+      // 月間サマリーを強制的に再取得
+      if (currentOrganization) {
+        const summary = await fetchMonthlySummary(currentOrganization, currentMonth, getToken);
+        setMonthlySummary(summary);
+      }
       setIsEditingMealSignup(false);
     } catch (error) {
       console.error('Error updating monthly summary:', error);
+      setIsEditingMealSignup(false); // エラーでも画面遷移は行う
     }
   };
 

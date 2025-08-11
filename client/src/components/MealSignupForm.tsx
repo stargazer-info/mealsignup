@@ -247,9 +247,25 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
                   <input
                     type="checkbox"
                     checked={daily.dinner}
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const updatedDay = { ...daily, dinner: e.target.checked };
-                      updateDay(updatedDay);
+                      try {
+                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day);
+                        const token = await getToken();
+                        await saveMealSignupApi(
+                          formatDateForAPI(targetDate),
+                          {
+                            breakfast: updatedDay.breakfast,
+                            lunch: updatedDay.lunch,
+                            dinner: updatedDay.dinner,
+                          },
+                          organizationId,
+                          token
+                        );
+                        updateDay(updatedDay);
+                      } catch (error) {
+                        console.error(`Day ${daily.day} の予約更新に失敗しました:`, error);
+                      }
                     }}
                     className="transform scale-125"
                   />
@@ -270,7 +286,24 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
       {/* 月間サマリー表示ボタン */}
       <div className="mt-4 flex justify-end">
         <button
-          onClick={onSave}
+          onClick={async () => {
+            try {
+              // 最新データを再取得してから月間サマリーに移行
+              const token = await getToken();
+              const data = await fetchSelfMonthlyMealSignup(
+                validMonth.getFullYear(),
+                validMonth.getMonth() + 1,
+                token
+              );
+              if (data && data.length > 0) {
+                setMonthlyMealSignup(data);
+              }
+              onSave();
+            } catch (error) {
+              console.error('月間サマリー表示時のデータ更新に失敗しました:', error);
+              onSave(); // エラーでも画面遷移は行う
+            }
+          }}
           className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
         >
           月間サマリー表示
