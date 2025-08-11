@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import Layout from './components/Layout'
 import { MonthlySummary } from './components/MonthlySummary'
 import { MealSignupForm } from './components/MealSignupForm'
-import { MonthlySummary } from './components/MonthlySummary'
 import type { DailyData, DailyMealSignup } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
 import { fetchUserOrganizations, registerUserIfNeeded, switchOrganizationApi } from './api/organizations'
