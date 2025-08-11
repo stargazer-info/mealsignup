@@ -21,7 +21,7 @@ router.post('/register', requireAuth, async (req, res) => {
 
     if (existingUser) {
       console.log(`⚠️ POST /api/auth/register: User already exists for clerkId: ${req.user.id}`);
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(200).json({ message: 'User already exists' });
     }
 
     // Create new user
@@ -35,7 +35,11 @@ router.post('/register', requireAuth, async (req, res) => {
 
     console.log(`✅ POST /api/auth/register: User created successfully with id: ${user.id}`);
     res.status(201).json({ user });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === 'P2002' && error.meta?.target.includes('clerkId')) {
+      console.log(`⚠️ POST /api/auth/register: User already exists for clerkId: ${req.user.id}`);
+      return res.status(200).json({ message: 'User already exists' });
+    }
     console.error('❌ User registration error:', error);
     res.status(500).json({ error: 'Failed to create user' });
   }
