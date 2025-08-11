@@ -170,7 +170,6 @@ function App() {
   // イベントハンドラー
   const handleMealSignupSave = async () => {
     try {
-      await saveMealSignup();
       setIsEditingMealSignup(false);
       await loadMonthlySummary(); // 最新の月間サマリーを再取得
     } catch (error) {
