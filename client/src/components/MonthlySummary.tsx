@@ -54,7 +54,7 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary, 
           onClick={onEdit}
           className="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
         >
-          食事予約フォームへ戻る
+          戻る
         </button>
       </div>
     </div>
