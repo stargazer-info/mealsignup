@@ -331,7 +331,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     const finalResult = Array.from({ length: daysInMonth }, (_, i) => {
       const dayNumber = i + 1;
       const existing = dailySignups.find(ds => ds.day === dayNumber);
-      return existing || { day: dayNumber, breakfast: false, lunch: false, dinner: false };
+      return existing || { id: null, day: dayNumber, breakfast: false, lunch: false, dinner: false };
     });
     
     console.log('API Response Data:', finalResult); // デバッグ用ログ追加
