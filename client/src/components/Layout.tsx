@@ -1,6 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './OrganizationForm'
-import { fetchOrganizationDetails, updateUserProfile, deleteOrganization } from '../api/organizations'
+import { fetchOrganizationDetails, deleteOrganization } from '../api/organizations'
+import { updateUserProfile } from '../api/auth'
 
 interface LayoutProps {
   organizations: any[];
