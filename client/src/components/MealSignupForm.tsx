@@ -196,7 +196,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
                     onChange={async (e) => {
                       const updatedDay = { ...daily, breakfast: e.target.checked };
                       try {
-                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day);
+                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day, 12);
                         const token = await getToken();
                         await saveMealSignupApi(
                           formatDateForAPI(targetDate),
@@ -223,7 +223,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
                     onChange={async (e) => {
                       const updatedDay = { ...daily, lunch: e.target.checked };
                       try {
-                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day);
+                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day, 12);
                         const token = await getToken();
                         await saveMealSignupApi(
                           formatDateForAPI(targetDate),
@@ -250,7 +250,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
                     onChange={async (e) => {
                       const updatedDay = { ...daily, dinner: e.target.checked };
                       try {
-                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day);
+                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day, 12);
                         const token = await getToken();
                         await saveMealSignupApi(
                           formatDateForAPI(targetDate),
