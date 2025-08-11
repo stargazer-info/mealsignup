@@ -88,6 +88,36 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
     );
   };
 
+  // 全選択/全解除ボタン用ハンドラ
+  const handleToggleAll = async () => {
+    // 全ての行で朝食・昼食・夕食がtrueの場合は全解除、それ以外は全選択
+    const areAllSelected =
+      monthlyMealSignup.length > 0 &&
+      monthlyMealSignup.every(item => item.breakfast && item.lunch && item.dinner);
+    const newValue = !areAllSelected;
+    const updatedMonthlyMealSignup = monthlyMealSignup.map(item => ({
+      ...item,
+      breakfast: newValue,
+      lunch: newValue,
+      dinner: newValue,
+    }));
+
+    try {
+      const token = await getToken();
+      await saveSelfMonthlyMealSignup(
+        updatedMonthlyMealSignup,
+        validMonth.getFullYear(),
+        validMonth.getMonth() + 1,
+        organizationId,
+        token
+      );
+      // 更新完了後、stateを更新して画面を再描画する
+      setMonthlyMealSignup(updatedMonthlyMealSignup);
+    } catch (error) {
+      console.error("全選択/全解除の更新に失敗しました:", error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
       <div className="mb-6">
@@ -110,6 +140,15 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
             <span className="text-lg">→</span>
           </button>
         </div>
+      </div>
+      {/* 全選択/全解除ボタン */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleToggleAll}
+          className="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+        >
+          {monthlyMealSignup.every(item => item.breakfast && item.lunch && item.dinner) ? "全解除" : "全選択"}
+        </button>
       </div>
 
       <div className="overflow-x-auto">
