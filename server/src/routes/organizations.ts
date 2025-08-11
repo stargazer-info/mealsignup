@@ -10,8 +10,11 @@ const router = Router();
 router.get('/me', requireAuth, async (req, res) => {
   try {
     if (!req.user) {
+      console.log('❌ GET /api/organizations/me: User not authenticated');
       return res.status(401).json({ error: 'User not authenticated' });
     }
+
+    console.log(`🔍 GET /api/organizations/me: Looking for user with clerkId: ${req.user.id}`);
 
     // Get user (must exist from registration)
     const user = await prisma.user.findUnique({
@@ -27,8 +30,11 @@ router.get('/me', requireAuth, async (req, res) => {
     });
 
     if (!user) {
+      console.log(`❌ GET /api/organizations/me: User not found in database for clerkId: ${req.user.id}`);
       return res.status(404).json({ error: 'User not found. Please complete registration.' });
     }
+
+    console.log(`✅ GET /api/organizations/me: User found with ${user.memberships.length} organizations`);
 
     const organizations = user.memberships.map(membership => ({
       ...membership.organization,
@@ -41,7 +47,7 @@ router.get('/me', requireAuth, async (req, res) => {
       lastSelectedOrganization: user.lastSelectedOrganization
     });
   } catch (error) {
-    console.error('Get organizations error:', error);
+    console.error('❌ Get organizations error:', error);
     res.status(500).json({ error: 'Failed to get organizations' });
   }
 });

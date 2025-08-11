@@ -10,18 +10,28 @@ export const fetchUserOrganizations = async (token: string) => {
 };
 
 export const registerUserIfNeeded = async (token: string) => {
+  console.log('🔄 POST /api/auth/register を呼び出し中...');
   const registerResponse = await fetch('http://localhost:3001/api/auth/register', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}` },
   });
+  
+  console.log(`📡 POST /api/auth/register レスポンス: ${registerResponse.status}`);
+  
   if (!registerResponse.ok) {
     const err = await registerResponse.json();
+    console.log('⚠️ 登録レスポンスエラー:', err);
+    
     if (registerResponse.status === 400 && err.error === 'User already exists') {
       // ユーザーが既に存在する場合は正常とみなす
+      console.log('✅ ユーザーは既に存在します');
       return;
     }
-    throw new Error(err.error);
+    throw new Error(err.error || `Registration failed with status ${registerResponse.status}`);
   }
+  
+  const result = await registerResponse.json();
+  console.log('✅ ユーザー登録成功:', result);
 };
 
 export const switchOrganizationApi = async (organizationId: string, token: string) => {

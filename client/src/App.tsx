@@ -62,14 +62,31 @@ function App() {
       let data;
       
       try {
+        console.log('🔍 組織情報を取得中...');
         data = await fetchUserOrganizations(token);
+        console.log('✅ 組織情報取得成功');
       } catch (err) {
+        console.log('⚠️ 組織情報取得エラー:', err.message);
         // 404 だった場合は登録を試みる
-        if (err.message.includes('404') || err.message.includes('User not found')) {
+        if (err.message.includes('404') || err.message.includes('User not found') || err.message.includes('Not Found')) {
+          console.log('🔄 初回ユーザー登録を開始...');
           setMessage('🔄 初回登録中...');
-          await registerUserIfNeeded(token);
-          setMessage('✅ 登録完了');
-          data = await fetchUserOrganizations(token);
+          
+          try {
+            await registerUserIfNeeded(token);
+            console.log('✅ ユーザー登録完了');
+            setMessage('✅ 登録完了 - 組織情報を再取得中...');
+            
+            // 少し待ってから再取得（データベース反映待ち）
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            console.log('🔄 組織情報を再取得中...');
+            data = await fetchUserOrganizations(token);
+            console.log('✅ 組織情報再取得成功');
+          } catch (registerError) {
+            console.error('❌ ユーザー登録エラー:', registerError);
+            throw new Error(`登録エラー: ${registerError.message}`);
+          }
         } else {
           throw err;
         }
@@ -83,7 +100,7 @@ function App() {
       }
       setMessage(''); // Clear any registration messages
     } catch (error) {
-      console.error('Error loading organizations:', error);
+      console.error('❌ Error loading organizations:', error);
       setMessage(`❌ エラー: ${error.message || '接続エラーが発生しました'}`);
     }
   }

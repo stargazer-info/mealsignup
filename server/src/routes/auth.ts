@@ -8,8 +8,11 @@ const router = Router();
 router.post('/register', requireAuth, async (req, res) => {
   try {
     if (!req.user) {
+      console.log('❌ POST /api/auth/register: User not authenticated');
       return res.status(401).json({ error: 'User not authenticated' });
     }
+
+    console.log(`🔍 POST /api/auth/register: Attempting to register user with clerkId: ${req.user.id}`);
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -17,6 +20,7 @@ router.post('/register', requireAuth, async (req, res) => {
     });
 
     if (existingUser) {
+      console.log(`⚠️ POST /api/auth/register: User already exists for clerkId: ${req.user.id}`);
       return res.status(400).json({ error: 'User already exists' });
     }
 
@@ -29,9 +33,10 @@ router.post('/register', requireAuth, async (req, res) => {
       }
     });
 
+    console.log(`✅ POST /api/auth/register: User created successfully with id: ${user.id}`);
     res.status(201).json({ user });
   } catch (error) {
-    console.error('User registration error:', error);
+    console.error('❌ User registration error:', error);
     res.status(500).json({ error: 'Failed to create user' });
   }
 });
