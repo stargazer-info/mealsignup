@@ -121,12 +121,18 @@ router.put('/me', requireAuth, async (req, res) => {
 
     const { name, avatar } = req.body;
 
-    const user = await prisma.user.update({
+    // Update user profile: プロフィールの変更のみを行う
+    const updatedUser = await prisma.user.update({
       where: { clerkId: req.user.id },
       data: {
         ...(name && { name }),
         ...(avatar && { avatar })
-      },
+      }
+    });
+
+    // 更新後、関連データを含むユーザー情報を取得
+    const userWithFamily = await prisma.user.findUnique({
+      where: { clerkId: req.user.id },
       include: {
         family: {
           include: {
@@ -145,12 +151,12 @@ router.put('/me', requireAuth, async (req, res) => {
 
     res.json({
       user: {
-        id: user.id,
-        clerkId: user.clerkId,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        family: user.family
+        id: userWithFamily!.id,
+        clerkId: userWithFamily!.clerkId,
+        email: userWithFamily!.email,
+        name: userWithFamily!.name,
+        avatar: userWithFamily!.avatar,
+        family: userWithFamily!.family
       }
     });
   } catch (error) {
