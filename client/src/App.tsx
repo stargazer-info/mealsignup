@@ -226,6 +226,7 @@ function App() {
       <Layout
         organizations={organizations}
         currentOrganization={currentOrganization}
+        setCurrentOrganization={setCurrentOrganization}
         showOrgSelector={showOrgSelector}
         showCreateOrg={showCreateOrg}
         showJoinOrg={showJoinOrg}

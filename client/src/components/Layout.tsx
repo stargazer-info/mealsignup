@@ -6,6 +6,7 @@ import { updateUserProfile } from '../api/auth'
 interface LayoutProps {
   organizations: any[];
   currentOrganization: any;
+  setCurrentOrganization: (org: any) => void;
   showOrgSelector: boolean;
   showCreateOrg: boolean;
   showJoinOrg: boolean;
@@ -27,6 +28,7 @@ const DotIcon = () => {
 export const Layout = ({
   organizations,
   currentOrganization,
+  setCurrentOrganization,
   showOrgSelector,
   showCreateOrg,
   showJoinOrg,
