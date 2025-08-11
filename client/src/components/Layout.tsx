@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './OrganizationForm'
 import { fetchOrganizationDetails, updateUserProfile, deleteOrganization } from '../api/organizations'
 
