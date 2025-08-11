@@ -267,6 +267,15 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
           {message}
         </div>
       )}
+      {/* 月間サマリー表示ボタン */}
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={onSave}
+          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          月間サマリー表示
+        </button>
+      </div>
     </div>
   );
 };
