@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import type { DailyMealSignup } from '../types/DailyData';
 import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup } from '../api/mealSignup';
+import { saveMealSignupApi } from '../api/meals';
+import { formatDateForAPI } from '../App';
 
 interface MealSignup {
   breakfast: boolean;
@@ -128,9 +130,25 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
                   <input
                     type="checkbox"
                     checked={daily.breakfast}
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const updatedDay = { ...daily, breakfast: e.target.checked };
-                      updateDay(updatedDay);
+                      try {
+                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day);
+                        const token = await getToken();
+                        await saveMealSignupApi(
+                          formatDateForAPI(targetDate),
+                          {
+                            breakfast: updatedDay.breakfast,
+                            lunch: updatedDay.lunch,
+                            dinner: updatedDay.dinner,
+                          },
+                          organizationId,
+                          token
+                        );
+                        updateDay(updatedDay);
+                      } catch (error) {
+                        console.error(`Day ${daily.day} の予約更新に失敗しました:`, error);
+                      }
                     }}
                     className="transform scale-125"
                   />
@@ -139,9 +157,25 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
                   <input
                     type="checkbox"
                     checked={daily.lunch}
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const updatedDay = { ...daily, lunch: e.target.checked };
-                      updateDay(updatedDay);
+                      try {
+                        const targetDate = new Date(validMonth.getFullYear(), validMonth.getMonth(), daily.day);
+                        const token = await getToken();
+                        await saveMealSignupApi(
+                          formatDateForAPI(targetDate),
+                          {
+                            breakfast: updatedDay.breakfast,
+                            lunch: updatedDay.lunch,
+                            dinner: updatedDay.dinner,
+                          },
+                          organizationId,
+                          token
+                        );
+                        updateDay(updatedDay);
+                      } catch (error) {
+                        console.error(`Day ${daily.day} の予約更新に失敗しました:`, error);
+                      }
                     }}
                     className="transform scale-125"
                   />
