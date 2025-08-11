@@ -7,9 +7,10 @@ interface MonthlySummaryProps {
     month: number;
     dailyData: DailyData[];
   };
+  onEdit: () => void;
 }
 
-export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary }) => {
+export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary, onEdit }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 w-full">
       <h2 className="text-lg font-semibold text-text mb-4">
@@ -47,6 +48,15 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ monthlySummary }
           ))}
         </tbody>
       </table>
+      {/* 月間サマリーから食事予約フォームへ戻るボタン */}
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={onEdit}
+          className="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+        >
+          食事予約フォームへ戻る
+        </button>
+      </div>
     </div>
   );
 };
