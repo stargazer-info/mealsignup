@@ -260,40 +260,6 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
         </table>
       </div>
 
-      <div className="mt-6">
-        <button
-          onClick={async () => {
-            try {
-              console.log('Saving monthlyMealSignup:', monthlyMealSignup);
-              console.log('Year:', validMonth.getFullYear());
-              console.log('Month:', validMonth.getMonth() + 1);
-              console.log('OrganizationId:', organizationId);
-              const token = await getToken();
-              await saveSelfMonthlyMealSignup(
-                monthlyMealSignup,
-                validMonth.getFullYear(),
-                validMonth.getMonth() + 1,
-                organizationId,
-                token
-              );
-              onSave();
-            } catch (error) {
-              console.error(error);
-            }
-          }}
-          disabled={loading}
-          className="w-full bg-primary hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex justify-center items-center"
-        >
-          <span>{loading ? '保存中...' : '保存する'}</span>
-        </button>
-        <button
-          onClick={onCancel}
-          disabled={loading}
-          className="w-full mt-2 bg-gray-300 hover:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-        >
-          キャンセル
-        </button>
-      </div>
 
       {/* Message */}
       {message && (
