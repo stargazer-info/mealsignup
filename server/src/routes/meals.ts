@@ -396,31 +396,32 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
     }
     
     const operations = monthlyMealSignup.map(daySignup => {
-      const { id, day, breakfast, lunch, dinner } = daySignup;
-      if (id) {
-        // 既存レコードの場合、id を条件に update
-        return prisma.mealSignup.update({
-          where: { id },
-          data: {
-            breakfast: Boolean(breakfast),
-            lunch: Boolean(lunch),
-            dinner: Boolean(dinner),
-          },
-        });
-      } else {
-        // 新規作成の場合は、日付を計算して create
-        const targetDate = new Date(yearNum, monthNum - 1, day, 0, 0, 0, 0);
-        return prisma.mealSignup.create({
-          data: {
+      const { day, breakfast, lunch, dinner } = daySignup;
+      const targetDate = new Date(yearNum, monthNum - 1, day, 0, 0, 0, 0);
+      
+      // 常に upsert を使用して、既存レコードがあれば更新、なければ作成
+      return prisma.mealSignup.upsert({
+        where: {
+          userId_organizationId_date: {
             userId: user.id,
             organizationId: targetOrganizationId,
-            date: targetDate,
-            breakfast: Boolean(breakfast),
-            lunch: Boolean(lunch),
-            dinner: Boolean(dinner),
-          },
-        });
-      }
+            date: targetDate
+          }
+        },
+        update: {
+          breakfast: Boolean(breakfast),
+          lunch: Boolean(lunch),
+          dinner: Boolean(dinner),
+        },
+        create: {
+          userId: user.id,
+          organizationId: targetOrganizationId,
+          date: targetDate,
+          breakfast: Boolean(breakfast),
+          lunch: Boolean(lunch),
+          dinner: Boolean(dinner),
+        },
+      });
     });
     
     await prisma.$transaction(operations);
