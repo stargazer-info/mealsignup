@@ -15,6 +15,14 @@ interface LayoutProps {
   switchOrganization: (organizationId: string) => void;
 }
 
+const DotIcon = () => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+      <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z" />
+    </svg>
+  )
+}
+
 export const Layout = ({
   organizations,
   currentOrganization,
@@ -73,13 +81,16 @@ export const Layout = ({
                 <SignInButton />
               </SignedOut>
               <SignedIn>
-                <UserButton />
-                <button 
-                  onClick={handleOrgLeave} 
-                  className="ml-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
-                >
-                  家族/店舗から抜ける
-                </button>
+                <UserButton>
+		  <UserButton.MenuItems>
+		    <UserButton.Action
+		      label="家族/店舗から抜ける"
+		      labelIcon={<DotIcon />}
+		      onClick={() => handleOrgLeave()}
+		    >
+		    </UserButton.Action>
+		  </UserButton.MenuItems>
+                </UserButton>
               </SignedIn>
             </div>
           </div>
