@@ -56,18 +56,12 @@ router.get('/me', requireAuth, async (req, res) => {
     let user = await prisma.user.findUnique({
       where: { clerkId: req.user.id },
       include: {
-        family: {
+        memberships: {
           include: {
-            members: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatar: true
-              }
-            }
+            organization: true
           }
-        }
+        },
+        lastSelectedOrganization: true
       }
     });
 
@@ -80,18 +74,12 @@ router.get('/me', requireAuth, async (req, res) => {
           name: req.user.name
         },
         include: {
-          family: {
+          memberships: {
             include: {
-              members: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  avatar: true
-                }
-              }
+              organization: true
             }
-          }
+          },
+          lastSelectedOrganization: true
         }
       });
     }
@@ -103,7 +91,8 @@ router.get('/me', requireAuth, async (req, res) => {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
-        family: user.family
+        memberships: user.memberships,
+        lastSelectedOrganization: user.lastSelectedOrganization
       }
     });
   } catch (error) {
@@ -131,32 +120,27 @@ router.put('/me', requireAuth, async (req, res) => {
     });
 
     // 更新後、関連データを含むユーザー情報を取得
-    const userWithFamily = await prisma.user.findUnique({
+    const userWithData = await prisma.user.findUnique({
       where: { clerkId: req.user.id },
       include: {
-        family: {
+        memberships: {
           include: {
-            members: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatar: true
-              }
-            }
+            organization: true
           }
-        }
+        },
+        lastSelectedOrganization: true
       }
     });
 
     res.json({
       user: {
-        id: userWithFamily!.id,
-        clerkId: userWithFamily!.clerkId,
-        email: userWithFamily!.email,
-        name: userWithFamily!.name,
-        avatar: userWithFamily!.avatar,
-        family: userWithFamily!.family
+        id: userWithData!.id,
+        clerkId: userWithData!.clerkId,
+        email: userWithData!.email,
+        name: userWithData!.name,
+        avatar: userWithData!.avatar,
+        memberships: userWithData!.memberships,
+        lastSelectedOrganization: userWithData!.lastSelectedOrganization
       }
     });
   } catch (error) {
