@@ -1,5 +1,6 @@
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './OrganizationForm'
+import { fetchOrganizationDetails, updateUserProfile, deleteOrganization } from '../api/organizations'
 
 interface LayoutProps {
   organizations: any[];
@@ -26,6 +27,29 @@ export const Layout = ({
   setShowOrgSelector,
   switchOrganization,
 }: LayoutProps) => {
+
+  const { getToken } = useAuth(); // Ensure getToken is available from Clerk if not already imported
+
+  const handleOrgLeave = async () => {
+    try {
+      const token = await getToken();
+      const details = await fetchOrganizationDetails(currentOrganization.id, token);
+      const memberCount = details.members ? details.members.length : 0;
+      const confirmMsg = memberCount === 1 ? 
+        `${currentOrganization.name}は削除されますがよろしいですか？` : 
+        "本当に家族/店舗から抜けますか？";
+      if (!window.confirm(confirmMsg)) return;
+      if (memberCount === 1) {
+        await deleteOrganization(currentOrganization.id, token);
+      }
+      await updateUserProfile({ lastSelectedOrganizationId: null }, token);
+      setCurrentOrganization(null);
+      loadUserOrganizations();
+    } catch (error) {
+      console.error("Error leaving organization:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -50,6 +74,12 @@ export const Layout = ({
               </SignedOut>
               <SignedIn>
                 <UserButton />
+                <button 
+                  onClick={handleOrgLeave} 
+                  className="ml-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
+                >
+                  家族/店舗から抜ける
+                </button>
               </SignedIn>
             </div>
           </div>
