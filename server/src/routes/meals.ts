@@ -319,6 +319,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     
     // マッピング：各レコードの日付から「日」を抽出
     const dailySignups = mealSignups.map(signup => ({
+      id: signup.id,
       day: signup.date.getDate(),
       breakfast: signup.breakfast,
       lunch: signup.lunch,
@@ -395,33 +396,31 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
     }
     
     const operations = monthlyMealSignup.map(daySignup => {
-      const { day, breakfast, lunch, dinner } = daySignup;
-      // 日付を正規化（時刻部分を00:00:00に設定）
-      const targetDate = new Date(yearNum, monthNum - 1, day, 0, 0, 0, 0);
-      console.log(`Processing day ${day}: targetDate = ${targetDate.toISOString()}`);
-      
-      return prisma.mealSignup.upsert({
-        where: {
-          userId_organizationId_date: {
+      const { id, day, breakfast, lunch, dinner } = daySignup;
+      if (id) {
+        // 既存レコードの場合、id を条件に update
+        return prisma.mealSignup.update({
+          where: { id },
+          data: {
+            breakfast: Boolean(breakfast),
+            lunch: Boolean(lunch),
+            dinner: Boolean(dinner),
+          },
+        });
+      } else {
+        // 新規作成の場合は、日付を計算して create
+        const targetDate = new Date(yearNum, monthNum - 1, day, 0, 0, 0, 0);
+        return prisma.mealSignup.create({
+          data: {
             userId: user.id,
             organizationId: targetOrganizationId,
             date: targetDate,
+            breakfast: Boolean(breakfast),
+            lunch: Boolean(lunch),
+            dinner: Boolean(dinner),
           },
-        },
-        update: {
-          breakfast: Boolean(breakfast),
-          lunch: Boolean(lunch),
-          dinner: Boolean(dinner),
-        },
-        create: {
-          userId: user.id,
-          organizationId: targetOrganizationId,
-          date: targetDate,
-          breakfast: Boolean(breakfast),
-          lunch: Boolean(lunch),
-          dinner: Boolean(dinner),
-        },
-      });
+        });
+      }
     });
     
     await prisma.$transaction(operations);

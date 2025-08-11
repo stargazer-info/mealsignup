@@ -27,7 +27,13 @@ export const saveSelfMonthlyMealSignup = async (
       'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify({
-      monthlyMealSignup,
+      monthlyMealSignup: monthlyMealSignup.map(item => ({
+        id: item.id, // 既存レコードの場合は id を渡す
+        day: item.day, // デバッグ目的で残してもよい
+        breakfast: item.breakfast,
+        lunch: item.lunch,
+        dinner: item.dinner,
+      })),
       year,
       month,
       organizationId,

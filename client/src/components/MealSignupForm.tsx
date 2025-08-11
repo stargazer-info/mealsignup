@@ -82,7 +82,7 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   }, [validMonth, setMonthlyMealSignup, organizationId, getToken]);
   const updateDay = (updatedDay: DailyMealSignup) => {
     setMonthlyMealSignup((prev) =>
-      prev.map((day) => (day.day === updatedDay.day ? updatedDay : day))
+      prev.map((day) => (day.day === updatedDay.day ? { ...day, ...updatedDay } : day))
     );
   };
 
