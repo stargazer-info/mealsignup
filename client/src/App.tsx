@@ -6,7 +6,7 @@ import { MealSignupForm } from './components/MealSignupForm'
 import type { DailyData, DailyMealSignup } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
 import { fetchUserOrganizations } from './api/organizations'
-import { switchOrganizationApi } from './api/auth'
+import { switchOrganizationApi, registerUserIfNeeded } from './api/auth'
 import { fetchMealSignup, saveMealSignupApi } from './api/meals'
 import './App.css'
 
@@ -190,8 +190,18 @@ function App() {
       // 未ログインの場合はメッセージ表示などで誘導する
       setMessage('サインインしてください。')
     } else {
-      // ログイン済みの場合は組織情報をロードする
-      loadUserOrganizations()
+      // ログイン済みの場合は、まずユーザー登録処理を実行してから組織情報をロードする
+      const init = async () => {
+        try {
+          const token = await getToken();
+          await registerUserIfNeeded(token);
+          await loadUserOrganizations();
+        } catch (error) {
+          console.error('初期化エラー:', error);
+          setMessage(`エラー: ${error.message || '読み込み失敗'}`);
+        }
+      }
+      init();
     }
   }, [isLoaded, isSignedIn])
 
