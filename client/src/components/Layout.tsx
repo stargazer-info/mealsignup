@@ -1,4 +1,5 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
+import { useState } from 'react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './OrganizationForm'
 import { fetchOrganizationDetails } from '../api/organizations'
 import { leaveOrganization } from '../api/auth'
@@ -40,6 +41,11 @@ export const Layout = ({
 }: LayoutProps) => {
 
   const { getToken } = useAuth(); // Ensure getToken is available from Clerk if not already imported
+  
+  // モーダル用の状態
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [currentInviteCode, setCurrentInviteCode] = useState<string | null>(null);
+  const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
 
   const handleOrgLeave = async () => {
     try {
@@ -165,7 +171,16 @@ export const Layout = ({
           {currentOrganization && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
               <div className="text-center">
-                <h2 className="text-lg font-semibold text-text">{currentOrganization.name}</h2>
+                <h2 
+                  className="cursor-pointer text-lg font-semibold text-text hover:underline" 
+                  onClick={() => {
+                    setCurrentInviteCode(currentOrganization.inviteCode);
+                    setCurrentOrgName(currentOrganization.name);
+                    setShowInviteModal(true);
+                  }}
+                >
+                  {currentOrganization.name}
+                </h2>
                 <p className="text-sm text-gray-600">家族/店舗</p>
               </div>
             </div>
@@ -174,6 +189,31 @@ export const Layout = ({
         </SignedIn>
         </div>
       </main>
+
+      {/* 招待コード表示モーダル */}
+      {showInviteModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-11/12 max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">招待コード - {currentOrgName}</h3>
+              <button onClick={() => setShowInviteModal(false)} className="text-gray-500 hover:text-gray-700 text-xl">
+                ×
+              </button>
+            </div>
+            <div className="text-center text-2xl font-mono bg-gray-100 p-4 rounded">
+              {currentInviteCode}
+            </div>
+            <div className="mt-4 flex justify-center">
+              <button 
+                onClick={() => setShowInviteModal(false)} 
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
