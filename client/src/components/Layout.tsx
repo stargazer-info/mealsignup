@@ -65,6 +65,7 @@ export const Layout = ({
     }
   };
 
+  console.log('currentOrganization', currentOrganization)
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -89,14 +90,16 @@ export const Layout = ({
               </SignedOut>
               <SignedIn>
                 <UserButton>
-		  <UserButton.MenuItems>
-		    <UserButton.Action
-		      label="家族/店舗から抜ける"
-		      labelIcon={<DotIcon />}
-		      onClick={() => handleOrgLeave()}
-		    >
-		    </UserButton.Action>
-		  </UserButton.MenuItems>
+		  {currentOrganization && (
+		    <UserButton.MenuItems>
+		      <UserButton.Action
+			label="家族/店舗から抜ける"
+			labelIcon={<DotIcon />}
+			onClick={() => handleOrgLeave()}
+		      >
+		      </UserButton.Action>
+		    </UserButton.MenuItems>
+		  )}
                 </UserButton>
               </SignedIn>
             </div>
