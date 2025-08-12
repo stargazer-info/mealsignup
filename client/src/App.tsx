@@ -7,7 +7,6 @@ import type { DailyData, DailyMealSignup } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
 import { fetchUserOrganizations } from './api/organizations'
 import { switchOrganizationApi } from './api/auth'
-import { registerUserIfNeeded } from './api/auth'
 import { fetchMealSignup, saveMealSignupApi } from './api/meals'
 import './App.css'
 
@@ -57,42 +56,14 @@ function App() {
   const [monthlyMealSignup, setMonthlyMealSignup] = useState<DailyMealSignup[]>([])
 
 
-  // Register user if needed, then load organizations
+  // Load user organizations
   const loadUserOrganizations = async () => {
     try {
       const token = await getToken();
-      let data;
       
-      try {
-        console.log('🔍 組織情報を取得中...');
-        data = await fetchUserOrganizations(token);
-        console.log('✅ 組織情報取得成功');
-      } catch (err) {
-        console.log('⚠️ 組織情報取得エラー:', err.message);
-        // 404 だった場合は登録を試みる
-        if (err.message.includes('404') || err.message.includes('User not found') || err.message.includes('Not Found')) {
-          console.log('🔄 初回ユーザー登録を開始...');
-          setMessage('🔄 初回登録中...');
-          
-          try {
-            await registerUserIfNeeded(token);
-            console.log('✅ ユーザー登録完了');
-            setMessage('✅ 登録完了 - 組織情報を再取得中...');
-            
-            // 少し待ってから再取得（データベース反映待ち）
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            console.log('🔄 組織情報を再取得中...');
-            data = await fetchUserOrganizations(token);
-            console.log('✅ 組織情報再取得成功');
-          } catch (registerError) {
-            console.error('❌ ユーザー登録エラー:', registerError);
-            throw new Error(`登録エラー: ${registerError.message}`);
-          }
-        } else {
-          throw err;
-        }
-      }
+      console.log('🔍 組織情報を取得中...');
+      const data = await fetchUserOrganizations(token);
+      console.log('✅ 組織情報取得成功');
       
       setOrganizations(data.organizations);
       setCurrentOrganization(data.lastSelectedOrganization);
@@ -100,10 +71,14 @@ function App() {
       if (data.organizations.length === 0) {
         setShowOrgSelector(true);
       }
-      setMessage(''); // Clear any registration messages
+      setMessage(''); // Clear any messages
     } catch (error) {
       console.error('❌ Error loading organizations:', error);
-      setMessage(`❌ エラー: ${error.message || '接続エラーが発生しました'}`);
+      if (error.message.includes('404') || error.message.includes('User not found') || error.message.includes('Not Found')) {
+        setMessage('❌ ユーザーが見つかりません。サインアップしてください。');
+      } else {
+        setMessage(`❌ エラー: ${error.message || '接続エラーが発生しました'}`);
+      }
     }
   }
 
