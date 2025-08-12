@@ -10,16 +10,6 @@ export const fetchUserOrganizations = async (token: string) => {
   return response.json();
 };
 
-export const switchOrganizationApi = async (organizationId: string, token: string) => {
-  const response = await fetch(`http://localhost:3001/api/organizations/select/${organizationId}`, {
-    method: 'PUT',
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    throw new Error(`Error switching organization: ${response.statusText}`);
-  }
-  return response.json();
-};
 
 export const fetchOrganizationDetails = async (organizationId: string, token: string) => {
   const response = await fetch(`http://localhost:3001/api/organizations/${organizationId}`, {

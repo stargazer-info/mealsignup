@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
 import { CreateOrganizationForm, JoinOrganizationForm } from './OrganizationForm'
-import { fetchOrganizationDetails, deleteOrganization } from '../api/organizations'
-import { updateUserProfile } from '../api/auth'
+import { fetchOrganizationDetails } from '../api/organizations'
+import { leaveOrganization } from '../api/auth'
 
 interface LayoutProps {
   organizations: any[];
@@ -50,10 +50,8 @@ export const Layout = ({
         `${currentOrganization.name}は削除されますがよろしいですか？` : 
         "本当に家族/店舗から抜けますか？";
       if (!window.confirm(confirmMsg)) return;
-      if (memberCount === 1) {
-        await deleteOrganization(currentOrganization.id, token);
-      }
-      await updateUserProfile({ lastSelectedOrganizationId: null }, token);
+      
+      await leaveOrganization(token);
       setCurrentOrganization(null);
       loadUserOrganizations();
     } catch (error) {

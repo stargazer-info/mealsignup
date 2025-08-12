@@ -179,43 +179,6 @@ router.post('/join', requireAuth, async (req, res) => {
   }
 });
 
-// Set last selected organization
-router.put('/select/:organizationId', requireAuth, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    const { organizationId } = req.params;
-
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          where: { organizationId }
-        }
-      }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    if (user.memberships.length === 0) {
-      return res.status(403).json({ error: 'User is not a member of this organization' });
-    }
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastSelectedOrganizationId: organizationId }
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Select organization error:', error);
-    res.status(500).json({ error: 'Failed to select organization' });
-  }
-});
 
 // Get organization details (for admins)
 router.get('/:organizationId', requireAuth, async (req, res) => {

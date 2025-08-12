@@ -149,4 +149,108 @@ router.put('/me', requireAuth, async (req, res) => {
   }
 });
 
+// Set last selected organization
+router.put('/select-organization/:organizationId', requireAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const { organizationId } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: req.user.id },
+      include: {
+        memberships: {
+          where: { organizationId }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.memberships.length === 0) {
+      return res.status(403).json({ error: 'User is not a member of this organization' });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastSelectedOrganizationId: organizationId }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Select organization error:', error);
+    res.status(500).json({ error: 'Failed to select organization' });
+  }
+});
+
+// Leave organization
+router.delete('/leave-organization', requireAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: req.user.id },
+      include: {
+        memberships: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.lastSelectedOrganizationId) {
+      return res.status(400).json({ error: 'No organization selected' });
+    }
+
+    // Check if user is member of the selected organization
+    const membership = user.memberships.find(m => m.organizationId === user.lastSelectedOrganizationId);
+    if (!membership) {
+      return res.status(403).json({ error: 'User is not a member of the selected organization' });
+    }
+
+    // Check how many members are in the organization
+    const memberCount = await prisma.organizationMembership.count({
+      where: { organizationId: user.lastSelectedOrganizationId }
+    });
+
+    // Remove user from organization and clear lastSelectedOrganizationId
+    await prisma.$transaction(async (tx) => {
+      // Remove membership
+      await tx.organizationMembership.delete({
+        where: {
+          userId_organizationId: {
+            userId: user.id,
+            organizationId: user.lastSelectedOrganizationId!
+          }
+        }
+      });
+
+      // Clear lastSelectedOrganizationId
+      await tx.user.update({
+        where: { id: user.id },
+        data: { lastSelectedOrganizationId: null }
+      });
+
+      // If this was the last member, delete the organization
+      if (memberCount === 1) {
+        await tx.organization.delete({
+          where: { id: user.lastSelectedOrganizationId! }
+        });
+      }
+    });
+
+    res.json({ success: true, organizationDeleted: memberCount === 1 });
+  } catch (error) {
+    console.error('Leave organization error:', error);
+    res.status(500).json({ error: 'Failed to leave organization' });
+  }
+});
+
 export default router;

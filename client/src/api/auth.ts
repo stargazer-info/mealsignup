@@ -60,3 +60,25 @@ export const updateUserProfile = async (data: any, token: string) => {
   }
   return response.json();
 };
+
+export const switchOrganizationApi = async (organizationId: string, token: string) => {
+  const response = await fetch(`http://localhost:3001/api/auth/select-organization/${organizationId}`, {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Error switching organization: ${response.statusText}`);
+  }
+  return response.json();
+};
+
+export const leaveOrganization = async (token: string) => {
+  const response = await fetch('http://localhost:3001/api/auth/leave-organization', {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Error leaving organization: ${response.statusText}`);
+  }
+  return response.json();
+};
