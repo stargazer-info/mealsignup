@@ -1,4 +1,4 @@
-import { useAuth } from '@clerk/clerk-react'
+import { useAuth, useUser } from '@clerk/clerk-react'
 import { useState, useEffect } from 'react'
 import Layout from './components/Layout'
 import { MonthlySummary } from './components/MonthlySummary'
@@ -33,6 +33,7 @@ export const updateMonth = (date: Date, offset: number): Date => {
 
 function App() {
   const { getToken } = useAuth()
+  const { isLoaded, isSignedIn, user } = useUser()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [mealSignup, setMealSignup] = useState({
     breakfast: false,
@@ -181,10 +182,18 @@ function App() {
     loadMealSignup();
   };
 
-  // Load organizations on mount
+  // 初回表示時のログインチェック
   useEffect(() => {
-    loadUserOrganizations()
-  }, [])
+    if (!isLoaded) return; // Clerkの情報が読み込まれるまで待つ
+ 
+    if (!isSignedIn) {
+      // 未ログインの場合はメッセージ表示などで誘導する
+      setMessage('サインインしてください。')
+    } else {
+      // ログイン済みの場合は組織情報をロードする
+      loadUserOrganizations()
+    }
+  }, [isLoaded, isSignedIn])
 
   // Load meal signup when date or organization changes
   useEffect(() => {
