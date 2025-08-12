@@ -220,9 +220,17 @@ router.delete('/leave-organization', requireAuth, async (req, res) => {
       where: { organizationId: user.lastSelectedOrganizationId }
     });
 
-    // Remove user from organization and clear lastSelectedOrganizationId
+    // Remove user from organization, delete user's meal signups for that organization, and clear lastSelectedOrganizationId
     await prisma.$transaction(async (tx) => {
-      // Remove membership
+      // ① ユーザーのこの組織での食事予約を削除
+      await tx.mealSignup.deleteMany({
+        where: {
+          userId: user.id,
+          organizationId: user.lastSelectedOrganizationId!
+        }
+      });
+
+      // ② ユーザーのメンバーシップを削除
       await tx.organizationMembership.delete({
         where: {
           userId_organizationId: {
@@ -232,13 +240,13 @@ router.delete('/leave-organization', requireAuth, async (req, res) => {
         }
       });
 
-      // Clear lastSelectedOrganizationId
+      // ③ ユーザーの lastSelectedOrganizationId をクリア
       await tx.user.update({
         where: { id: user.id },
         data: { lastSelectedOrganizationId: null }
       });
 
-      // If this was the last member, delete the organization
+      // ④ この組織のメンバーが最後の場合、組織自体を削除
       if (memberCount === 1) {
         await tx.organization.delete({
           where: { id: user.lastSelectedOrganizationId! }
