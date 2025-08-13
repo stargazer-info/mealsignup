@@ -7,7 +7,6 @@ import type { DailyData, DailyMealSignup } from './types/DailyData';
 import { fetchMonthlySummary } from './api/monthlySummary'
 import { fetchUserOrganizations } from './api/organizations'
 import { switchOrganizationApi, registerUserIfNeeded } from './api/auth'
-import { fetchMealSignup, saveMealSignupApi } from './api/meals'
 import './App.css'
 
 // ヘルパー関数
@@ -35,12 +34,6 @@ function App() {
   const { getToken } = useAuth()
   const { isLoaded, isSignedIn, user } = useUser()
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [mealSignup, setMealSignup] = useState({
-    breakfast: false,
-    lunch: false,
-    dinner: false
-  })
-  const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [organizations, setOrganizations] = useState([])
   const [currentOrganization, setCurrentOrganization] = useState(null)
@@ -83,61 +76,6 @@ function App() {
     }
   }
 
-  // Load existing meal signup for current date
-  const loadMealSignup = async () => {
-    if (!currentOrganization) return;
-    
-    try {
-      const token = await getToken();
-      const dateStr = formatDateForAPI(currentDate);
-      const data = await fetchMealSignup(dateStr, token);
-      
-      // Find current user's meal signup for this date
-      const userSignup = data.mealSignups.find((signup: any) => signup.user);
-      if (userSignup) {
-        setMealSignup({
-          breakfast: userSignup.breakfast,
-          lunch: userSignup.lunch,
-          dinner: userSignup.dinner
-        });
-      } else {
-        // Reset to default if no signup found
-        setMealSignup({ breakfast: false, lunch: false, dinner: false });
-      }
-    } catch (error) {
-      console.error('Error loading meal signup:', error);
-    }
-  }
-
-
-  // Save meal signup
-  const saveMealSignup = async () => {
-    if (!currentOrganization) {
-      setMessage('❌ 組織が選択されていません');
-      return;
-    }
-    
-    setLoading(true);
-    setMessage('');
-    
-    try {
-      const token = await getToken();
-      await saveMealSignupApi(
-        formatDateForAPI(currentDate),
-        mealSignup,
-        currentOrganization.id,
-        token
-      );
-      setMessage('✅ 食事予定を保存しました');
-      setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
-      setMessage(`❌ エラー: ${error.message}`);
-      console.error('Error saving meal signup:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   // Switch organization
   const switchOrganization = async (organizationId: string) => {
     try {
@@ -177,11 +115,6 @@ function App() {
     }
   };
 
-  const handleMealSignupCancel = () => {
-    setIsEditingMealSignup(false);
-    loadMealSignup();
-  };
-
   // 初回表示時のログインチェック
   useEffect(() => {
     if (!isLoaded) return; // Clerkの情報が読み込まれるまで待つ
@@ -204,13 +137,6 @@ function App() {
       init();
     }
   }, [isLoaded, isSignedIn])
-
-  // Load meal signup when date or organization changes
-  useEffect(() => {
-    if (currentOrganization) {
-      loadMealSignup()
-    }
-  }, [currentDate, currentOrganization])
 
   useEffect(() => {
     loadMonthlySummary();
@@ -241,8 +167,6 @@ function App() {
               monthlyMealSignup={monthlyMealSignup}
               setMonthlyMealSignup={setMonthlyMealSignup}
               onSave={handleMealSignupSave}
-              onCancel={handleMealSignupCancel}
-              loading={loading}
               message={message}
               currentMonth={currentMonth}
               changeMonth={(offset) => setCurrentMonth(updateMonth(currentMonth, offset))}

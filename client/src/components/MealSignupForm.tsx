@@ -4,18 +4,10 @@ import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup } from '../api/me
 import { saveMealSignupApi } from '../api/meals';
 import { formatDateForAPI } from '../App';
 
-interface MealSignup {
-  breakfast: boolean;
-  lunch: boolean;
-  dinner: number;
-}
-
 interface MealSignupFormProps {
   monthlyMealSignup: DailyMealSignup[];
   setMonthlyMealSignup: React.Dispatch<React.SetStateAction<DailyMealSignup[]>>;
   onSave: () => void;
-  onCancel: () => void;
-  loading: boolean;
   message: string;
   currentMonth: Date;
   changeMonth: (offset: number) => void;
@@ -27,8 +19,6 @@ export const MealSignupForm: React.FC<MealSignupFormProps> = ({
   monthlyMealSignup,
   setMonthlyMealSignup,
   onSave,
-  onCancel,
-  loading,
   message,
   currentMonth,
   changeMonth,
