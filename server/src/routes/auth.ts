@@ -4,47 +4,6 @@ import { prisma } from '../app';
 
 const router = Router();
 
-// Create user on registration
-router.post('/register', requireAuth, async (req, res) => {
-  try {
-    if (!req.user) {
-      console.log('❌ POST /api/auth/register: User not authenticated');
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    console.log(`🔍 POST /api/auth/register: Attempting to register user with clerkId: ${req.user.id}`);
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { clerkId: req.user.id }
-    });
-
-    if (existingUser) {
-      console.log(`⚠️ POST /api/auth/register: User already exists for clerkId: ${req.user.id}`);
-      return res.status(200).json({ message: 'User already exists' });
-    }
-
-    // Create new user
-    const user = await prisma.user.create({
-      data: {
-        clerkId: req.user.id,
-        email: req.user.email,
-        name: req.user.name
-      }
-    });
-
-    console.log(`✅ POST /api/auth/register: User created successfully with id: ${user.id}`);
-    res.status(201).json({ user });
-  } catch (error: any) {
-    if (error.code === 'P2002' && error.meta?.target.includes('clerkId')) {
-      console.log(`⚠️ POST /api/auth/register: User already exists for clerkId: ${req.user.id}`);
-      return res.status(200).json({ message: 'User already exists' });
-    }
-    console.error('❌ User registration error:', error);
-    res.status(500).json({ error: 'Failed to create user' });
-  }
-});
-
 // Get current user profile
 router.get('/me', requireAuth, async (req, res) => {
   try {
@@ -52,100 +11,31 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // Find or create user in our database
-    let user = await prisma.user.findUnique({
+    // Get user preferences and memberships
+    const userPreference = await prisma.userPreference.findUnique({
       where: { clerkId: req.user.id },
       include: {
-        memberships: {
-          include: {
-            organization: true
-          }
-        },
         lastSelectedOrganization: true
       }
     });
 
-    if (!user) {
-      // Create new user if doesn't exist
-      user = await prisma.user.create({
-        data: {
-          clerkId: req.user.id,
-          email: req.user.email,
-          name: req.user.name
-        },
-        include: {
-          memberships: {
-            include: {
-              organization: true
-            }
-          },
-          lastSelectedOrganization: true
-        }
-      });
-    }
+    const memberships = await prisma.organizationMembership.findMany({
+      where: { clerkId: req.user.id },
+      include: {
+        organization: true
+      }
+    });
 
     res.json({
-      user: {
-        id: user.id,
-        clerkId: user.clerkId,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        memberships: user.memberships,
-        lastSelectedOrganization: user.lastSelectedOrganization
-      }
+      clerkId: req.user.id,
+      email: req.user.email,
+      name: req.user.name,
+      memberships: memberships,
+      lastSelectedOrganization: userPreference?.lastSelectedOrganization || null
     });
   } catch (error) {
     console.error('Get user profile error:', error);
     res.status(500).json({ error: 'Failed to get user profile' });
-  }
-});
-
-// Update user profile
-router.put('/me', requireAuth, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    const { name, avatar } = req.body;
-
-    // Update user profile: プロフィールの変更のみを行う
-    const updatedUser = await prisma.user.update({
-      where: { clerkId: req.user.id },
-      data: {
-        ...(name && { name }),
-        ...(avatar && { avatar })
-      }
-    });
-
-    // 更新後、関連データを含むユーザー情報を取得
-    const userWithData = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          include: {
-            organization: true
-          }
-        },
-        lastSelectedOrganization: true
-      }
-    });
-
-    res.json({
-      user: {
-        id: userWithData!.id,
-        clerkId: userWithData!.clerkId,
-        email: userWithData!.email,
-        name: userWithData!.name,
-        avatar: userWithData!.avatar,
-        memberships: userWithData!.memberships,
-        lastSelectedOrganization: userWithData!.lastSelectedOrganization
-      }
-    });
-  } catch (error) {
-    console.error('Update user profile error:', error);
-    res.status(500).json({ error: 'Failed to update user profile' });
   }
 });
 
@@ -158,26 +48,23 @@ router.put('/select-organization/:organizationId', requireAuth, async (req, res)
 
     const { organizationId } = req.params;
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          where: { organizationId }
-        }
-      }
+    const membership = await prisma.organizationMembership.findUnique({
+      where: { clerkId_organizationId: { clerkId: req.user.id, organizationId } }
     });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    if (user.memberships.length === 0) {
+    if (!membership) {
       return res.status(403).json({ error: 'User is not a member of this organization' });
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastSelectedOrganizationId: organizationId }
+    await prisma.userPreference.upsert({
+      where: { clerkId: req.user.id },
+      update: {
+        lastSelectedOrganizationId: organizationId
+      },
+      create: {
+        clerkId: req.user.id,
+        lastSelectedOrganizationId: organizationId
+      }
     });
 
     res.json({ success: true });
@@ -194,62 +81,56 @@ router.delete('/leave-organization', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: true
-      }
+    const userPreference = await prisma.userPreference.findUnique({
+      where: { clerkId: req.user.id }
     });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    if (!user.lastSelectedOrganizationId) {
+    if (!userPreference || !userPreference.lastSelectedOrganizationId) {
       return res.status(400).json({ error: 'No organization selected' });
     }
 
+    const organizationIdToLeave = userPreference.lastSelectedOrganizationId;
+
     // Check if user is member of the selected organization
-    const membership = user.memberships.find(m => m.organizationId === user.lastSelectedOrganizationId);
+    const membership = await prisma.organizationMembership.findUnique({
+      where: { clerkId_organizationId: { clerkId: req.user.id, organizationId: organizationIdToLeave } }
+    });
     if (!membership) {
       return res.status(403).json({ error: 'User is not a member of the selected organization' });
     }
 
     // Check how many members are in the organization
     const memberCount = await prisma.organizationMembership.count({
-      where: { organizationId: user.lastSelectedOrganizationId }
+      where: { organizationId: organizationIdToLeave }
     });
 
     // Remove user from organization, delete user's meal signups for that organization, and clear lastSelectedOrganizationId
     await prisma.$transaction(async (tx) => {
-      // ① ユーザーのこの組織での食事予約を削除
+      // 1. Delete user's meal signups for this organization
       await tx.mealSignup.deleteMany({
-        where: {
-          userId: user.id,
-          organizationId: user.lastSelectedOrganizationId!
-        }
+        where: { clerkId: req.user.id, organizationId: organizationIdToLeave }
       });
 
-      // ② ユーザーのメンバーシップを削除
+      // 2. Delete user's membership
       await tx.organizationMembership.delete({
         where: {
-          userId_organizationId: {
-            userId: user.id,
-            organizationId: user.lastSelectedOrganizationId!
+          clerkId_organizationId: {
+            clerkId: req.user.id,
+            organizationId: organizationIdToLeave
           }
         }
       });
 
-      // ③ ユーザーの lastSelectedOrganizationId をクリア
-      await tx.user.update({
-        where: { id: user.id },
+      // 3. Clear user's lastSelectedOrganizationId
+      await tx.userPreference.update({
+        where: { clerkId: req.user.id },
         data: { lastSelectedOrganizationId: null }
       });
 
-      // ④ この組織のメンバーが最後の場合、組織自体を削除
+      // 4. If last member, delete the organization itself
       if (memberCount === 1) {
         await tx.organization.delete({
-          where: { id: user.lastSelectedOrganizationId! }
+          where: { id: organizationIdToLeave }
         });
       }
     });

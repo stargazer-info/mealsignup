@@ -20,44 +20,33 @@ model Organization {
   updatedAt  DateTime         @updatedAt
 
   // Relations
-  memberships     OrganizationMembership[]
-  mealSignups     MealSignup[]
-  lastSelectedBy  User[] @relation("UserLastSelected")
+  memberships              OrganizationMembership[]
+  mealSignups              MealSignup[]
+  lastSelectedOrganization UserPreference[]
 
   @@map("organizations")
 }
 
+model UserPreference {
+  clerkId                    String        @id
+  lastSelectedOrganizationId String?
+  lastSelectedOrganization   Organization? @relation(fields: [lastSelectedOrganizationId], references: [id], onDelete: SetNull)
+
+  @@map("user_preferences")
+}
+
 model OrganizationMembership {
   id             String       @id @default(cuid())
-  userId         String
+  clerkId        String
   organizationId String
   role           UserRole     @default(MEMBER)
   joinedAt       DateTime     @default(now())
 
   // Relations
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, organizationId])
+  @@unique([clerkId, organizationId])
   @@map("organization_memberships")
-}
-
-model User {
-  id                         String  @id @default(cuid())
-  clerkId                    String  @unique
-  email                      String  @unique
-  name                       String
-  avatar                     String?
-  createdAt                  DateTime @default(now())
-  updatedAt                  DateTime @updatedAt
-  lastSelectedOrganizationId String?
-
-  // Relations
-  memberships                OrganizationMembership[]
-  mealSignups                MealSignup[]
-  lastSelectedOrganization   Organization? @relation("UserLastSelected", fields: [lastSelectedOrganizationId], references: [id])
-
-  @@map("users")
 }
 
 model MealSignup {
@@ -68,13 +57,12 @@ model MealSignup {
   dinner         Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  userId         String
+  clerkId        String
   organizationId String
 
   // Relations
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, organizationId, date])
+  @@unique([clerkId, organizationId, date])
   @@map("meal_signups")
 }

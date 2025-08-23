@@ -37,13 +37,11 @@ app.get('/health', (req, res) => {
 
 // API routes
 import authRoutes from './routes/auth';
-import familiesRoutes from './routes/families';
 import mealsRoutes from './routes/meals';
 import organizationsRoutes from './routes/organizations';
 import testRoutes from './routes/test';
 
 app.use('/api/auth', authRoutes);
-app.use('/api/families', familiesRoutes);
 app.use('/api/meals', mealsRoutes);
 app.use('/api/organizations', organizationsRoutes);
 console.log('🔧 Organizations router mounted at /api/organizations');

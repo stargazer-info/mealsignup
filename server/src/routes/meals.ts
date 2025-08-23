@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { prisma } from '../app';
+import { clerkClient } from '@clerk/backend';
 
 const router = Router();
 
@@ -13,29 +14,23 @@ router.get('/', requireAuth, async (req, res) => {
 
     const { date, month, organizationId } = req.query;
 
-    // Get user and determine organization
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          include: { organization: true }
-        },
-        lastSelectedOrganization: true
-      }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const [memberships, userPreference] = await Promise.all([
+      prisma.organizationMembership.findMany({ where: { clerkId: req.user.id } }),
+      prisma.userPreference.findUnique({ where: { clerkId: req.user.id } })
+    ]);
 
     // Determine which organization to use
     let targetOrganizationId = organizationId as string;
     if (!targetOrganizationId) {
-      targetOrganizationId = user.lastSelectedOrganizationId || '';
+      targetOrganizationId = userPreference?.lastSelectedOrganizationId || '';
+    }
+
+    if (!targetOrganizationId) {
+      return res.status(400).json({ error: 'No organization selected' });
     }
 
     // Verify user has access to this organization
-    const membership = user.memberships.find(m => m.organizationId === targetOrganizationId);
+    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
     if (!membership) {
       return res.status(403).json({ error: 'User does not have access to this organization' });
     }
@@ -69,24 +64,33 @@ router.get('/', requireAuth, async (req, res) => {
 
     const mealSignups = await prisma.mealSignup.findMany({
       where: whereClause,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true
-          }
-        }
-      },
       orderBy: [
         { date: 'asc' },
-        { user: { name: 'asc' } }
+        { clerkId: 'asc' }
       ]
     });
 
-    res.json({ 
-      mealSignups, 
+    if (mealSignups.length === 0) {
+      return res.json({ mealSignups: [], date: date || null, month: month || null, organizationId: targetOrganizationId });
+    }
+
+    const clerkIds = [...new Set(mealSignups.map(signup => signup.clerkId))];
+    const clerkUsers = await clerkClient.users.getUserList({ userId: clerkIds });
+
+    const usersMap = new Map(clerkUsers.map(user => [user.id, {
+      id: user.id,
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unknown User',
+      email: user.emailAddresses[0]?.emailAddress || '',
+      avatar: user.imageUrl,
+    }]));
+
+    const mealSignupsWithUsers = mealSignups.map(signup => ({
+      ...signup,
+      user: usersMap.get(signup.clerkId) || { id: signup.clerkId, name: 'Unknown User' }
+    }));
+
+    res.json({
+      mealSignups: mealSignupsWithUsers,
       date: date || null,
       month: month || null,
       organizationId: targetOrganizationId
@@ -116,33 +120,22 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    // Get user and determine organization
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          include: { organization: true }
-        },
-        lastSelectedOrganization: true
-      }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const [memberships, userPreference] = await Promise.all([
+      prisma.organizationMembership.findMany({ where: { clerkId: req.user.id } }),
+      prisma.userPreference.findUnique({ where: { clerkId: req.user.id } })
+    ]);
 
     // Determine which organization to use
     let targetOrganizationId = organizationId;
     if (!targetOrganizationId) {
-      targetOrganizationId = user.lastSelectedOrganizationId;
+      targetOrganizationId = userPreference?.lastSelectedOrganizationId;
     }
 
     if (!targetOrganizationId) {
       return res.status(400).json({ error: 'No organization selected' });
     }
 
-    // Verify user has access to this organization
-    const membership = user.memberships.find(m => m.organizationId === targetOrganizationId);
+    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
     if (!membership) {
       return res.status(403).json({ error: 'User does not have access to this organization' });
     }
@@ -150,8 +143,8 @@ router.post('/', requireAuth, async (req, res) => {
     // Create or update meal signup
     const mealSignup = await prisma.mealSignup.upsert({
       where: {
-        userId_organizationId_date: {
-          userId: user.id,
+        clerkId_organizationId_date: {
+          clerkId: req.user.id,
           organizationId: targetOrganizationId,
           date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0)
         }
@@ -162,26 +155,19 @@ router.post('/', requireAuth, async (req, res) => {
         dinner: Boolean(dinner)
       },
       create: {
-        userId: user.id,
+        clerkId: req.user.id,
         organizationId: targetOrganizationId,
         date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
         breakfast: Boolean(breakfast),
         lunch: Boolean(lunch),
         dinner: Boolean(dinner)
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true
-          }
-        }
       }
     });
 
-    res.json({ mealSignup });
+    res.json({ mealSignup: {
+      ...mealSignup,
+      user: { id: req.user.id, name: req.user.name, email: req.user.email }
+    } });
   } catch (error) {
     console.error('Create/update meal signup error:', error);
     res.status(500).json({ error: 'Failed to save meal signup' });
@@ -202,33 +188,22 @@ router.post('/bulk', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Dates array is required' });
     }
 
-    // Get user and determine organization
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          include: { organization: true }
-        },
-        lastSelectedOrganization: true
-      }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const [memberships, userPreference] = await Promise.all([
+      prisma.organizationMembership.findMany({ where: { clerkId: req.user.id } }),
+      prisma.userPreference.findUnique({ where: { clerkId: req.user.id } })
+    ]);
 
     // Determine which organization to use
     let targetOrganizationId = organizationId;
     if (!targetOrganizationId) {
-      targetOrganizationId = user.lastSelectedOrganizationId;
+      targetOrganizationId = userPreference?.lastSelectedOrganizationId;
     }
 
     if (!targetOrganizationId) {
       return res.status(400).json({ error: 'No organization selected' });
     }
 
-    // Verify user has access to this organization
-    const membership = user.memberships.find(m => m.organizationId === targetOrganizationId);
+    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
     if (!membership) {
       return res.status(403).json({ error: 'User does not have access to this organization' });
     }
@@ -242,8 +217,8 @@ router.post('/bulk', requireAuth, async (req, res) => {
 
       return prisma.mealSignup.upsert({
         where: {
-          userId_organizationId_date: {
-            userId: user.id,
+          clerkId_organizationId_date: {
+            clerkId: req.user.id,
             organizationId: targetOrganizationId,
             date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0)
           }
@@ -254,7 +229,7 @@ router.post('/bulk', requireAuth, async (req, res) => {
           ...(dinner !== undefined && { dinner: Boolean(dinner) })
         },
         create: {
-          userId: user.id,
+          clerkId: req.user.id,
           organizationId: targetOrganizationId,
           date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
           breakfast: Boolean(breakfast),
@@ -293,22 +268,13 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid year or month' });
     }
     
-    // Get user
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
     // 日付を正規化（時刻部分を00:00:00に設定）
     const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0);
     const endDate = new Date(yearNum, monthNum, 1, 0, 0, 0, 0);
     
     const mealSignups = await prisma.mealSignup.findMany({
       where: {
-        userId: user.id,
+        clerkId: req.user.id,
         date: {
           gte: startDate,
           lt: endDate,
@@ -364,33 +330,22 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid year or month' });
     }
 
-    // Get user and determine organization
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          include: { organization: true }
-        },
-        lastSelectedOrganization: true
-      }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const [memberships, userPreference] = await Promise.all([
+      prisma.organizationMembership.findMany({ where: { clerkId: req.user.id } }),
+      prisma.userPreference.findUnique({ where: { clerkId: req.user.id } })
+    ]);
 
     // Determine which organization to use
     let targetOrganizationId = organizationId;
     if (!targetOrganizationId) {
-      targetOrganizationId = user.lastSelectedOrganizationId;
+      targetOrganizationId = userPreference?.lastSelectedOrganizationId;
     }
 
     if (!targetOrganizationId) {
       return res.status(400).json({ error: 'No organization selected' });
     }
 
-    // Verify user has access to this organization
-    const membership = user.memberships.find(m => m.organizationId === targetOrganizationId);
+    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
     if (!membership) {
       return res.status(403).json({ error: 'User does not have access to this organization' });
     }
@@ -402,8 +357,8 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
       // 常に upsert を使用して、既存レコードがあれば更新、なければ作成
       return prisma.mealSignup.upsert({
         where: {
-          userId_organizationId_date: {
-            userId: user.id,
+          clerkId_organizationId_date: {
+            clerkId: req.user.id,
             organizationId: targetOrganizationId,
             date: targetDate
           }
@@ -414,7 +369,7 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
           dinner: Boolean(dinner),
         },
         create: {
-          userId: user.id,
+          clerkId: req.user.id,
           organizationId: targetOrganizationId,
           date: targetDate,
           breakfast: Boolean(breakfast),

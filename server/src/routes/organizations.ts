@@ -16,35 +16,31 @@ router.get('/me', requireAuth, async (req, res) => {
 
     console.log(`🔍 GET /api/organizations/me: Looking for user with clerkId: ${req.user.id}`);
 
-    // Get user (must exist from registration)
-    const user = await prisma.user.findUnique({
+    const memberships = await prisma.organizationMembership.findMany({
       where: { clerkId: req.user.id },
       include: {
-        memberships: {
-          include: {
-            organization: true
-          }
-        },
+        organization: true
+      }
+    });
+
+    const userPreference = await prisma.userPreference.findUnique({
+      where: { clerkId: req.user.id },
+      include: {
         lastSelectedOrganization: true
       }
     });
 
-    if (!user) {
-      console.log(`❌ GET /api/organizations/me: User not found in database for clerkId: ${req.user.id}`);
-      return res.status(404).json({ error: 'User not found. Please complete registration.' });
-    }
+    console.log(`✅ GET /api/organizations/me: User found with ${memberships.length} organizations`);
 
-    console.log(`✅ GET /api/organizations/me: User found with ${user.memberships.length} organizations`);
-
-    const organizations = user.memberships.map(membership => ({
+    const organizations = memberships.map(membership => ({
       ...membership.organization,
       role: membership.role,
       joinedAt: membership.joinedAt
     }));
 
-    res.json({ 
+    res.json({
       organizations,
-      lastSelectedOrganization: user.lastSelectedOrganization
+      lastSelectedOrganization: userPreference?.lastSelectedOrganization
     });
   } catch (error) {
     console.error('❌ Get organizations error:', error);
@@ -68,15 +64,6 @@ router.post('/', requireAuth, async (req, res) => {
     // Generate unique invite code
     const inviteCode = nanoid(8).toUpperCase();
 
-    // Get user (must exist from registration)
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found. Please complete registration.' });
-    }
-
     // Create organization and membership in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
@@ -88,16 +75,17 @@ router.post('/', requireAuth, async (req, res) => {
 
       await tx.organizationMembership.create({
         data: {
-          userId: user.id,
+          clerkId: req.user.id,
           organizationId: organization.id,
           role: 'ADMIN'
         }
       });
 
       // Set as last selected organization
-      await tx.user.update({
-        where: { id: user.id },
-        data: { lastSelectedOrganizationId: organization.id }
+      await tx.userPreference.upsert({
+        where: { clerkId: req.user.id },
+        create: { clerkId: req.user.id, lastSelectedOrganizationId: organization.id },
+        update: { lastSelectedOrganizationId: organization.id }
       });
 
       return organization;
@@ -123,15 +111,6 @@ router.post('/join', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invite code is required' });
     }
 
-    // Get user (must exist from registration)
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found. Please complete registration.' });
-    }
-
     // Find organization by invite code
     const organization = await prisma.organization.findUnique({
       where: { inviteCode: inviteCode.trim().toUpperCase() }
@@ -144,8 +123,8 @@ router.post('/join', requireAuth, async (req, res) => {
     // Check if user is already a member
     const existingMembership = await prisma.organizationMembership.findUnique({
       where: {
-        userId_organizationId: {
-          userId: user.id,
+        clerkId_organizationId: {
+          clerkId: req.user.id,
           organizationId: organization.id
         }
       }
@@ -158,17 +137,22 @@ router.post('/join', requireAuth, async (req, res) => {
     // Add user to organization
     await prisma.organizationMembership.create({
       data: {
-        userId: user.id,
+        clerkId: req.user.id,
         organizationId: organization.id,
         role: 'MEMBER'
       }
     });
 
+    const userPreference = await prisma.userPreference.findUnique({
+      where: { clerkId: req.user.id }
+    });
+
     // Set as last selected organization if user has no current selection
-    if (!user.lastSelectedOrganizationId) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { lastSelectedOrganizationId: organization.id }
+    if (!userPreference?.lastSelectedOrganizationId) {
+      await prisma.userPreference.upsert({
+        where: { clerkId: req.user.id },
+        create: { clerkId: req.user.id, lastSelectedOrganizationId: organization.id },
+        update: { lastSelectedOrganizationId: organization.id }
       });
     }
 
@@ -189,42 +173,25 @@ router.get('/:organizationId', requireAuth, async (req, res) => {
 
     const { organizationId } = req.params;
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          where: { organizationId },
-          include: { organization: true }
-        }
-      }
+    const membership = await prisma.organizationMembership.findUnique({
+      where: { clerkId_organizationId: { clerkId: req.user.id, organizationId } },
+      include: { organization: true }
     });
 
-    if (!user || user.memberships.length === 0) {
+    if (!membership) {
       return res.status(403).json({ error: 'Access denied' });
     }
-
-    const membership = user.memberships[0];
     const organization = membership.organization;
 
     // Get all members if user is admin
     let members = [];
     if (membership.role === 'ADMIN') {
       const allMemberships = await prisma.organizationMembership.findMany({
-        where: { organizationId },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true
-            }
-          }
-        }
+        where: { organizationId }
       });
 
       members = allMemberships.map(m => ({
-        ...m.user,
+        clerkId: m.clerkId,
         role: m.role,
         joinedAt: m.joinedAt
       }));
@@ -260,16 +227,11 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
     const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
 
     // Verify user is member of organization
-    const user = await prisma.user.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        memberships: {
-          where: { organizationId }
-        }
-      }
+    const membership = await prisma.organizationMembership.findUnique({
+      where: { clerkId_organizationId: { clerkId: req.user.id, organizationId } }
     });
 
-    if (!user || user.memberships.length === 0) {
+    if (!membership) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
