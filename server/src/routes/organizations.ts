@@ -242,11 +242,6 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
           gte: startDate,
           lte: endDate
         }
-      },
-      include: {
-        user: {
-          select: { name: true, email: true }
-        }
       }
     });
 
