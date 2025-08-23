@@ -7,7 +7,7 @@ import { Sun, Utensils, Moon, Check, X, ChevronLeft, ChevronRight } from "lucide
 import { useState, useEffect } from "react"
 import { useAuth } from "@clerk/clerk-react"
 import { saveMealSignupApi } from "@/api/meals"
-import { fetchSelfMonthlyMealSignup } from "@/api/mealSignup"
+import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup } from "@/api/mealSignup"
 
 type MealStatus = "applied" | "not-applied"
 
@@ -58,6 +58,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
   const [currentYear, setCurrentYear] = useState(2025)
   const [currentMonth, setCurrentMonth] = useState(8)
   const [mealData, setMealData] = useState<Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>>({})
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
   const fetchMealData = async () => {
     const token = await getToken()
@@ -129,15 +130,35 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     }
   }
 
-  // TODO: APIを呼び出して一括申し込み
-  const applyAllMeals = () => {
-    console.log("[v0] 全て申し込み完了")
-  }
+  const handleBulkUpdate = async (apply: boolean) => {
+    const token = await getToken();
+    if (!token || !groupData) return;
 
-  // TODO: APIを呼び出して一括解除
-  const cancelAllMeals = () => {
-    console.log("[v0] 全て申し込み取消完了")
-  }
+    const originalMealData = { ...mealData };
+    setIsBulkUpdating(true);
+
+    const daysInMonthValue = getDaysInMonth(currentYear, currentMonth);
+    const newMealData: typeof mealData = {};
+    const monthlySignupPayload = [];
+    for (let day = 1; day <= daysInMonthValue; day++) {
+        newMealData[day] = { breakfast: apply, lunch: apply, dinner: apply };
+        monthlySignupPayload.push({ day, breakfast: apply, lunch: apply, dinner: apply });
+    }
+    setMealData(newMealData);
+
+    try {
+        await saveSelfMonthlyMealSignup(monthlySignupPayload, currentYear, currentMonth, groupData.id, token);
+    } catch (error) {
+        console.error(`Failed to ${apply ? 'apply' : 'cancel'} all meals:`, error);
+        // エラー発生時はUIを元の状態に戻す
+        setMealData(originalMealData);
+    } finally {
+        setIsBulkUpdating(false);
+    }
+  };
+
+  const applyAllMeals = () => handleBulkUpdate(true);
+  const cancelAllMeals = () => handleBulkUpdate(false);
 
   const navigateToStatistics = () => {
     console.log("[v0] 統計画面に移動")
@@ -180,6 +201,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                 size="sm"
                 onClick={applyAllMeals}
                 className="bg-chart-1 hover:bg-chart-1/90 text-white w-20 px-4 flex-shrink-0"
+                disabled={isBulkUpdating}
               >
                 全申込
               </Button>
@@ -188,6 +210,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                 size="sm"
                 onClick={cancelAllMeals}
                 className="border-destructive text-destructive hover:bg-destructive hover:text-white bg-transparent w-20 px-4 flex-shrink-0"
+                disabled={isBulkUpdating}
               >
                 全解除
               </Button>
