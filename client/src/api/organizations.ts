@@ -1,3 +1,5 @@
+import { apiUrl } from './index';
+
 // 組織関連のAPI関数群
 
 export interface Organization {
@@ -19,7 +21,7 @@ export interface MyOrganizationsResponse {
 }
 
 export const fetchUserOrganizations = async (token: string): Promise<MyOrganizationsResponse> => {
-  const response = await fetch('http://localhost:3001/api/organizations/me', {
+  const response = await fetch(apiUrl.organizations.me(), {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!response.ok) {
@@ -30,7 +32,7 @@ export const fetchUserOrganizations = async (token: string): Promise<MyOrganizat
 
 
 export const fetchOrganizationDetails = async (organizationId: string, token: string) => {
-  const response = await fetch(`http://localhost:3001/api/organizations/${organizationId}`, {
+  const response = await fetch(apiUrl.organizations.details(organizationId), {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!response.ok) {
@@ -40,7 +42,7 @@ export const fetchOrganizationDetails = async (organizationId: string, token: st
 };
 
 export const createOrganization = async (name: string, token: string): Promise<Organization> => {
-  const response = await fetch('http://localhost:3001/api/organizations', {
+  const response = await fetch(apiUrl.organizations.create(), {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -53,7 +55,7 @@ export const createOrganization = async (name: string, token: string): Promise<O
 };
 
 export const joinOrganization = async (inviteCode: string, token: string): Promise<{ organization: Organization }> => {
-  const response = await fetch('http://localhost:3001/api/organizations/join', {
+  const response = await fetch(apiUrl.organizations.join(), {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -66,7 +68,7 @@ export const joinOrganization = async (inviteCode: string, token: string): Promi
 };
 
 export const deleteOrganization = async (organizationId: string, token: string) => {
-  const response = await fetch(`http://localhost:3001/api/organizations/${organizationId}`, {
+  const response = await fetch(apiUrl.organizations.delete(organizationId), {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${token}` },
   });

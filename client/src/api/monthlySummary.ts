@@ -1,3 +1,4 @@
+import { apiUrl } from './index';
 import type { DailyData } from '../types/DailyData';
 
 interface MonthlySummaryResponse {
@@ -14,9 +15,8 @@ export const fetchMonthlySummary = async (
   const token = await getToken();
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1; // 1～12形式
-  const url = `http://localhost:3001/api/organizations/${currentOrganization.id}/monthly-summary?year=${year}&month=${month}`;
   
-  const response = await fetch(url, {
+  const response = await fetch(apiUrl.organizations.monthlySummary(currentOrganization.id, year, month), {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   

@@ -1,6 +1,8 @@
+import { apiUrl } from './index';
+
 // 食事予約関連のAPI関数群
 export const fetchMealSignup = async (dateStr: string, token: string) => {
-  const response = await fetch(`http://localhost:3001/api/meals?date=${dateStr}`, {
+  const response = await fetch(apiUrl.meals.get(dateStr), {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!response.ok) {
@@ -15,7 +17,7 @@ export const saveMealSignupApi = async (
   organizationId: string,
   token: string
 ) => {
-  const response = await fetch('http://localhost:3001/api/meals', {
+  const response = await fetch(apiUrl.meals.save(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

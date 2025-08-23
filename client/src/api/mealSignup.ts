@@ -1,11 +1,10 @@
+import { apiUrl } from './index';
+
 // 自分の月次食事予約データを取得
 export const fetchSelfMonthlyMealSignup = async (year: number, month: number, token: string) => {
-  const response = await fetch(
-    `http://localhost:3001/api/meals/self/monthly?year=${year}&month=${month}`,
-    {
-      headers: { 'Authorization': `Bearer ${token}` },
-    }
-  );
+  const response = await fetch(apiUrl.mealSignup.selfMonthly(year, month), {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
   if (!response.ok) {
     throw new Error(`Error fetching self monthly meal signup: ${response.statusText}`);
   }
@@ -20,7 +19,7 @@ export const saveSelfMonthlyMealSignup = async (
   organizationId: string,
   token: string
 ) => {
-  const response = await fetch('http://localhost:3001/api/meals/self/bulk', {
+  const response = await fetch(apiUrl.mealSignup.saveSelfMonthly(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

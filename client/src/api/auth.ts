@@ -1,3 +1,5 @@
+import { apiUrl } from './index';
+
 // ユーザー登録の重複実行を防ぐためのフラグ
 let isRegistering = false;
 
@@ -12,7 +14,7 @@ export const registerUserIfNeeded = async (token: string) => {
     isRegistering = true;
     console.log('🔄 POST /api/auth/register を呼び出し中...');
     
-    const registerResponse = await fetch('http://localhost:3001/api/auth/register', {
+    const registerResponse = await fetch(apiUrl.auth.register(), {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
     });
@@ -47,7 +49,7 @@ export const registerUserIfNeeded = async (token: string) => {
 };
 
 export const updateUserProfile = async (data: any, token: string) => {
-  const response = await fetch('http://localhost:3001/api/auth/me', {
+  const response = await fetch(apiUrl.auth.me(), {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -62,7 +64,7 @@ export const updateUserProfile = async (data: any, token: string) => {
 };
 
 export const switchOrganizationApi = async (organizationId: string, token: string) => {
-  const response = await fetch(`http://localhost:3001/api/auth/select-organization/${organizationId}`, {
+  const response = await fetch(apiUrl.auth.selectOrganization(organizationId), {
     method: 'PUT',
     headers: { 'Authorization': `Bearer ${token}` },
   });
@@ -73,7 +75,7 @@ export const switchOrganizationApi = async (organizationId: string, token: strin
 };
 
 export const leaveOrganization = async (token: string) => {
-  const response = await fetch('http://localhost:3001/api/auth/leave-organization', {
+  const response = await fetch(apiUrl.auth.leaveOrganization(), {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${token}` },
   });
