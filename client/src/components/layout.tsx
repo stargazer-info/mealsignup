@@ -1,5 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
 import type { ReactNode } from 'react'
+import { UserRoundMinus } from 'lucide-react'
+import { leaveOrganization } from '@/api/auth'
 
 // const DotIcon = () => {
 //   return (
@@ -12,6 +14,24 @@ import type { ReactNode } from 'react'
 function Layout ({ children }: {
     children: ReactNode,
 }) {
+  const { getToken } = useAuth()
+
+  const handleOrgLeave = async () => {
+    if (!window.confirm('本当にこのグループから抜けますか？この操作は取り消せません。')) {
+      return
+    }
+    try {
+      const token = await getToken()
+      if (!token) return
+      await leaveOrganization(token)
+      // 成功したらページをリロードして状態を更新
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to leave organization', error)
+      alert('グループからの脱退に失敗しました。')
+    }
+  }
+
   return (
     <main className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-6xl">
@@ -26,7 +46,16 @@ function Layout ({ children }: {
         </SignedOut>
         <SignedIn>
 	  <div className="flex justify-center mb-4">
-            <UserButton />
+            <UserButton>
+              <UserButton.MenuItems>
+                <UserButton.Action
+                  label="グループから抜ける"
+                  labelIcon={<UserRoundMinus className="text-destructive" />}
+                  onClick={handleOrgLeave}
+                  className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+                />
+              </UserButton.MenuItems>
+            </UserButton>
 	  </div>
 	  { children }
         </SignedIn>
