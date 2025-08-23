@@ -91,10 +91,9 @@ interface GroupSummaryProps {
 }
 
 export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
-  const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
   const [currentDate, setCurrentDate] = useState(new Date(2025, 7)) // 2025年8月
 
-  const currentGroup = groupsData[currentGroupIndex]
+  const currentGroup = groupsData[0]
 
   const displayGroupName = groupData?.name || currentGroup.groupName
   const displayInviteCode = groupData?.inviteCode || currentGroup.inviteCode
@@ -141,15 +140,6 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
     })
   }
 
-  const navigateGroup = (direction: "prev" | "next") => {
-    setCurrentGroupIndex((prev) => {
-      if (direction === "prev") {
-        return prev > 0 ? prev - 1 : groupsData.length - 1
-      } else {
-        return prev < groupsData.length - 1 ? prev + 1 : 0
-      }
-    })
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-4">
@@ -166,20 +156,14 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
 
         {/* グループ情報 */}
         <Card className="border-amber-200">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <Button variant="ghost" size="sm" onClick={() => navigateGroup("prev")}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="text-center">
-                <CardTitle className="text-xl text-amber-800">{displayGroupName}</CardTitle>
-                <Badge variant="secondary" className="mt-1">
-                  招待コード: {displayInviteCode}
+          <CardHeader>
+            <div className="flex flex-col items-center gap-2 text-lg">
+              <div className="flex items-center gap-4">
+                <span className="font-semibold text-foreground">グループ名: {displayGroupName || "N/A"}</span>
+                <Badge variant="outline" className="text-sm px-3 py-1">
+                  招待コード: {displayInviteCode || "N/A"}
                 </Badge>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigateGroup("next")}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
           </CardHeader>
         </Card>
