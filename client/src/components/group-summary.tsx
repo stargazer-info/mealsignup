@@ -1,89 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@clerk/clerk-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-
-type MealStatus = "applied" | "not_applied"
-
-interface MealData {
-  breakfast: MealStatus
-  lunch: MealStatus
-  dinner: MealStatus
-}
-
-interface GroupData {
-  groupName: string
-  inviteCode: string
-  members: {
-    name: string
-    meals: Record<string, MealData>
-  }[]
-}
-
-// サンプルデータ
-const groupsData: GroupData[] = [
-  {
-    groupName: "田中ファミリー",
-    inviteCode: "ABC123",
-    members: [
-      {
-        name: "田中太郎",
-        meals: {
-          "2025-08": {
-            "1": { breakfast: "applied", lunch: "applied", dinner: "not_applied" },
-            "2": { breakfast: "not_applied", lunch: "applied", dinner: "applied" },
-            "3": { breakfast: "applied", lunch: "not_applied", dinner: "applied" },
-            // ... 他の日付
-          },
-        },
-      },
-      {
-        name: "田中花子",
-        meals: {
-          "2025-08": {
-            "1": { breakfast: "applied", lunch: "not_applied", dinner: "applied" },
-            "2": { breakfast: "applied", lunch: "applied", dinner: "not_applied" },
-            "3": { breakfast: "not_applied", lunch: "applied", dinner: "applied" },
-            // ... 他の日付
-          },
-        },
-      },
-    ],
-  },
-  {
-    groupName: "佐藤ファミリー",
-    inviteCode: "DEF456",
-    members: [
-      {
-        name: "佐藤一郎",
-        meals: {
-          "2025-08": {
-            "1": { breakfast: "applied", lunch: "applied", dinner: "applied" },
-            "2": { breakfast: "applied", lunch: "not_applied", dinner: "applied" },
-            "3": { breakfast: "not_applied", lunch: "applied", dinner: "not_applied" },
-          },
-        },
-      },
-      {
-        name: "佐藤美咲",
-        meals: {
-          "2025-08": {
-            "1": { breakfast: "not_applied", lunch: "applied", dinner: "applied" },
-            "2": { breakfast: "applied", lunch: "applied", dinner: "applied" },
-            "3": { breakfast: "applied", lunch: "not_applied", dinner: "applied" },
-          },
-        },
-      },
-    ],
-  },
-]
+import { fetchMonthlySummary } from "@/api/monthlySummary"
+import type { DailyData } from "../types/DailyData"
 
 interface GroupSummaryProps {
   onBack: () => void
   groupData?: {
+    id: string
     name: string
     userName: string
     inviteCode: string
@@ -91,42 +20,37 @@ interface GroupSummaryProps {
 }
 
 export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
+  const { getToken } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date(2025, 7)) // 2025年8月
+  const [dailySummary, setDailySummary] = useState<Record<string, DailyData>>({})
+  const [isLoading, setIsLoading] = useState(true)
 
-  const currentGroup = groupsData[0]
+  const displayGroupName = groupData?.name
+  const displayInviteCode = groupData?.inviteCode
 
-  const displayGroupName = groupData?.name || currentGroup.groupName
-  const displayInviteCode = groupData?.inviteCode || currentGroup.inviteCode
-
-  const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`
-
-  // 日付ごとの合計食事数を計算
-  const calculateDailySummary = () => {
-    const summary: Record<string, { breakfast: number; lunch: number; dinner: number }> = {}
-
-    const year = currentDate.getFullYear()
-    const month = currentDate.getMonth()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      summary[day.toString()] = { breakfast: 0, lunch: 0, dinner: 0 }
-    }
-
-    currentGroup.members.forEach((member) => {
-      const monthData = member.meals[monthKey]
-      if (monthData) {
-        Object.entries(monthData).forEach(([day, meals]) => {
-          if (meals.breakfast === "applied") summary[day].breakfast++
-          if (meals.lunch === "applied") summary[day].lunch++
-          if (meals.dinner === "applied") summary[day].dinner++
-        })
+  useEffect(() => {
+    const loadSummary = async () => {
+      if (!groupData) return
+      setIsLoading(true)
+      try {
+        const summaryResponse = await fetchMonthlySummary({ id: groupData.id }, currentDate, getToken)
+        const summaryMap = summaryResponse.dailyData.reduce(
+          (acc, item) => {
+            acc[item.day] = item
+            return acc
+          },
+          {} as Record<string, DailyData>
+        )
+        setDailySummary(summaryMap)
+      } catch (error) {
+        console.error("Failed to fetch monthly summary:", error)
+        setDailySummary({})
+      } finally {
+        setIsLoading(false)
       }
-    })
-
-    return summary
-  }
-
-  const dailySummary = calculateDailySummary()
+    }
+    loadSummary()
+  }, [currentDate, groupData, getToken])
 
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentDate((prev) => {
@@ -202,25 +126,39 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(dailySummary).map(([day, meals]) => (
-                    <tr key={day} className="border-b hover:bg-muted/50">
-                      <td className="p-2">{day}日</td>
-                      <td className="text-center p-2">
-                        <Badge variant={meals.breakfast > 0 ? "default" : "secondary"}>{meals.breakfast}</Badge>
-                      </td>
-                      <td className="text-center p-2">
-                        <Badge variant={meals.lunch > 0 ? "default" : "secondary"}>{meals.lunch}</Badge>
-                      </td>
-                      <td className="text-center p-2">
-                        <Badge variant={meals.dinner > 0 ? "default" : "secondary"}>{meals.dinner}</Badge>
-                      </td>
-                      <td className="text-center p-2">
-                        <Badge variant="outline" className="font-semibold">
-                          {meals.breakfast + meals.lunch + meals.dinner}
-                        </Badge>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="text-center p-4">
+                        読み込み中...
                       </td>
                     </tr>
-                  ))}
+                  ) : Object.keys(dailySummary).length > 0 ? (
+                    Object.entries(dailySummary).map(([day, meals]) => (
+                      <tr key={day} className="border-b hover:bg-muted/50">
+                        <td className="p-2">{day}日</td>
+                        <td className="text-center p-2">
+                          <Badge variant={meals.breakfast > 0 ? "default" : "secondary"}>{meals.breakfast}</Badge>
+                        </td>
+                        <td className="text-center p-2">
+                          <Badge variant={meals.lunch > 0 ? "default" : "secondary"}>{meals.lunch}</Badge>
+                        </td>
+                        <td className="text-center p-2">
+                          <Badge variant={meals.dinner > 0 ? "default" : "secondary"}>{meals.dinner}</Badge>
+                        </td>
+                        <td className="text-center p-2">
+                          <Badge variant="outline" className="font-semibold">
+                            {meals.breakfast + meals.lunch + meals.dinner}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="text-center p-4">
+                        表示するデータがありません。
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
