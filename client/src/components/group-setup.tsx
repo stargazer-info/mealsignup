@@ -21,8 +21,10 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
   const [groupName, setGroupName] = useState("")
   const [inviteCode, setInviteCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleCreateGroup = async () => {
+    setError(null)
     if (groupName.trim()) {
       setIsLoading(true);
       const token = await getToken();
@@ -36,6 +38,7 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
   }
 
   const handleJoinGroup = async () => {
+    setError(null)
     if (inviteCode.trim()) {
       setIsLoading(true);
       const token = await getToken();
@@ -43,7 +46,10 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
       try {
         await joinOrganization(inviteCode, token)
         await onGroupSetup()
-      } catch (error) { console.error("Failed to join group:", error); }
+      } catch (error) {
+        setError("招待コードが正しくないか、既にグループに参加しています。")
+        console.error("Failed to join group:", error);
+      }
       finally { setIsLoading(false); }
     }
   }
@@ -66,7 +72,7 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); setError(null); }}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="create" className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
@@ -104,6 +110,7 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
                     onChange={(e) => setInviteCode(e.target.value.trim().toUpperCase())}
                     maxLength={8}
                   />
+                  {error && <p className="text-sm text-destructive mt-1">{error}</p>}
                 </div>
                 <Button onClick={handleJoinGroup} className="w-full" disabled={!inviteCode.trim() || isLoading}>
                   <Key className="h-4 w-4 mr-2" />
