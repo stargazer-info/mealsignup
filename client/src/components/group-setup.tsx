@@ -1,42 +1,50 @@
 "use client"
 
 import { useState } from "react"
+import { useAuth, useUser } from "@clerk/clerk-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Users, Plus, Key } from "lucide-react"
+import { createOrganization, joinOrganization } from "@/api/organizations"
 
 interface GroupSetupProps {
-  onGroupSetup: (groupData: { name: string; userName: string; inviteCode: string }) => void
+  onGroupSetup: () => Promise<void>
 }
 
 export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
+  const { getToken } = useAuth()
+  const { user } = useUser()
   const [activeTab, setActiveTab] = useState("create")
   const [groupName, setGroupName] = useState("")
-  const [userName, setUserName] = useState("")
   const [inviteCode, setInviteCode] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleCreateGroup = () => {
-    if (groupName.trim() && userName.trim()) {
-      const newInviteCode = Math.random().toString(36).substring(2, 8).toUpperCase()
-      onGroupSetup({
-        name: groupName,
-        userName: userName,
-        inviteCode: newInviteCode,
-      })
+  const handleCreateGroup = async () => {
+    if (groupName.trim()) {
+      setIsLoading(true);
+      const token = await getToken();
+      if (!token) { setIsLoading(false); return; }
+      try {
+        await createOrganization(groupName, token)
+        await onGroupSetup()
+      } catch (error) { console.error("Failed to create group:", error); }
+      finally { setIsLoading(false); }
     }
   }
 
-  const handleJoinGroup = () => {
-    if (inviteCode.trim() && userName.trim()) {
-      // 実際のアプリでは招待コードを検証してグループ情報を取得
-      onGroupSetup({
-        name: "参加したグループ", // 実際は招待コードから取得
-        userName: userName,
-        inviteCode: inviteCode,
-      })
+  const handleJoinGroup = async () => {
+    if (inviteCode.trim()) {
+      setIsLoading(true);
+      const token = await getToken();
+      if (!token) { setIsLoading(false); return; }
+      try {
+        await joinOrganization(inviteCode, token)
+        await onGroupSetup()
+      } catch (error) { console.error("Failed to join group:", error); }
+      finally { setIsLoading(false); }
     }
   }
 
@@ -44,7 +52,9 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">ごはんお願い</h1>
+          <h1 className="text-4xl font-bold text-primary mb-2">
+            {user ? `ようこそ、${user.firstName}さん` : "ごはんお願い"}
+          </h1>
           <p className="text-lg text-muted-foreground">家族の食事申し込みを簡単管理</p>
         </div>
 
@@ -78,18 +88,9 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
                     onChange={(e) => setGroupName(e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="userName">あなたの名前</Label>
-                  <Input
-                    id="userName"
-                    placeholder="田中太郎"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                  />
-                </div>
-                <Button onClick={handleCreateGroup} className="w-full" disabled={!groupName.trim() || !userName.trim()}>
+                <Button onClick={handleCreateGroup} className="w-full" disabled={!groupName.trim() || isLoading}>
                   <Users className="h-4 w-4 mr-2" />
-                  グループを作成
+                  {isLoading ? '作成中...' : 'グループを作成'}
                 </Button>
               </TabsContent>
 
@@ -104,18 +105,9 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
                     maxLength={6}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="userNameJoin">あなたの名前</Label>
-                  <Input
-                    id="userNameJoin"
-                    placeholder="田中花子"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                  />
-                </div>
-                <Button onClick={handleJoinGroup} className="w-full" disabled={!inviteCode.trim() || !userName.trim()}>
+                <Button onClick={handleJoinGroup} className="w-full" disabled={!inviteCode.trim() || isLoading}>
                   <Key className="h-4 w-4 mr-2" />
-                  グループに参加
+                  {isLoading ? '参加中...' : 'グループに参加'}
                 </Button>
               </TabsContent>
             </Tabs>

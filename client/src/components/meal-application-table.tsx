@@ -3,126 +3,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Sun, Utensils, Moon, Check, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
+import { Sun, Utensils, Moon, Check, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
 
-// サンプルデータ
-const sampleData = {
-  groups: [
-    {
-      id: 1,
-      userName: "田中 太郎",
-      groupName: "田中ファミリー",
-      inviteCode: "ABC123",
-      applications: {
-        "2025-8": {
-          1: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-          2: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-          3: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-          4: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-          5: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-        },
-        "2025-9": {
-          1: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-          2: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-          3: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-          4: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-          5: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-        },
-        "2025-7": {
-          1: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-          2: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-          3: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-          4: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-          5: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-        },
-      },
-    },
-    {
-      id: 2,
-      userName: "佐藤 花子",
-      groupName: "佐藤ファミリー",
-      inviteCode: "XYZ789",
-      applications: {
-        "2025-8": {
-          1: { breakfast: "not-applied", lunch: "applied", dinner: "not-applied" },
-          2: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-          3: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-          4: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-          5: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-        },
-        "2025-9": {
-          1: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-          2: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-          3: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-          4: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-          5: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-        },
-        "2025-7": {
-          1: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-          2: { breakfast: "not-applied", lunch: "not-applied", dinner: "applied" },
-          3: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-          4: { breakfast: "not-applied", lunch: "applied", dinner: "not-applied" },
-          5: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-        },
-      },
-    },
-    {
-      id: 3,
-      userName: "山田 次郎",
-      groupName: "山田ファミリー",
-      inviteCode: "DEF456",
-      applications: {
-        "2025-8": {
-          1: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-          2: { breakfast: "not-applied", lunch: "applied", dinner: "not-applied" },
-          3: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-          4: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-          5: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-        },
-        "2025-9": {
-          1: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-          2: { breakfast: "applied", lunch: "not-applied", dinner: "applied" },
-          3: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-          4: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-          5: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-        },
-        "2025-7": {
-          1: { breakfast: "not-applied", lunch: "applied", dinner: "applied" },
-          2: { breakfast: "applied", lunch: "applied", dinner: "not-applied" },
-          3: { breakfast: "not-applied", lunch: "not-applied", dinner: "applied" },
-          4: { breakfast: "applied", lunch: "applied", dinner: "applied" },
-          5: { breakfast: "applied", lunch: "not-applied", dinner: "not-applied" },
-        },
-      },
-    },
-  ],
-}
-
 type MealStatus = "applied" | "not-applied"
-
-interface MealApplications {
-  breakfast: MealStatus
-  lunch: MealStatus
-  dinner: MealStatus
-}
 
 interface GroupData {
   name: string
   userName: string
   inviteCode: string
-}
-
-const getMealIcon = (mealType: "breakfast" | "lunch" | "dinner") => {
-  switch (mealType) {
-    case "breakfast":
-      return <Sun className="h-4 w-4" />
-    case "lunch":
-      return <Utensils className="h-4 w-4" />
-    case "dinner":
-      return <Moon className="h-4 w-4" />
-  }
 }
 
 const getMealStatusIcon = (status: MealStatus) => {
@@ -163,16 +52,10 @@ interface MealApplicationTableProps {
 export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApplicationTableProps) {
   const [currentYear, setCurrentYear] = useState(2025)
   const [currentMonth, setCurrentMonth] = useState(8)
-  const [currentGroupId, setCurrentGroupId] = useState(1)
-  const [mealData, setMealData] = useState(sampleData)
+  // TODO: APIから取得した食事データで初期化する
+  const [mealData, setMealData] = useState<Record<string, any>>({})
 
-  const currentGroup = mealData.groups.find((group) => group.id === currentGroupId) || mealData.groups[0]
-
-  const displayUserName = groupData?.userName || currentGroup.userName
-  const displayGroupName = groupData?.name || currentGroup.groupName
-  const displayInviteCode = groupData?.inviteCode || currentGroup.inviteCode
-
-  const { applications } = currentGroup
+  const applications = mealData[`${currentYear}-${currentMonth}`] || {}
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
 
   const navigateMonth = (direction: "prev" | "next") => {
@@ -193,108 +76,19 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     }
   }
 
+  // TODO: APIを呼び出して食事の申し込み状態を更新する
   const toggleMealStatus = (day: number, mealType: "breakfast" | "lunch" | "dinner") => {
-    const monthKey = `${currentYear}-${currentMonth}`
-
-    setMealData((prevData) => {
-      const updatedData = { ...prevData }
-      const groupIndex = updatedData.groups.findIndex((group) => group.id === currentGroupId)
-
-      if (groupIndex === -1) return prevData
-
-      const updatedGroup = { ...updatedData.groups[groupIndex] }
-      const updatedApplications = { ...updatedGroup.applications }
-
-      if (!updatedApplications[monthKey]) {
-        updatedApplications[monthKey] = {}
-      }
-
-      const currentDayData = updatedApplications[monthKey][day] || {
-        breakfast: "not-applied" as MealStatus,
-        lunch: "not-applied" as MealStatus,
-        dinner: "not-applied" as MealStatus,
-      }
-
-      const newStatus: MealStatus = currentDayData[mealType] === "applied" ? "not-applied" : "applied"
-
-      updatedApplications[monthKey] = {
-        ...updatedApplications[monthKey],
-        [day]: {
-          ...currentDayData,
-          [mealType]: newStatus,
-        },
-      }
-
-      updatedGroup.applications = updatedApplications
-      updatedData.groups[groupIndex] = updatedGroup
-
-      console.log(`[v0] ${day}日の${mealType}を${newStatus}に変更`)
-      return updatedData
-    })
+    console.log(`[v0] ${day}日の${mealType}を切り替え`)
   }
 
+  // TODO: APIを呼び出して一括申し込み
   const applyAllMeals = () => {
-    const monthKey = `${currentYear}-${currentMonth}`
-
-    setMealData((prevData) => {
-      const updatedData = { ...prevData }
-      const groupIndex = updatedData.groups.findIndex((group) => group.id === currentGroupId)
-
-      if (groupIndex === -1) return prevData
-
-      const updatedGroup = { ...updatedData.groups[groupIndex] }
-      const updatedApplications = { ...updatedGroup.applications }
-
-      if (!updatedApplications[monthKey]) {
-        updatedApplications[monthKey] = {}
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        updatedApplications[monthKey][day] = {
-          breakfast: "applied" as MealStatus,
-          lunch: "applied" as MealStatus,
-          dinner: "applied" as MealStatus,
-        }
-      }
-
-      updatedGroup.applications = updatedApplications
-      updatedData.groups[groupIndex] = updatedGroup
-
-      console.log("[v0] 全て申し込み完了")
-      return updatedData
-    })
+    console.log("[v0] 全て申し込み完了")
   }
 
+  // TODO: APIを呼び出して一括解除
   const cancelAllMeals = () => {
-    const monthKey = `${currentYear}-${currentMonth}`
-
-    setMealData((prevData) => {
-      const updatedData = { ...prevData }
-      const groupIndex = updatedData.groups.findIndex((group) => group.id === currentGroupId)
-
-      if (groupIndex === -1) return prevData
-
-      const updatedGroup = { ...updatedData.groups[groupIndex] }
-      const updatedApplications = { ...updatedGroup.applications }
-
-      if (!updatedApplications[monthKey]) {
-        updatedApplications[monthKey] = {}
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        updatedApplications[monthKey][day] = {
-          breakfast: "not-applied" as MealStatus,
-          lunch: "not-applied" as MealStatus,
-          dinner: "not-applied" as MealStatus,
-        }
-      }
-
-      updatedGroup.applications = updatedApplications
-      updatedData.groups[groupIndex] = updatedGroup
-
-      console.log("[v0] 全て申し込み取消完了")
-      return updatedData
-    })
+    console.log("[v0] 全て申し込み取消完了")
   }
 
   const navigateToStatistics = () => {
@@ -303,40 +97,18 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     onNavigateToSummary()
   }
 
-  const currentApplications = applications[`${currentYear}-${currentMonth}`] || {}
+  const currentApplications = applications || {}
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4">
         <div className="flex flex-col items-center gap-2 text-lg">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground">グループ名: </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="font-semibold text-foreground hover:bg-muted p-2 h-auto">
-                    {displayGroupName}
-                    <ChevronDown className="h-4 w-4 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-48">
-                  {sampleData.groups.map((group) => (
-                    <DropdownMenuItem
-                      key={group.id}
-                      onClick={() => setCurrentGroupId(group.id)}
-                      className={currentGroupId === group.id ? "bg-muted" : ""}
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium">{group.groupName}</span>
-                        <span className="text-xs text-muted-foreground">{group.userName}</span>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <span className="font-semibold text-foreground">
+              グループ名: {groupData?.name || "N/A"}
+            </span>
             <Badge variant="outline" className="text-sm px-3 py-1">
-              招待コード: {displayInviteCode}
+              招待コード: {groupData?.inviteCode || "N/A"}
             </Badge>
           </div>
         </div>
