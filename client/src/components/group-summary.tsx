@@ -144,6 +144,20 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
+        {/* グループ情報 */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-2 text-lg">
+            <div className="flex items-center gap-4">
+              <span className="font-semibold text-foreground">
+                グループ名: {displayGroupName || "N/A"}
+              </span>
+              <Badge variant="outline" className="text-sm px-3 py-1">
+                招待コード: {displayInviteCode || "N/A"}
+              </Badge>
+            </div>
+          </div>
+        </div>
+
         {/* ヘッダー */}
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={onBack} className="flex items-center gap-2 bg-transparent">
@@ -153,20 +167,6 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
           <h1 className="text-2xl font-bold text-amber-800">グループサマリー</h1>
           <div></div>
         </div>
-
-        {/* グループ情報 */}
-        <Card className="border-amber-200">
-          <CardHeader>
-            <div className="flex flex-col items-center gap-2 text-lg">
-              <div className="flex items-center gap-4">
-                <span className="font-semibold text-foreground">グループ名: {displayGroupName || "N/A"}</span>
-                <Badge variant="outline" className="text-sm px-3 py-1">
-                  招待コード: {displayInviteCode || "N/A"}
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
 
         {/* 月選択 */}
         <Card className="border-amber-200">
