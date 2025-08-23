@@ -14,15 +14,15 @@ router.get('/', requireAuth, async (req, res) => {
 
     const { date, month, organizationId } = req.query;
 
-    const [memberships, userPreference] = await Promise.all([
-      prisma.organizationMembership.findMany({ where: { clerkId: req.user.id } }),
-      prisma.userPreference.findUnique({ where: { clerkId: req.user.id } })
-    ]);
+    const memberships = await prisma.organizationMembership.findMany({ 
+      where: { clerkId: req.user.id } 
+    });
 
     // Determine which organization to use
     let targetOrganizationId = organizationId as string;
     if (!targetOrganizationId) {
-      targetOrganizationId = userPreference?.lastSelectedOrganizationId || '';
+      const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+      targetOrganizationId = lastSelectedMembership?.organizationId || '';
     }
 
     if (!targetOrganizationId) {
@@ -120,15 +120,15 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    const [memberships, userPreference] = await Promise.all([
-      prisma.organizationMembership.findMany({ where: { clerkId: req.user.id } }),
-      prisma.userPreference.findUnique({ where: { clerkId: req.user.id } })
-    ]);
+    const memberships = await prisma.organizationMembership.findMany({ 
+      where: { clerkId: req.user.id } 
+    });
 
     // Determine which organization to use
     let targetOrganizationId = organizationId;
     if (!targetOrganizationId) {
-      targetOrganizationId = userPreference?.lastSelectedOrganizationId;
+      const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+      targetOrganizationId = lastSelectedMembership?.organizationId;
     }
 
     if (!targetOrganizationId) {
@@ -188,15 +188,15 @@ router.post('/bulk', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Dates array is required' });
     }
 
-    const [memberships, userPreference] = await Promise.all([
-      prisma.organizationMembership.findMany({ where: { clerkId: req.user.id } }),
-      prisma.userPreference.findUnique({ where: { clerkId: req.user.id } })
-    ]);
+    const memberships = await prisma.organizationMembership.findMany({ 
+      where: { clerkId: req.user.id } 
+    });
 
     // Determine which organization to use
     let targetOrganizationId = organizationId;
     if (!targetOrganizationId) {
-      targetOrganizationId = userPreference?.lastSelectedOrganizationId;
+      const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+      targetOrganizationId = lastSelectedMembership?.organizationId;
     }
 
     if (!targetOrganizationId) {
@@ -330,15 +330,15 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid year or month' });
     }
 
-    const [memberships, userPreference] = await Promise.all([
-      prisma.organizationMembership.findMany({ where: { clerkId: req.user.id } }),
-      prisma.userPreference.findUnique({ where: { clerkId: req.user.id } })
-    ]);
+    const memberships = await prisma.organizationMembership.findMany({ 
+      where: { clerkId: req.user.id } 
+    });
 
     // Determine which organization to use
     let targetOrganizationId = organizationId;
     if (!targetOrganizationId) {
-      targetOrganizationId = userPreference?.lastSelectedOrganizationId;
+      const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+      targetOrganizationId = lastSelectedMembership?.organizationId;
     }
 
     if (!targetOrganizationId) {
