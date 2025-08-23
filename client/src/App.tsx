@@ -5,7 +5,7 @@ import { MealApplicationTable } from "@/components/meal-application-table"
 import GroupSummary from "@/components/group-summary"
 import GroupSetup from "@/components/group-setup"
 import Layout from "@/components/layout"
-import { fetchUserOrganizations, OrganizationWithRole } from './api/organizations'
+import { fetchUserOrganizations, type OrganizationWithRole } from './api/organizations'
 
 function App() {
   const { getToken } = useAuth()
