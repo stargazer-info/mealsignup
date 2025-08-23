@@ -1,6 +1,7 @@
-import { useAuth, useUser } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, SignInButton, useAuth, useUser } from '@clerk/clerk-react'
 import { useState, useEffect } from 'react'
 import './App.css'
+import { Button } from "@/components/ui/button"
 import { MealApplicationTable } from "@/components/meal-application-table"
 import GroupSummary from "@/components/group-summary"
 import GroupSetup from "@/components/group-setup"
@@ -42,12 +43,8 @@ function App() {
     }
   }, [isLoaded, isSignedIn, getToken])
 
-  if (!isLoaded || isLoading) {
+  if (!isLoaded) {
     return <Layout children={<div>Loading...</div>} />
-  }
-
-  if (!isSignedIn || organizations.length === 0) {
-    return <GroupSetup onGroupSetup={fetchOrganizations} />
   }
 
   const orgToDisplay = lastSelectedOrganization || organizations[0]
@@ -59,15 +56,36 @@ function App() {
   } : null
 
   return (
-    <main className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-6xl">
-	<Layout children={ currentView === "application" ? (
-            <MealApplicationTable onNavigateToSummary={() => setCurrentView("summary")} groupData={groupData} />
+    <>
+      <SignedOut>
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-primary mb-2">ごはんお願い</h1>
+            <p className="text-lg text-muted-foreground mb-8">家族の食事申し込みを簡単管理</p>
+            <SignInButton mode="modal">
+              <Button>サインイン</Button>
+            </SignInButton>
+          </div>
+        </div>
+      </SignedOut>
+      <SignedIn>
+        {isLoading ? (
+          <Layout children={<div>Loading...</div>} />
+        ) : organizations.length === 0 ? (
+          <GroupSetup onGroupSetup={fetchOrganizations} />
         ) : (
-          <GroupSummary onBack={() => setCurrentView("application")} groupData={groupData} />
-        )} />
-      </div>
-    </main>
+          <main className="min-h-screen bg-background p-4 md:p-8">
+            <div className="mx-auto max-w-6xl">
+              <Layout children={ currentView === "application" ? (
+                  <MealApplicationTable onNavigateToSummary={() => setCurrentView("summary")} groupData={groupData} />
+              ) : (
+                <GroupSummary onBack={() => setCurrentView("application")} groupData={groupData} />
+              )} />
+            </div>
+          </main>
+        )}
+      </SignedIn>
+    </>
   )
 }
 
