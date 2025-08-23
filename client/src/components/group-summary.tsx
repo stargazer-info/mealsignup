@@ -142,8 +142,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
         {/* グループ情報 */}
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-col items-center gap-2 text-lg">
@@ -164,18 +163,18 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
             <ChevronLeft className="h-4 w-4" />
             戻る
           </Button>
-          <h1 className="text-2xl font-bold text-amber-800">グループサマリー</h1>
+          <h1 className="text-2xl font-bold text-primary">グループサマリー</h1>
           <div></div>
         </div>
 
         {/* 月選択 */}
-        <Card className="border-amber-200">
+        <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-center gap-4">
               <Button variant="ghost" size="sm" onClick={() => navigateMonth("prev")}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h2 className="text-lg font-semibold text-amber-800">
+              <h2 className="text-lg font-semibold text-primary">
                 {currentDate.getFullYear()}年 {currentDate.getMonth() + 1}月
               </h2>
               <Button variant="ghost" size="sm" onClick={() => navigateMonth("next")}>
@@ -186,26 +185,26 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
         </Card>
 
         {/* 日別サマリーテーブル */}
-        <Card className="border-amber-200">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-amber-800">日別申込数</CardTitle>
+            <CardTitle className="text-primary">日別申込数</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-amber-200">
-                    <th className="text-left p-2 text-amber-700 font-medium">日付</th>
-                    <th className="text-center p-2 text-amber-700 font-medium">朝食</th>
-                    <th className="text-center p-2 text-amber-700 font-medium">昼食</th>
-                    <th className="text-center p-2 text-amber-700 font-medium">夕食</th>
-                    <th className="text-center p-2 text-amber-700 font-medium">合計</th>
+                  <tr className="border-b">
+                    <th className="text-left p-2 font-medium">日付</th>
+                    <th className="text-center p-2 font-medium">朝食</th>
+                    <th className="text-center p-2 font-medium">昼食</th>
+                    <th className="text-center p-2 font-medium">夕食</th>
+                    <th className="text-center p-2 font-medium">合計</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(dailySummary).map(([day, meals]) => (
-                    <tr key={day} className="border-b border-amber-100 hover:bg-amber-50">
-                      <td className="p-2 text-amber-800">{day}日</td>
+                    <tr key={day} className="border-b hover:bg-muted/50">
+                      <td className="p-2">{day}日</td>
                       <td className="text-center p-2">
                         <Badge variant={meals.breakfast > 0 ? "default" : "secondary"}>{meals.breakfast}</Badge>
                       </td>
@@ -227,7 +226,6 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
