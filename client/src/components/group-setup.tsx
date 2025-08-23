@@ -99,10 +99,10 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
                   <Label htmlFor="inviteCode">招待コード</Label>
                   <Input
                     id="inviteCode"
-                    placeholder="ABC123"
+                    placeholder="ABCDEFGH"
                     value={inviteCode}
-                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                    maxLength={6}
+                    onChange={(e) => setInviteCode(e.target.value.trim().toUpperCase())}
+                    maxLength={8}
                   />
                 </div>
                 <Button onClick={handleJoinGroup} className="w-full" disabled={!inviteCode.trim() || isLoading}>

@@ -56,14 +56,24 @@ router.post('/', requireAuth, async (req, res) => {
     }
 
     // Generate unique invite code
-    const inviteCode = nanoid(8).toUpperCase();
+    let inviteCode: string;
+    let isUnique = false;
+    while (!isUnique) {
+      inviteCode = nanoid(8).toUpperCase();
+      const existingOrganization = await prisma.organization.findUnique({
+        where: { inviteCode },
+      });
+      if (!existingOrganization) {
+        isUnique = true;
+      }
+    }
 
     // Create organization and membership in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
         data: {
           name: name.trim(),
-          inviteCode
+          inviteCode: inviteCode!
         }
       });
 
