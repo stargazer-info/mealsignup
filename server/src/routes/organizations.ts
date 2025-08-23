@@ -23,13 +23,6 @@ router.get('/me', requireAuth, async (req, res) => {
       }
     });
 
-    const userPreference = await prisma.userPreference.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        lastSelectedOrganization: true
-      }
-    });
-
     console.log(`✅ GET /api/organizations/me: User found with ${memberships.length} organizations`);
 
     const organizations = memberships.map(membership => ({
@@ -38,9 +31,10 @@ router.get('/me', requireAuth, async (req, res) => {
       joinedAt: membership.joinedAt
     }));
 
+    const lastSelectedMembership = memberships.find(m => m.isLastSelected);
     res.json({
       organizations,
-      lastSelectedOrganization: userPreference?.lastSelectedOrganization
+      lastSelectedOrganization: lastSelectedMembership?.organization || null
     });
   } catch (error) {
     console.error('❌ Get organizations error:', error);
@@ -73,19 +67,19 @@ router.post('/', requireAuth, async (req, res) => {
         }
       });
 
+      // 他の組織の選択を解除
+      await tx.organizationMembership.updateMany({
+        where: { clerkId: req.user.id },
+        data: { isLastSelected: false }
+      });
+
       await tx.organizationMembership.create({
         data: {
           clerkId: req.user.id,
           organizationId: organization.id,
-          role: 'ADMIN'
+          role: 'ADMIN',
+          isLastSelected: true
         }
-      });
-
-      // Set as last selected organization
-      await tx.userPreference.upsert({
-        where: { clerkId: req.user.id },
-        create: { clerkId: req.user.id, lastSelectedOrganizationId: organization.id },
-        update: { lastSelectedOrganizationId: organization.id }
       });
 
       return organization;
@@ -134,27 +128,20 @@ router.post('/join', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'User is already a member of this organization' });
     }
 
+    // ユーザーが他に選択中の組織を持っているか確認
+    const lastSelectedMembership = await prisma.organizationMembership.findFirst({
+      where: { clerkId: req.user.id, isLastSelected: true }
+    });
+
     // Add user to organization
     await prisma.organizationMembership.create({
       data: {
         clerkId: req.user.id,
         organizationId: organization.id,
-        role: 'MEMBER'
+        role: 'MEMBER',
+        isLastSelected: !lastSelectedMembership // 他に選択がなければこれを選択済みにする
       }
     });
-
-    const userPreference = await prisma.userPreference.findUnique({
-      where: { clerkId: req.user.id }
-    });
-
-    // Set as last selected organization if user has no current selection
-    if (!userPreference?.lastSelectedOrganizationId) {
-      await prisma.userPreference.upsert({
-        where: { clerkId: req.user.id },
-        create: { clerkId: req.user.id, lastSelectedOrganizationId: organization.id },
-        update: { lastSelectedOrganizationId: organization.id }
-      });
-    }
 
     res.json({ organization });
   } catch (error) {

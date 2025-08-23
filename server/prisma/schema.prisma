@@ -20,19 +20,10 @@ model Organization {
   updatedAt  DateTime         @updatedAt
 
   // Relations
-  memberships              OrganizationMembership[]
-  mealSignups              MealSignup[]
-  lastSelectedOrganization UserPreference[]
+  memberships OrganizationMembership[]
+  mealSignups MealSignup[]
 
   @@map("organizations")
-}
-
-model UserPreference {
-  clerkId                    String        @id
-  lastSelectedOrganizationId String?
-  lastSelectedOrganization   Organization? @relation(fields: [lastSelectedOrganizationId], references: [id], onDelete: SetNull)
-
-  @@map("user_preferences")
 }
 
 model OrganizationMembership {
@@ -41,6 +32,7 @@ model OrganizationMembership {
   organizationId String
   role           UserRole     @default(MEMBER)
   joinedAt       DateTime     @default(now())
+  isLastSelected Boolean      @default(false)
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

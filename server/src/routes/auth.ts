@@ -11,14 +11,6 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // Get user preferences and memberships
-    const userPreference = await prisma.userPreference.findUnique({
-      where: { clerkId: req.user.id },
-      include: {
-        lastSelectedOrganization: true
-      }
-    });
-
     const memberships = await prisma.organizationMembership.findMany({
       where: { clerkId: req.user.id },
       include: {
@@ -26,12 +18,13 @@ router.get('/me', requireAuth, async (req, res) => {
       }
     });
 
+    const lastSelectedMembership = memberships.find(m => m.isLastSelected);
     res.json({
       clerkId: req.user.id,
       email: req.user.email,
       name: req.user.name,
       memberships: memberships,
-      lastSelectedOrganization: userPreference?.lastSelectedOrganization || null
+      lastSelectedOrganization: lastSelectedMembership?.organization || null
     });
   } catch (error) {
     console.error('Get user profile error:', error);
@@ -56,16 +49,19 @@ router.put('/select-organization/:organizationId', requireAuth, async (req, res)
       return res.status(403).json({ error: 'User is not a member of this organization' });
     }
 
-    await prisma.userPreference.upsert({
-      where: { clerkId: req.user.id },
-      update: {
-        lastSelectedOrganizationId: organizationId
-      },
-      create: {
-        clerkId: req.user.id,
-        lastSelectedOrganizationId: organizationId
-      }
-    });
+    // トランザクションで更新
+    await prisma.$transaction([
+      // まず全ての組織選択を解除
+      prisma.organizationMembership.updateMany({
+        where: { clerkId: req.user.id },
+        data: { isLastSelected: false }
+      }),
+      // 次に指定された組織を選択
+      prisma.organizationMembership.update({
+        where: { clerkId_organizationId: { clerkId: req.user.id, organizationId } },
+        data: { isLastSelected: true }
+      })
+    ]);
 
     res.json({ success: true });
   } catch (error) {
@@ -81,15 +77,15 @@ router.delete('/leave-organization', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const userPreference = await prisma.userPreference.findUnique({
-      where: { clerkId: req.user.id }
+    const lastSelectedMembership = await prisma.organizationMembership.findFirst({
+      where: { clerkId: req.user.id, isLastSelected: true }
     });
 
-    if (!userPreference || !userPreference.lastSelectedOrganizationId) {
+    if (!lastSelectedMembership) {
       return res.status(400).json({ error: 'No organization selected' });
     }
 
-    const organizationIdToLeave = userPreference.lastSelectedOrganizationId;
+    const organizationIdToLeave = lastSelectedMembership.organizationId;
 
     // Check if user is member of the selected organization
     const membership = await prisma.organizationMembership.findUnique({
@@ -121,13 +117,7 @@ router.delete('/leave-organization', requireAuth, async (req, res) => {
         }
       });
 
-      // 3. Clear user's lastSelectedOrganizationId
-      await tx.userPreference.update({
-        where: { clerkId: req.user.id },
-        data: { lastSelectedOrganizationId: null }
-      });
-
-      // 4. If last member, delete the organization itself
+      // 3. If last member, delete the organization itself
       if (memberCount === 1) {
         await tx.organization.delete({
           where: { id: organizationIdToLeave }
