@@ -171,13 +171,13 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
         <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigateMonth("prev")}>
+              <Button variant="outline" size="sm" onClick={() => navigateMonth("prev")} className="p-2">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h2 className="text-lg font-semibold text-primary">
+              <CardTitle className="text-2xl font-bold text-primary">
                 {currentDate.getFullYear()}年 {currentDate.getMonth() + 1}月
-              </h2>
-              <Button variant="ghost" size="sm" onClick={() => navigateMonth("next")}>
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={() => navigateMonth("next")} className="p-2">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
