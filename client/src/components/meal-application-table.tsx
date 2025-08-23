@@ -4,11 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Sun, Utensils, Moon, Check, X, ChevronLeft, ChevronRight } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@clerk/clerk-react"
+import { saveMealSignupApi } from "@/api/meals"
+import { fetchSelfMonthlyMealSignup } from "@/api/mealSignup"
 
 type MealStatus = "applied" | "not-applied"
 
 interface GroupData {
+  id: string
   name: string
   userName: string
   inviteCode: string
@@ -50,12 +54,33 @@ interface MealApplicationTableProps {
 }
 
 export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApplicationTableProps) {
+  const { getToken } = useAuth()
   const [currentYear, setCurrentYear] = useState(2025)
   const [currentMonth, setCurrentMonth] = useState(8)
-  // TODO: APIから取得した食事データで初期化する
-  const [mealData, setMealData] = useState<Record<string, any>>({})
+  const [mealData, setMealData] = useState<Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>>({})
 
-  const applications = mealData[`${currentYear}-${currentMonth}`] || {}
+  const fetchMealData = async () => {
+    const token = await getToken()
+    if (!token) return
+    try {
+      const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, token)
+      const formattedData = data.reduce((acc, item) => {
+        acc[item.day] = { breakfast: item.breakfast, lunch: item.lunch, dinner: item.dinner }
+        return acc
+      }, {} as Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>)
+      setMealData(formattedData)
+    } catch (error) {
+      console.error("Failed to fetch meal data:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (groupData) {
+      fetchMealData()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentYear, currentMonth, groupData])
+
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
 
   const navigateMonth = (direction: "prev" | "next") => {
@@ -76,9 +101,32 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     }
   }
 
-  // TODO: APIを呼び出して食事の申し込み状態を更新する
-  const toggleMealStatus = (day: number, mealType: "breakfast" | "lunch" | "dinner") => {
-    console.log(`[v0] ${day}日の${mealType}を切り替え`)
+  const toggleMealStatus = async (day: number, mealType: "breakfast" | "lunch" | "dinner") => {
+    const token = await getToken();
+    if (!token || !groupData) return;
+
+    const currentDayData = mealData[day] || { breakfast: false, lunch: false, dinner: false };
+    const newStatus = !currentDayData[mealType];
+
+    const updatedDayData = {
+      ...currentDayData,
+      [mealType]: newStatus,
+    };
+
+    // UIを即時反映 (楽観的更新)
+    setMealData(prevData => ({ ...prevData, [day]: updatedDayData }));
+
+    try {
+      const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      await saveMealSignupApi(dateStr, updatedDayData, groupData.id, token);
+    } catch (error) {
+      console.error("Failed to update meal status:", error);
+      // エラー発生時はUIを元の状態に戻す
+      setMealData(prevData => ({
+        ...prevData,
+        [day]: currentDayData
+      }));
+    }
   }
 
   // TODO: APIを呼び出して一括申し込み
@@ -96,8 +144,6 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     // 実際のアプリケーションでは、ここでルーティングを行う
     onNavigateToSummary()
   }
-
-  const currentApplications = applications || {}
 
   return (
     <div className="space-y-6">
@@ -188,10 +234,15 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
               <tbody>
                 {Array.from({ length: daysInMonth }, (_, i) => {
                   const day = i + 1
-                  const dayApplications = currentApplications[day as keyof typeof currentApplications] || {
-                    breakfast: "not-applied" as MealStatus,
-                    lunch: "not-applied" as MealStatus,
-                    dinner: "not-applied" as MealStatus,
+                  const dayBooleans = mealData[day] || {
+                    breakfast: false,
+                    lunch: false,
+                    dinner: false,
+                  }
+                  const dayApplications = {
+                    breakfast: (dayBooleans.breakfast ? "applied" : "not-applied") as MealStatus,
+                    lunch: (dayBooleans.lunch ? "applied" : "not-applied") as MealStatus,
+                    dinner: (dayBooleans.dinner ? "applied" : "not-applied") as MealStatus,
                   }
 
                   return (

@@ -52,6 +52,7 @@ function App() {
 
   const orgToDisplay = lastSelectedOrganization || organizations[0]
   const groupData = orgToDisplay && user ? {
+    id: orgToDisplay.id,
     name: orgToDisplay.name,
     userName: user.fullName || "",
     inviteCode: orgToDisplay.inviteCode,
