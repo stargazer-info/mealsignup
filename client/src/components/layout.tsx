@@ -36,7 +36,7 @@ function Layout ({ children }: {
       const confirmMsg =
         memberCount === 1
           ? 'あなたは最後のメンバーです。この操作でグループが削除されます。よろしいですか？'
-          : '本当にこのグループから抜けますか？'
+          : 'グループから離脱すると、明日以降の食事申し込みがすべて削除されます。よろしいですか？'
 
       if (!window.confirm(confirmMsg)) {
         return

@@ -292,8 +292,27 @@ router.post('/:organizationId/leave', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Membership not found' });
     }
 
-    await prisma.organizationMembership.delete({
-      where: { id: membership.id }
+    // トランザクションで食事予約削除とメンバーシップ削除を実行
+    await prisma.$transaction(async (tx) => {
+      // 明日以降の食事予約を削除
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      await tx.mealSignup.deleteMany({
+        where: {
+          clerkId: req.user.id,
+          organizationId: organizationId,
+          date: {
+            gte: tomorrow
+          }
+        }
+      });
+
+      // メンバーシップを削除
+      await tx.organizationMembership.delete({
+        where: { id: membership.id }
+      });
     });
 
     return res.status(204).end();
