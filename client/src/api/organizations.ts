@@ -51,15 +51,6 @@ export const leaveOrganization = async (organizationId: string, token: string) =
   }
 };
 
-export const getOrganization = async (organizationId: string, token: string) => {
-  const response = await fetch(`/api/organizations/${organizationId}`, {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch organization');
-  }
-  return response.json();
-};
 
 export const createOrganization = async (name: string, token: string): Promise<Organization> => {
   const response = await fetch(apiUrl.organizations.create(), {
