@@ -42,12 +42,10 @@ function Layout ({ children }: {
         return
       }
 
-      // グループ離脱
+      // グループ離脱（最後のメンバーの場合はサーバー側でグループも削除される）
       await leaveOrganization(orgId, token)
 
-      // 最後のメンバーだった場合はグループ削除
       if (memberCount === 1) {
-        await deleteOrganization(orgId, token)
         showSuccess('グループを削除しました')
       } else {
         showSuccess('グループから離脱しました')

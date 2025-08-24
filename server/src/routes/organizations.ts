@@ -292,28 +292,37 @@ router.post('/:organizationId/leave', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Membership not found' });
     }
 
-    // トランザクションで食事予約削除とメンバーシップ削除を実行
-    await prisma.$transaction(async (tx) => {
-      // 明日以降の食事予約を削除
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-
-      await tx.mealSignup.deleteMany({
-        where: {
-          clerkId: req.user.id,
-          organizationId: organizationId,
-          date: {
-            gte: tomorrow
-          }
-        }
-      });
-
-      // メンバーシップを削除
-      await tx.organizationMembership.delete({
-        where: { id: membership.id }
-      });
+    const memberCount = await prisma.organizationMembership.count({
+      where: { organizationId }
     });
+
+    if (memberCount === 1) {
+      // 最後のメンバーの場合：グループ削除（カスケードで全て削除）
+      await prisma.organization.delete({
+        where: { id: organizationId }
+      });
+    } else {
+      // 通常の離脱：食事予約削除 + メンバーシップ削除
+      await prisma.$transaction(async (tx) => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
+        await tx.mealSignup.deleteMany({
+          where: {
+            clerkId: req.user.id,
+            organizationId: organizationId,
+            date: {
+              gte: tomorrow
+            }
+          }
+        });
+
+        await tx.organizationMembership.delete({
+          where: { id: membership.id }
+        });
+      });
+    }
 
     return res.status(204).end();
   } catch (error) {
