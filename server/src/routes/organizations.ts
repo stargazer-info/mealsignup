@@ -180,6 +180,11 @@ router.get('/:organizationId', requireAuth, async (req, res) => {
     }
     const organization = membership.organization;
 
+    // メンバー人数を取得
+    const memberCount = await prisma.organizationMembership.count({
+      where: { organizationId }
+    });
+
     // Get all members if user is admin
     let members = [];
     if (membership.role === 'ADMIN') {
@@ -197,6 +202,7 @@ router.get('/:organizationId', requireAuth, async (req, res) => {
     res.json({
       organization,
       userRole: membership.role,
+      memberCount,
       members: membership.role === 'ADMIN' ? members : []
     });
   } catch (error) {
@@ -264,6 +270,74 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
   } catch (error) {
     console.error('Get monthly summary error:', error);
     res.status(500).json({ error: 'Failed to get monthly summary' });
+  }
+});
+
+/**
+ * Leave organization – remove membership for current user
+ * POST /api/organizations/:organizationId/leave
+ */
+router.post('/:organizationId/leave', requireAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const { organizationId } = req.params;
+
+    const membership = await prisma.organizationMembership.findUnique({
+      where: { clerkId_organizationId: { clerkId: req.user.id, organizationId } }
+    });
+
+    if (!membership) {
+      return res.status(404).json({ error: 'Membership not found' });
+    }
+
+    await prisma.organizationMembership.delete({
+      where: { id: membership.id }
+    });
+
+    return res.status(204).end();
+  } catch (error) {
+    console.error('Leave organization error:', error);
+    res.status(500).json({ error: 'Failed to leave organization' });
+  }
+});
+
+/**
+ * Delete organization – allowed only if current user is the last member
+ * DELETE /api/organizations/:organizationId
+ */
+router.delete('/:organizationId', requireAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const { organizationId } = req.params;
+
+    const memberCount = await prisma.organizationMembership.count({
+      where: { organizationId }
+    });
+
+    if (memberCount > 1) {
+      return res.status(403).json({ error: 'Organization has other members' });
+    }
+
+    const membership = await prisma.organizationMembership.findUnique({
+      where: { clerkId_organizationId: { clerkId: req.user.id, organizationId } }
+    });
+
+    if (!membership) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await prisma.organization.delete({
+      where: { id: organizationId }
+    });
+
+    return res.status(204).end();
+  } catch (error) {
+    console.error('Delete organization error:', error);
+    res.status(500).json({ error: 'Failed to delete organization' });
   }
 });
 

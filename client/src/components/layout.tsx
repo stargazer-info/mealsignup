@@ -1,7 +1,8 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
 import type { ReactNode } from 'react'
 import { UserRoundMinus } from 'lucide-react'
-import { leaveOrganization } from '@/api/auth'
+import { fetchUserOrganizations, fetchOrganizationDetails, leaveOrganization, deleteOrganization } from '@/api/organizations'
+import { useToast } from '@/components/ui/toast-provider'
 
 // const DotIcon = () => {
 //   return (
@@ -15,20 +16,48 @@ function Layout ({ children }: {
     children: ReactNode,
 }) {
   const { getToken } = useAuth()
+  const { showSuccess } = useToast()
 
   const handleOrgLeave = async () => {
-    if (!window.confirm('本当にこのグループから抜けますか？この操作は取り消せません。')) {
-      return
-    }
     try {
       const token = await getToken()
       if (!token) return
-      await leaveOrganization(token)
-      // 成功したらページをリロードして状態を更新
-      window.location.reload()
+
+      // 現在選択中のグループを取得
+      const { lastSelectedOrganization } = await fetchUserOrganizations(token)
+      if (!lastSelectedOrganization) {
+        alert('現在参加中のグループが見つかりません。')
+        return
+      }
+
+      const orgId = lastSelectedOrganization.id
+      const { memberCount } = await fetchOrganizationDetails(orgId, token)
+
+      const confirmMsg =
+        memberCount === 1
+          ? 'あなたは最後のメンバーです。この操作でグループが削除されます。よろしいですか？'
+          : '本当にこのグループから抜けますか？'
+
+      if (!window.confirm(confirmMsg)) {
+        return
+      }
+
+      // グループ離脱
+      await leaveOrganization(orgId, token)
+
+      // 最後のメンバーだった場合はグループ削除
+      if (memberCount === 1) {
+        await deleteOrganization(orgId, token)
+        showSuccess('グループを削除しました')
+      } else {
+        showSuccess('グループから離脱しました')
+      }
+
+      // ホームへリダイレクト
+      window.location.href = '/'
     } catch (error) {
-      console.error('Failed to leave organization', error)
-      alert('グループからの脱退に失敗しました。')
+      console.error('Failed to leave/delete organization', error)
+      alert('グループからの離脱に失敗しました。')
     }
   }
 
