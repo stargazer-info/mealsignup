@@ -74,13 +74,3 @@ export const switchOrganizationApi = async (organizationId: string, token: strin
   return response.json();
 };
 
-export const leaveOrganization = async (token: string) => {
-  const response = await fetch(apiUrl.auth.leaveOrganization(), {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    throw new Error(`Error leaving organization: ${response.statusText}`);
-  }
-  return response.json();
-};
