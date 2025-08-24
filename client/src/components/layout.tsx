@@ -21,22 +21,28 @@ function Layout ({ children }: {
 
   // グループ離脱の共通処理（トーストとリダイレクトなし）
   const performOrgLeave = async () => {
-    const token = await getToken()
-    if (!token) throw new Error('認証トークンが取得できません')
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('認証トークンが取得できません')
 
-    // 現在選択中のグループを取得
-    const { lastSelectedOrganization } = await fetchUserOrganizations(token)
-    if (!lastSelectedOrganization) {
-      throw new Error('現在参加中のグループが見つかりません')
+      const { lastSelectedOrganization } = await fetchUserOrganizations(token)
+      if (!lastSelectedOrganization) {
+        // グループに参加していない場合はスキップ
+        return { memberCount: 0 }
+      }
+
+      const orgId = lastSelectedOrganization.id
+      const { memberCount } = await fetchOrganizationDetails(orgId, token)
+      await leaveOrganization(orgId, token)
+
+      return { memberCount }
+    } catch (error) {
+      // 403エラーの場合はグループが存在しないものとして処理
+      if (error.message?.includes('403')) {
+        return { memberCount: 0 }
+      }
+      throw error
     }
-
-    const orgId = lastSelectedOrganization.id
-    const { memberCount } = await fetchOrganizationDetails(orgId, token)
-
-    // グループ離脱（最後のメンバーの場合はサーバー側でグループも削除される）
-    await leaveOrganization(orgId, token)
-
-    return { memberCount }
   }
 
   const handleOrgLeave = async () => {
@@ -88,11 +94,18 @@ function Layout ({ children }: {
       // 1. グループ離脱処理を実行
       await performOrgLeave()
 
-      // 2. Clerkユーザー削除（自動的にサインイン画面にリダイレクト）
-      await user?.delete()
+      // 2. Clerkユーザー削除（再認証付き）
+      await user?.delete({
+        redirectUrl: window.location.origin
+      })
     } catch (error) {
-      console.error('Failed to delete user', error)
-      alert('アカウント削除に失敗しました。')
+      if (error.errors?.[0]?.code === 'session_reverification_required') {
+        alert('アカウント削除には追加認証が必要です。パスワードを再入力してください。')
+        // Clerkが自動的に再認証画面を表示します
+      } else {
+        console.error('Failed to delete user', error)
+        alert('アカウント削除に失敗しました。')
+      }
     }
   }
 
