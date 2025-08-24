@@ -4,8 +4,8 @@ import './App.css'
 import { Button } from "@/components/ui/button"
 import { MealApplicationTable } from "@/components/meal-application-table"
 import GroupSummary from "@/components/group-summary"
-import GroupSetup from "@/components/group-setup"
 import Layout from "@/components/layout"
+import GroupSetup from "@/components/group-setup"
 import { fetchUserOrganizations, type OrganizationWithRole } from './api/organizations'
 
 function App() {
@@ -71,16 +71,20 @@ function App() {
       <SignedIn>
         {isLoading ? (
           <Layout children={<div>Loading...</div>} />
-        ) : organizations.length === 0 ? (
-          <GroupSetup onGroupSetup={fetchOrganizations} />
         ) : (
           <main className="min-h-screen bg-background p-4 md:p-8">
             <div className="mx-auto max-w-6xl">
-              <Layout children={ currentView === "application" ? (
-                  <MealApplicationTable onNavigateToSummary={() => setCurrentView("summary")} groupData={groupData} />
-              ) : (
-                <GroupSummary onBack={() => setCurrentView("application")} groupData={groupData} />
-              )} />
+              <Layout children={
+                organizations.length === 0 ? (
+                  <GroupSetup onGroupSetup={fetchOrganizations} />
+                ) : (
+                  currentView === "application" ? (
+                    <MealApplicationTable onNavigateToSummary={() => setCurrentView("summary")} groupData={groupData} />
+                  ) : (
+                    <GroupSummary onBack={() => setCurrentView("application")} groupData={groupData} />
+                  )
+                )
+              } />
             </div>
           </main>
         )}
