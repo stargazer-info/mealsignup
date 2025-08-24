@@ -42,7 +42,7 @@ export const fetchOrganizationDetails = async (organizationId: string, token: st
 };
 
 export const leaveOrganization = async (organizationId: string, token: string) => {
-  const response = await fetch(`/api/organizations/${organizationId}/leave`, {
+  const response = await fetch(apiUrl.organizations.leave(organizationId), {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}` },
   });

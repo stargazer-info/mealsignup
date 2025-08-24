@@ -10,6 +10,7 @@ export const apiUrl = {
     details: (id: string) => buildApiUrl(`/api/organizations/${id}`),
     create: () => buildApiUrl('/api/organizations'),
     join: () => buildApiUrl('/api/organizations/join'),
+    leave: (id: string) => buildApiUrl(`/api/organizations/${id}/leave`),
     delete: (id: string) => buildApiUrl(`/api/organizations/${id}`),
     monthlySummary: (id: string, year: number, month: number) => buildApiUrl(`/api/organizations/${id}/monthly-summary?year=${year}&month=${month}`),
   },
