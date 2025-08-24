@@ -1,6 +1,6 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth, useUser } from '@clerk/clerk-react'
 import type { ReactNode } from 'react'
-import { UserRoundMinus, Trash } from 'lucide-react'
+import { UserRoundMinus } from 'lucide-react'
 import { fetchUserOrganizations, fetchOrganizationDetails, leaveOrganization, deleteOrganization } from '@/api/organizations'
 import { useToast } from '@/components/ui/toast-provider'
 
@@ -18,32 +18,6 @@ function Layout ({ children }: {
   const { getToken } = useAuth()
   const { user } = useUser()
   const { showSuccess } = useToast()
-
-  // グループ離脱の共通処理（トーストとリダイレクトなし）
-  const performOrgLeave = async () => {
-    try {
-      const token = await getToken()
-      if (!token) throw new Error('認証トークンが取得できません')
-
-      const { lastSelectedOrganization } = await fetchUserOrganizations(token)
-      if (!lastSelectedOrganization) {
-        // グループに参加していない場合はスキップ
-        return { memberCount: 0 }
-      }
-
-      const orgId = lastSelectedOrganization.id
-      const { memberCount } = await fetchOrganizationDetails(orgId, token)
-      await leaveOrganization(orgId, token)
-
-      return { memberCount }
-    } catch (error) {
-      // 403エラーの場合はグループが存在しないものとして処理
-      if (error.message?.includes('403')) {
-        return { memberCount: 0 }
-      }
-      throw error
-    }
-  }
 
   const handleOrgLeave = async () => {
     try {
@@ -69,9 +43,10 @@ function Layout ({ children }: {
         return
       }
 
-      const { memberCount: resultMemberCount } = await performOrgLeave()
+      // グループ離脱（最後のメンバーの場合はサーバー側でグループも削除される）
+      await leaveOrganization(orgId, token)
 
-      if (resultMemberCount === 1) {
+      if (memberCount === 1) {
         showSuccess('グループを削除しました')
       } else {
         showSuccess('グループから離脱しました')
@@ -85,29 +60,6 @@ function Layout ({ children }: {
     }
   }
 
-  const handleUserDelete = async () => {
-    if (!window.confirm('アカウントを完全に削除しますか？この操作は取り消せません。')) {
-      return
-    }
-
-    try {
-      // 1. グループ離脱処理を実行
-      await performOrgLeave()
-
-      // 2. Clerkユーザー削除（再認証付き）
-      await user?.delete({
-        redirectUrl: window.location.origin
-      })
-    } catch (error) {
-      if (error.errors?.[0]?.code === 'session_reverification_required') {
-        alert('アカウント削除には追加認証が必要です。パスワードを再入力してください。')
-        // Clerkが自動的に再認証画面を表示します
-      } else {
-        console.error('Failed to delete user', error)
-        alert('アカウント削除に失敗しました。')
-      }
-    }
-  }
 
   return (
     <main className="min-h-screen bg-background p-4 md:p-8">
@@ -137,12 +89,6 @@ function Layout ({ children }: {
                   label="グループから抜ける"
                   labelIcon={<UserRoundMinus className="text-destructive" />}
                   onClick={handleOrgLeave}
-                  className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
-                />
-                <UserButton.Action
-                  label="アカウントを削除"
-                  labelIcon={<Trash className="h-4 w-4 text-destructive" />}
-                  onClick={handleUserDelete}
                   className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
                 />
               </UserButton.MenuItems>
