@@ -47,6 +47,23 @@ function App() {
     }
   }, [isLoaded, isSignedIn, displayName, getToken])
 
+  const handleSetDisplayName = async (name: string) => {
+    if (!user) return
+    try {
+      await user.update({
+        publicMetadata: {
+          ...(user.publicMetadata || {}),
+          displayName: name.trim(),
+        },
+      })
+      await user.reload()
+      // reload 後、displayName が反映され useEffect が fetchOrganizations を走らせる
+    } catch (e) {
+      console.error('Failed to save displayName:', e)
+      alert('表示名の保存に失敗しました。時間をおいて再度お試しください。')
+    }
+  }
+
   if (!isLoaded) {
     return <Layout children={<div>Loading...</div>} />
   }
