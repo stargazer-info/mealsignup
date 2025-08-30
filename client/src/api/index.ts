@@ -18,7 +18,6 @@ export const apiUrl = {
     register: () => buildApiUrl('/api/auth/register'),
     me: () => buildApiUrl('/api/auth/me'),
     selectOrganization: (id: string) => buildApiUrl(`/api/auth/select-organization/${id}`),
-    leaveOrganization: () => buildApiUrl('/api/auth/leave-organization'),
   },
   meals: {
     get: (dateStr: string) => buildApiUrl(`/api/meals?date=${dateStr}`),

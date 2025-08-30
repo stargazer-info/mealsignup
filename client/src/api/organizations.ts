@@ -17,7 +17,7 @@ export interface OrganizationWithRole extends Organization {
 
 export interface MyOrganizationsResponse {
   organizations: OrganizationWithRole[];
-  lastSelectedOrganization: OrganizationWithRole | null;
+  lastSelectedOrganization: Organization | null;
 }
 
 export const fetchUserOrganizations = async (token: string): Promise<MyOrganizationsResponse> => {

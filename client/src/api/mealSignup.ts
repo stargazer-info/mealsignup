@@ -27,8 +27,7 @@ export const saveSelfMonthlyMealSignup = async (
     },
     body: JSON.stringify({
       monthlyMealSignup: monthlyMealSignup.map(item => ({
-        id: item.id, // 既存レコードの場合は id を渡す
-        day: item.day, // デバッグ目的で残してもよい
+        day: item.day,
         breakfast: item.breakfast,
         lunch: item.lunch,
         dinner: item.dinner,

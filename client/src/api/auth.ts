@@ -1,76 +1,10 @@
-import { apiUrl } from './index';
+/**
+ * Deprecated: このファイルのAPIは不要のため削除されました。
+ * 必要になった場合にのみ実装を追加してください。
+ */
+export {}
 
-// ユーザー登録の重複実行を防ぐためのフラグ
-let isRegistering = false;
 
-export const registerUserIfNeeded = async (token: string) => {
-  // 既に登録処理中の場合は重複実行を防ぐ
-  if (isRegistering) {
-    console.log('⚠️ ユーザー登録処理が既に実行中です。重複実行をスキップします。');
-    return;
-  }
 
-  try {
-    isRegistering = true;
-    console.log('🔄 POST /api/auth/register を呼び出し中...');
-    
-    const registerResponse = await fetch(apiUrl.auth.register(), {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    
-    console.log(`📡 POST /api/auth/register レスポンス: ${registerResponse.status}`);
-    
-    if (!registerResponse.ok) {
-      const err = await registerResponse.json();
-      console.log('⚠️ 登録レスポンスエラー:', err);
-      
-      if (registerResponse.status === 400 && err.error === 'User already exists') {
-        // ユーザーが既に存在する場合は正常とみなす
-        console.log('✅ ユーザーは既に存在します');
-        return;
-      }
-      throw new Error(err.error || `Registration failed with status ${registerResponse.status}`);
-    }
-    
-    const result = await registerResponse.json();
-    
-    // サーバー側でP2002エラーをキャッチして200レスポンスが返された場合の処理
-    if (registerResponse.status === 200 && result.message === 'User already exists') {
-      console.log('✅ ユーザーは既に存在します（サーバー側で検出）');
-      return;
-    }
-    
-    console.log('✅ ユーザー登録成功:', result);
-  } finally {
-    // 処理完了後にフラグをリセット
-    isRegistering = false;
-  }
-};
 
-export const updateUserProfile = async (data: any, token: string) => {
-  const response = await fetch(apiUrl.auth.me(), {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error(`Error updating user profile: ${response.statusText}`);
-  }
-  return response.json();
-};
-
-export const switchOrganizationApi = async (organizationId: string, token: string) => {
-  const response = await fetch(apiUrl.auth.selectOrganization(organizationId), {
-    method: 'PUT',
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    throw new Error(`Error switching organization: ${response.statusText}`);
-  }
-  return response.json();
-};
 

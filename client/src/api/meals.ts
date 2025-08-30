@@ -1,15 +1,6 @@
 import { apiUrl } from './index';
 
 // 食事予約関連のAPI関数群
-export const fetchMealSignup = async (dateStr: string, token: string) => {
-  const response = await fetch(apiUrl.meals.get(dateStr), {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    throw new Error(`Error fetching meal signup: ${response.statusText}`);
-  }
-  return response.json();
-};
 
 export const saveMealSignupApi = async (
   dateStr: string,
