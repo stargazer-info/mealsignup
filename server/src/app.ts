@@ -40,11 +40,13 @@ import authRoutes from './routes/auth';
 import mealsRoutes from './routes/meals';
 import organizationsRoutes from './routes/organizations';
 import testRoutes from './routes/test';
+import meRoutes from './routes/me';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/meals', mealsRoutes);
 app.use('/api/organizations', organizationsRoutes);
 console.log('🔧 Organizations router mounted at /api/organizations');
+app.use('/api/me', meRoutes);
 app.use('/api/test', testRoutes);
 
 // 404 handler

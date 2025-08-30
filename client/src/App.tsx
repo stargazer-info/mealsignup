@@ -8,6 +8,7 @@ import Layout from "@/components/layout"
 import GroupSetup from "@/components/group-setup"
 import UserNameInput from '@/components/user-name-input'
 import { fetchUserOrganizations, type OrganizationWithRole } from './api/organizations'
+import { apiUrl } from './api/index'
 
 function App() {
   const { getToken } = useAuth()
@@ -50,11 +51,15 @@ function App() {
   const handleSetDisplayName = async (name: string) => {
     if (!user) return
     try {
-      await user.update({
-        publicMetadata: {
-          ...(user.publicMetadata || {}),
-          displayName: name.trim(),
+      const token = await getToken()
+      if (!token) throw new Error('No auth token')
+      await fetch(apiUrl.me.updateDisplayName(), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
+        body: JSON.stringify({ displayName: name.trim() }),
       })
       await user.reload()
       // reload 後、displayName が反映され useEffect が fetchOrganizations を走らせる
