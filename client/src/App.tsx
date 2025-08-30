@@ -6,6 +6,7 @@ import { MealApplicationTable } from "@/components/meal-application-table"
 import GroupSummary from "@/components/group-summary"
 import Layout from "@/components/layout"
 import GroupSetup from "@/components/group-setup"
+import UserNameInput from '@/components/user-name-input'
 import { fetchUserOrganizations, type OrganizationWithRole } from './api/organizations'
 
 function App() {
@@ -15,6 +16,8 @@ function App() {
   const [organizations, setOrganizations] = useState<OrganizationWithRole[]>([])
   const [lastSelectedOrganization, setLastSelectedOrganization] = useState<OrganizationWithRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const displayName = (user?.publicMetadata as any)?.displayName as string | undefined
 
   const fetchOrganizations = async () => {
     const token = await getToken();
@@ -36,12 +39,13 @@ function App() {
   }
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (isLoaded && isSignedIn && displayName) {
       fetchOrganizations()
     } else if (isLoaded) {
+      // サインイン済みでも displayName 未設定ならローディングを解除して入力カードを表示
       setIsLoading(false)
     }
-  }, [isLoaded, isSignedIn, getToken])
+  }, [isLoaded, isSignedIn, displayName, getToken])
 
   if (!isLoaded) {
     return <Layout children={<div>Loading...</div>} />
@@ -51,7 +55,7 @@ function App() {
   const groupData = orgToDisplay && user ? {
     id: orgToDisplay.id,
     name: orgToDisplay.name,
-    userName: user.fullName || "",
+    userName: (displayName || user.fullName || ""),
     inviteCode: orgToDisplay.inviteCode,
   } : null
 
@@ -69,7 +73,17 @@ function App() {
         </div>
       </SignedOut>
       <SignedIn>
-        {isLoading ? (
+        {!displayName ? (
+          <main className="min-h-screen bg-background p-4 md:p-8">
+            <div className="mx-auto max-w-6xl">
+              <Layout children={
+                <div className="mx-auto max-w-md">
+                  <UserNameInput onUserNameSet={handleSetDisplayName} initialValue={user?.fullName || ""} />
+                </div>
+              } />
+            </div>
+          </main>
+        ) : isLoading ? (
           <Layout children={<div>Loading...</div>} />
         ) : (
           <main className="min-h-screen bg-background p-4 md:p-8">
