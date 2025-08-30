@@ -25,7 +25,7 @@ export const apiUrl = {
     save: () => buildApiUrl('/api/meals'),
   },
   mealSignup: {
-    selfMonthly: (year: number, month: number) => buildApiUrl(`/api/meals/self/monthly?year=${year}&month=${month}`),
+    selfMonthly: (year: number, month: number, organizationId?: string) => buildApiUrl(`/api/meals/self/monthly?year=${year}&month=${month}${organizationId ? `&organizationId=${organizationId}` : ''}`),
     saveSelfMonthly: () => buildApiUrl('/api/meals/self/bulk'),
   }
 };

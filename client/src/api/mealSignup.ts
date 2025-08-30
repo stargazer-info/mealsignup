@@ -1,8 +1,8 @@
 import { apiUrl } from './index';
 
 // 自分の月次食事予約データを取得
-export const fetchSelfMonthlyMealSignup = async (year: number, month: number, token: string) => {
-  const response = await fetch(apiUrl.mealSignup.selfMonthly(year, month), {
+export const fetchSelfMonthlyMealSignup = async (year: number, month: number, token: string, organizationId?: string) => {
+  const response = await fetch(apiUrl.mealSignup.selfMonthly(year, month, organizationId), {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!response.ok) {

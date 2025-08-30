@@ -21,7 +21,7 @@ interface GroupSummaryProps {
 
 export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
   const { getToken } = useAuth()
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 7)) // 2025年8月
+  const [currentDate, setCurrentDate] = useState(new Date())
   const [dailySummary, setDailySummary] = useState<Record<string, DailyData>>({})
   const [isLoading, setIsLoading] = useState(true)
 

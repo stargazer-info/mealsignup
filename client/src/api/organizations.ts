@@ -62,7 +62,8 @@ export const createOrganization = async (name: string, token: string): Promise<O
     body: JSON.stringify({ name }),
   });
   if (!response.ok) { throw new Error('Failed to create organization'); }
-  return response.json();
+  const data = await response.json();
+  return data.organization as Organization;
 };
 
 export const joinOrganization = async (inviteCode: string, token: string): Promise<{ organization: Organization }> => {
@@ -86,5 +87,5 @@ export const deleteOrganization = async (organizationId: string, token: string) 
   if (!response.ok) {
     throw new Error(`Error deleting organization: ${response.statusText}`);
   }
-  return response.json();
+  return;
 };

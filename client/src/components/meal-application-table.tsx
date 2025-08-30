@@ -55,8 +55,9 @@ interface MealApplicationTableProps {
 
 export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApplicationTableProps) {
   const { getToken } = useAuth()
-  const [currentYear, setCurrentYear] = useState(2025)
-  const [currentMonth, setCurrentMonth] = useState(8)
+  const now = new Date()
+  const [currentYear, setCurrentYear] = useState(now.getFullYear())
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth() + 1)
   const [mealData, setMealData] = useState<Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>>({})
   const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
@@ -64,7 +65,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     const token = await getToken()
     if (!token) return
     try {
-      const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, token)
+      const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, token, groupData.id)
       const formattedData = data.reduce((acc, item) => {
         acc[item.day] = { breakfast: item.breakfast, lunch: item.lunch, dinner: item.dinner }
         return acc

@@ -261,7 +261,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
     
-    const { year, month } = req.query;
+    const { year, month, organizationId } = req.query;
     const yearNum = Number(year);
     const monthNum = Number(month);
     if (!yearNum || !monthNum || monthNum < 1 || monthNum > 12) {
@@ -272,9 +272,28 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0);
     const endDate = new Date(yearNum, monthNum, 1, 0, 0, 0, 0);
     
+    // 対象組織を特定（クエリ優先、なければ isLastSelected → 先頭）
+    const memberships = await prisma.organizationMembership.findMany({
+      where: { clerkId: req.user.id },
+    });
+
+    let targetOrganizationId: string | undefined = typeof organizationId === 'string' ? organizationId : undefined;
+    if (!targetOrganizationId) {
+      const lastSelected = memberships.find(m => m.isLastSelected);
+      targetOrganizationId = lastSelected?.organizationId || memberships[0]?.organizationId;
+    }
+    if (!targetOrganizationId) {
+      return res.status(400).json({ error: 'No organization selected' });
+    }
+    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
+    if (!membership) {
+      return res.status(403).json({ error: 'User does not have access to this organization' });
+    }
+
     const mealSignups = await prisma.mealSignup.findMany({
       where: {
         clerkId: req.user.id,
+        organizationId: targetOrganizationId,
         date: {
           gte: startDate,
           lt: endDate,

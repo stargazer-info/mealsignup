@@ -10,9 +10,12 @@ interface MonthlySummaryResponse {
 export const fetchMonthlySummary = async (
   currentOrganization: { id: string },
   currentDate: Date,
-  getToken: () => Promise<string>
+  getToken: () => Promise<string | null>
 ): Promise<MonthlySummaryResponse> => {
   const token = await getToken();
+  if (!token) {
+    throw new Error('No auth token');
+  }
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1; // 1～12形式
   
