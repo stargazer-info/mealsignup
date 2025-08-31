@@ -55,6 +55,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev)
+      newDate.setDate(1)
       if (direction === "prev") {
         newDate.setMonth(prev.getMonth() - 1)
       } else {
