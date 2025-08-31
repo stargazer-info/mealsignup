@@ -81,7 +81,7 @@ router.post('/', requireAuth, async (req, res) => {
 
       // 他の組織の選択を解除
       await tx.organizationMembership.updateMany({
-        where: { clerkId: req.user.id },
+        where: { clerkId: userId },
         data: { isLastSelected: false }
       });
 
@@ -268,9 +268,10 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
       const day = signupDate.getDate();
       const idx = day - 1;
       if (idx >= 0 && idx < dailyData.length) {
-        if (signup.breakfast) dailyData[idx].breakfast += 1;
-        if (signup.lunch)     dailyData[idx].lunch += 1;
-        if (signup.dinner)    dailyData[idx].dinner += 1;
+        const dayData = dailyData[idx]!;
+        if (signup.breakfast) dayData.breakfast += 1;
+        if (signup.lunch)     dayData.lunch += 1;
+        if (signup.dinner)    dayData.dinner += 1;
       }
     });
 

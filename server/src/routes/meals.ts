@@ -78,7 +78,8 @@ router.get('/', requireAuth, async (req, res) => {
     }
 
     const clerkIds = [...new Set(mealSignups.map(signup => signup.clerkId))];
-    const clerkUsers = await clerk.users.getUserList({ userId: clerkIds });
+    const clerkUsersResp = await clerk.users.getUserList({ userId: clerkIds });
+    const clerkUsers = clerkUsersResp.data ?? [];
 
     const usersMap = new Map(clerkUsers.map((user: any) => [user.id, {
       id: user.id,
