@@ -1,9 +1,10 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Sun, Utensils, Moon, Check, X, ChevronLeft, ChevronRight } from "lucide-react"
+import MonthNavigator from "@/components/month-navigator"
+import { Sun, Utensils, Moon, Check, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@clerk/clerk-react"
 import { saveMealSignupApi } from "@/api/meals"
@@ -85,23 +86,6 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
 
-  const navigateMonth = (direction: "prev" | "next") => {
-    if (direction === "prev") {
-      if (currentMonth === 1) {
-        setCurrentMonth(12)
-        setCurrentYear(currentYear - 1)
-      } else {
-        setCurrentMonth(currentMonth - 1)
-      }
-    } else {
-      if (currentMonth === 12) {
-        setCurrentMonth(1)
-        setCurrentYear(currentYear + 1)
-      } else {
-        setCurrentMonth(currentMonth + 1)
-      }
-    }
-  }
 
   const toggleMealStatus = async (day: number, mealType: "breakfast" | "lunch" | "dinner") => {
     const token = await getToken();
@@ -185,17 +169,14 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
       <Card className="bg-card">
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" onClick={() => navigateMonth("prev")} className="p-2">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <CardTitle className="text-2xl font-bold text-primary">
-                {currentYear}年 {currentMonth}月
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => navigateMonth("next")} className="p-2">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <MonthNavigator
+              year={currentYear}
+              month={currentMonth}
+              onChange={(y, m) => {
+                setCurrentYear(y);
+                setCurrentMonth(m);
+              }}
+            />
             <div className="flex flex-row gap-2">
               <Button
                 variant="default"

@@ -5,7 +5,8 @@ import { useAuth } from "@clerk/clerk-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
+import MonthNavigator from "@/components/month-navigator"
 import { fetchMonthlySummary } from "@/api/monthlySummary"
 import type { DailyData } from "../types/DailyData"
 
@@ -52,18 +53,6 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
     loadSummary()
   }, [currentDate, groupData, getToken])
 
-  const navigateMonth = (direction: "prev" | "next") => {
-    setCurrentDate((prev) => {
-      const newDate = new Date(prev)
-      newDate.setDate(1)
-      if (direction === "prev") {
-        newDate.setMonth(prev.getMonth() - 1)
-      } else {
-        newDate.setMonth(prev.getMonth() + 1)
-      }
-      return newDate
-    })
-  }
 
 
   return (
@@ -95,17 +84,12 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
         {/* 月選択 */}
         <Card>
           <CardHeader className="pb-4">
-            <div className="flex items-center justify-center gap-4">
-              <Button variant="outline" size="sm" onClick={() => navigateMonth("prev")} className="p-2">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <CardTitle className="text-2xl font-bold text-primary">
-                {currentDate.getFullYear()}年 {currentDate.getMonth() + 1}月
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => navigateMonth("next")} className="p-2">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <MonthNavigator
+              year={currentDate.getFullYear()}
+              month={currentDate.getMonth() + 1}
+              onChange={(y, m) => setCurrentDate(new Date(y, m - 1, 1))}
+              className="justify-center"
+            />
           </CardHeader>
         </Card>
 
