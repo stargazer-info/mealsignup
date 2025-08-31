@@ -39,7 +39,7 @@ router.put('/select-organization/:organizationId', requireAuth, async (req, res)
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const { organizationId } = req.params;
+    const { organizationId } = req.params as { organizationId: string };
 
     const membership = await prisma.organizationMembership.findUnique({
       where: { clerkId_organizationId: { clerkId: req.user.id, organizationId } }

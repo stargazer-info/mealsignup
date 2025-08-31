@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { prisma } from '../app';
-import { clerkClient } from '@clerk/backend';
+import { createClerkClient } from '@clerk/backend';
+
+const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
 
 const router = Router();
 
@@ -11,11 +13,12 @@ router.get('/', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
+    const currentUser = req.user;
 
     const { date, month, organizationId } = req.query;
 
     const memberships = await prisma.organizationMembership.findMany({ 
-      where: { clerkId: req.user.id } 
+      where: { clerkId: currentUser.id } 
     });
 
     // Determine which organization to use
@@ -75,9 +78,9 @@ router.get('/', requireAuth, async (req, res) => {
     }
 
     const clerkIds = [...new Set(mealSignups.map(signup => signup.clerkId))];
-    const clerkUsers = await clerkClient.users.getUserList({ userId: clerkIds });
+    const clerkUsers = await clerk.users.getUserList({ userId: clerkIds });
 
-    const usersMap = new Map(clerkUsers.map(user => [user.id, {
+    const usersMap = new Map(clerkUsers.map((user: any) => [user.id, {
       id: user.id,
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unknown User',
       email: user.emailAddresses[0]?.emailAddress || '',
@@ -107,6 +110,7 @@ router.post('/', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
+    const currentUser = req.user;
 
     const { date, breakfast, lunch, dinner, organizationId } = req.body;
 
@@ -121,7 +125,7 @@ router.post('/', requireAuth, async (req, res) => {
     }
 
     const memberships = await prisma.organizationMembership.findMany({ 
-      where: { clerkId: req.user.id } 
+      where: { clerkId: currentUser.id } 
     });
 
     // Determine which organization to use
@@ -144,7 +148,7 @@ router.post('/', requireAuth, async (req, res) => {
     const mealSignup = await prisma.mealSignup.upsert({
       where: {
         clerkId_organizationId_date: {
-          clerkId: req.user.id,
+          clerkId: currentUser.id,
           organizationId: targetOrganizationId,
           date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0)
         }
@@ -155,7 +159,7 @@ router.post('/', requireAuth, async (req, res) => {
         dinner: Boolean(dinner)
       },
       create: {
-        clerkId: req.user.id,
+        clerkId: currentUser.id,
         organizationId: targetOrganizationId,
         date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
         breakfast: Boolean(breakfast),
@@ -184,6 +188,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
+    const currentUser = req.user;
     
     const { year, month, organizationId } = req.query;
     const yearNum = Number(year);
@@ -198,7 +203,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     
     // 対象組織を特定（クエリ優先、なければ isLastSelected → 先頭）
     const memberships = await prisma.organizationMembership.findMany({
-      where: { clerkId: req.user.id },
+      where: { clerkId: currentUser.id },
     });
 
     let targetOrganizationId: string | undefined = typeof organizationId === 'string' ? organizationId : undefined;
@@ -216,7 +221,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
 
     const mealSignups = await prisma.mealSignup.findMany({
       where: {
-        clerkId: req.user.id,
+        clerkId: currentUser.id,
         organizationId: targetOrganizationId,
         date: {
           gte: startDate,
@@ -261,6 +266,7 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
+    const currentUser = req.user;
     
     const { monthlyMealSignup, year, month, organizationId } = req.body;
     if (!Array.isArray(monthlyMealSignup) || monthlyMealSignup.length === 0) {
@@ -274,7 +280,7 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
     }
 
     const memberships = await prisma.organizationMembership.findMany({ 
-      where: { clerkId: req.user.id } 
+      where: { clerkId: currentUser.id } 
     });
 
     // Determine which organization to use
@@ -301,7 +307,7 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
       return prisma.mealSignup.upsert({
         where: {
           clerkId_organizationId_date: {
-            clerkId: req.user.id,
+            clerkId: currentUser.id,
             organizationId: targetOrganizationId,
             date: targetDate
           }
@@ -312,7 +318,7 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
           dinner: Boolean(dinner),
         },
         create: {
-          clerkId: req.user.id,
+          clerkId: currentUser.id,
           organizationId: targetOrganizationId,
           date: targetDate,
           breakfast: Boolean(breakfast),

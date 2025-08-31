@@ -37,7 +37,6 @@
     "jsx": "react-jsx",
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
-    "skipLibCheck": true,
-    "ts-node.esm": true,
+    "skipLibCheck": true
   }
 }
