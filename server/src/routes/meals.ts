@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
-import { prisma } from '../app';
+import { requireAuth } from '../middleware/auth.js';
+import { prisma } from '../app.js';
 import { createClerkClient } from '@clerk/backend';
 
 const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });

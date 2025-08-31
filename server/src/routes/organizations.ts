@@ -1,7 +1,7 @@
 console.log('🔧 Organizations router loaded');
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
-import { prisma } from '../app';
+import { requireAuth } from '../middleware/auth.js';
+import { prisma } from '../app.js';
 import { nanoid } from 'nanoid';
 
 const router = Router();
