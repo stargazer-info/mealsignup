@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { prisma } from '../app.js';
 import { nanoid } from 'nanoid';
+import type { Prisma, OrganizationMembership, MealSignup } from '@prisma/client';
 
 const router = Router();
 
@@ -17,7 +18,8 @@ router.get('/me', requireAuth, async (req, res) => {
 
     console.log(`🔍 GET /api/organizations/me: Looking for user with clerkId: ${userId}`);
 
-    const memberships = await prisma.organizationMembership.findMany({
+    type MembershipWithOrg = Prisma.OrganizationMembershipGetPayload<{ include: { organization: true } }>;
+    const memberships: MembershipWithOrg[] = await prisma.organizationMembership.findMany({
       where: { clerkId: userId },
       include: {
         organization: true
@@ -26,13 +28,13 @@ router.get('/me', requireAuth, async (req, res) => {
 
     console.log(`✅ GET /api/organizations/me: User found with ${memberships.length} organizations`);
 
-    const organizations = memberships.map(membership => ({
+    const organizations = memberships.map((membership: MembershipWithOrg) => ({
       ...membership.organization,
       role: membership.role,
       joinedAt: membership.joinedAt
     }));
 
-    const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+    const lastSelectedMembership = memberships.find((m: MembershipWithOrg) => m.isLastSelected);
     res.json({
       organizations,
       lastSelectedOrganization: lastSelectedMembership?.organization || null
@@ -71,7 +73,7 @@ router.post('/', requireAuth, async (req, res) => {
     }
 
     // Create organization and membership in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const organization = await tx.organization.create({
         data: {
           name: name.trim(),
@@ -174,7 +176,8 @@ router.get('/:organizationId', requireAuth, async (req, res) => {
 
     const { organizationId } = req.params as { organizationId: string };
 
-    const membership = await prisma.organizationMembership.findUnique({
+    type MembershipWithOrg = Prisma.OrganizationMembershipGetPayload<{ include: { organization: true } }>;
+    const membership: MembershipWithOrg | null = await prisma.organizationMembership.findUnique({
       where: { clerkId_organizationId: { clerkId: userId, organizationId } },
       include: { organization: true }
     });
@@ -192,11 +195,11 @@ router.get('/:organizationId', requireAuth, async (req, res) => {
     // Get all members if user is admin
     let members: Array<{ clerkId: string; role: 'ADMIN' | 'MEMBER'; joinedAt: Date }> = [];
     if (membership.role === 'ADMIN') {
-      const allMemberships = await prisma.organizationMembership.findMany({
+      const allMemberships: OrganizationMembership[] = await prisma.organizationMembership.findMany({
         where: { organizationId }
       });
 
-      members = allMemberships.map(m => ({
+      members = allMemberships.map((m: OrganizationMembership) => ({
         clerkId: m.clerkId,
         role: m.role,
         joinedAt: m.joinedAt
@@ -243,7 +246,7 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const mealSignups = await prisma.mealSignup.findMany({
+    const mealSignups: MealSignup[] = await prisma.mealSignup.findMany({
       where: {
         organizationId,
         date: {
@@ -263,7 +266,7 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
     }));
 
     // 各日の予約数を更新（各登録が true ならカウントをインクリメント）
-    mealSignups.forEach(signup => {
+    mealSignups.forEach((signup: MealSignup) => {
       const signupDate = new Date(signup.date);
       const day = signupDate.getDate();
       const idx = day - 1;
@@ -313,7 +316,7 @@ router.post('/:organizationId/leave', requireAuth, async (req, res) => {
       });
     } else {
       // 通常の離脱：食事予約削除 + メンバーシップ削除
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(0, 0, 0, 0);

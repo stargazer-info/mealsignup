@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { prisma } from '../app.js';
+import type { Prisma } from '@prisma/client';
 
 const router = Router();
 
@@ -11,14 +12,15 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const memberships = await prisma.organizationMembership.findMany({
+    type MembershipWithOrg = Prisma.OrganizationMembershipGetPayload<{ include: { organization: true } }>;
+    const memberships: MembershipWithOrg[] = await prisma.organizationMembership.findMany({
       where: { clerkId: req.user.id },
       include: {
         organization: true
       }
     });
 
-    const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+    const lastSelectedMembership = memberships.find((m: MembershipWithOrg) => m.isLastSelected);
     res.json({
       clerkId: req.user.id,
       email: req.user.email,
