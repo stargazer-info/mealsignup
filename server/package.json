@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "MealSignup backend server",
   "main": "dist/app.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "start": "node dist/app.js",
