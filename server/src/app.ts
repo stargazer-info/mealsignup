@@ -36,11 +36,11 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-import authRoutes from './routes/auth';
-import mealsRoutes from './routes/meals';
-import organizationsRoutes from './routes/organizations';
-import testRoutes from './routes/test';
-import meRoutes from './routes/me';
+import authRoutes from './routes/auth.js';
+import mealsRoutes from './routes/meals.js';
+import organizationsRoutes from './routes/organizations.js';
+import testRoutes from './routes/test.js';
+import meRoutes from './routes/me.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/meals', mealsRoutes);
