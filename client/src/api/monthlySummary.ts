@@ -12,16 +12,10 @@ export const fetchMonthlySummary = async (
   currentDate: Date,
   getToken: () => Promise<string | null>
 ): Promise<MonthlySummaryResponse> => {
-  const token = await getToken();
-  if (!token) {
-    throw new Error('No auth token');
-  }
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1; // 1～12形式
   
-  const response = await fetch(apiUrl.organizations.monthlySummary(currentOrganization.id, year, month), {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const response = await fetchWithRefresh(apiUrl.organizations.monthlySummary(currentOrganization.id, year, month), {}, getToken);
   
   if (!response.ok) {
     throw new Error('Error fetching monthly summary');

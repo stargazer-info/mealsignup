@@ -6,14 +6,10 @@ export const saveMealSignupApi = async (
   dateStr: string,
   mealSignup: { breakfast: boolean; lunch: boolean; dinner: boolean },
   organizationId: string,
-  token: string
+  getToken: () => Promise<string | null>
 ) => {
-  const response = await fetch(apiUrl.meals.save(), {
+  const response = await fetchWithRefresh(apiUrl.meals.save(), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
     body: JSON.stringify({
       date: dateStr,
       breakfast: mealSignup.breakfast,
@@ -21,7 +17,7 @@ export const saveMealSignupApi = async (
       dinner: mealSignup.dinner,
       organizationId,
     }),
-  });
+  }, getToken);
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.error);

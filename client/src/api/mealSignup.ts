@@ -1,10 +1,8 @@
 import { apiUrl } from './index';
 
 // 自分の月次食事予約データを取得
-export const fetchSelfMonthlyMealSignup = async (year: number, month: number, token: string, organizationId?: string) => {
-  const response = await fetch(apiUrl.mealSignup.selfMonthly(year, month, organizationId), {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
+export const fetchSelfMonthlyMealSignup = async (year: number, month: number, getToken: () => Promise<string | null>, organizationId?: string) => {
+  const response = await fetchWithRefresh(apiUrl.mealSignup.selfMonthly(year, month, organizationId), {}, getToken);
   if (!response.ok) {
     throw new Error(`Error fetching self monthly meal signup: ${response.statusText}`);
   }
@@ -17,14 +15,10 @@ export const saveSelfMonthlyMealSignup = async (
   year: number,
   month: number,
   organizationId: string,
-  token: string
+  getToken: () => Promise<string | null>
 ) => {
-  const response = await fetch(apiUrl.mealSignup.saveSelfMonthly(), {
+  const response = await fetchWithRefresh(apiUrl.mealSignup.saveSelfMonthly(), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
     body: JSON.stringify({
       monthlyMealSignup: monthlyMealSignup.map(item => ({
         day: item.day,
@@ -36,7 +30,7 @@ export const saveSelfMonthlyMealSignup = async (
       month,
       organizationId,
     }),
-  });
+  }, getToken);
   if (!response.ok) {
     throw new Error(`Error saving self monthly meal signup: ${response.statusText}`);
   }

@@ -1,3 +1,5 @@
+import { useAuth } from '@clerk/clerk-react';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const buildApiUrl = (path: string) => {
@@ -29,5 +31,32 @@ export const apiUrl = {
   },
   me: {
     updateDisplayName: () => buildApiUrl('/api/me/display-name'),
+  }
+};
+
+export const fetchWithRefresh = async (url: string, options: RequestInit = {}, getToken: () => Promise<string | null>) => {
+  let token = await getToken();
+  if (!token) throw new Error('No token available');
+
+  const headers = {
+    ...options.headers,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) {
+      if (response.status === 401) { // 認証エラー時リフレッシュ
+        console.warn('Token may be expired, refreshing...');
+        token = await getToken({ forceRefresh: true });
+        headers['Authorization'] = `Bearer ${token}`;
+        return fetch(url, { ...options, headers });
+      }
+      throw new Error(`API error: ${response.statusText}`);
+    }
+    return response;
+  } catch (error) {
+    throw error;
   }
 };
