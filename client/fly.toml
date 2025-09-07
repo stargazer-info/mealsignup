@@ -1,0 +1,25 @@
+# fly.toml app configuration file generated for mealsignup on 2025-09-07T18:14:25+09:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'mealsignup'
+primary_region = 'nrt'
+
+[build]
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[env]
+  VITE_API_BASE_URL = 'https://api.mealsignup.stargazer-info.com'
