@@ -1,4 +1,4 @@
-import { apiUrl } from './index';
+import { apiUrl, fetchWithRefresh } from './index';
 
 // 食事予約関連のAPI関数群
 

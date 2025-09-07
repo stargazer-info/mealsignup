@@ -1,4 +1,4 @@
-import { apiUrl } from './index';
+import { apiUrl, fetchWithRefresh } from './index';
 
 // 自分の月次食事予約データを取得
 export const fetchSelfMonthlyMealSignup = async (year: number, month: number, getToken: () => Promise<string | null>, organizationId?: string) => {

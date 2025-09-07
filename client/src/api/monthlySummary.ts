@@ -1,4 +1,4 @@
-import { apiUrl } from './index';
+import { apiUrl, fetchWithRefresh } from './index';
 import type { DailyData } from '../types/DailyData';
 
 interface MonthlySummaryResponse {

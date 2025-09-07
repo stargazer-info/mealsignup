@@ -23,20 +23,9 @@ function App() {
   const fetchOrganizations = async () => {
     try {
       setIsLoading(true)
-      let token = await getToken();
-      if (!token) throw new Error('No token available');
-      try {
-        const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(token);
-        setOrganizations(organizations)
-        setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
-      } catch (error) {
-        // トークン期限切れの場合、リフレッシュを試みる
-        console.warn('Token may be expired, refreshing...');
-        token = await getToken({ forceRefresh: true });
-        const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(token);
-        setOrganizations(organizations)
-        setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
-      }
+      const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(getToken);
+      setOrganizations(organizations)
+      setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
     } catch (error) {
       console.error("Failed to fetch organizations:", error)
       setOrganizations([])
@@ -57,16 +46,11 @@ function App() {
   const handleSetDisplayName = async (name: string) => {
     if (!user) return
     try {
-      const token = await getToken()
-      if (!token) throw new Error('No auth token')
-      await fetch(apiUrl.me.updateDisplayName(), {
+      const response = await fetchWithRefresh(apiUrl.me.updateDisplayName(), {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify({ displayName: name.trim() }),
-      })
+      }, getToken)
+      if (!response.ok) throw new Error('Failed to update display name');
       await user.reload()
       // reload 後、displayName が反映され useEffect が fetchOrganizations を走らせる
     } catch (e) {
