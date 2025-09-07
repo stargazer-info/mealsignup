@@ -16,7 +16,7 @@ interface GroupSetupProps {
 
 export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
   const { getToken } = useAuth()
-  const { user } = useUser()
+  const {} = useUser()
   const [activeTab, setActiveTab] = useState("create")
   const [groupName, setGroupName] = useState("")
   const [inviteCode, setInviteCode] = useState("")
@@ -27,10 +27,8 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
     setError(null)
     if (groupName.trim()) {
       setIsLoading(true);
-      const token = await getToken();
-      if (!token) { setIsLoading(false); return; }
       try {
-        await createOrganization(groupName, token)
+        await createOrganization(groupName, getToken)
         await onGroupSetup()
       } catch (error) { console.error("Failed to create group:", error); }
       finally { setIsLoading(false); }
@@ -41,10 +39,8 @@ export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
     setError(null)
     if (inviteCode.trim()) {
       setIsLoading(true);
-      const token = await getToken();
-      if (!token) { setIsLoading(false); return; }
       try {
-        await joinOrganization(inviteCode, token)
+        await joinOrganization(inviteCode, getToken)
         await onGroupSetup()
       } catch (error) {
         setError("招待コードが正しくないか、既にグループに参加しています。")

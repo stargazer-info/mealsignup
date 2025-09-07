@@ -38,6 +38,9 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "skipLibCheck": true,
-    "ts-node.esm": true,
-  }
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
 }

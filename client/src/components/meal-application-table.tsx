@@ -63,14 +63,12 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
   const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
   const fetchMealData = async () => {
-    const token = await getToken()
-    if (!token) return
     try {
-      const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, token, groupData.id)
-      const formattedData = data.reduce((acc, item) => {
+      const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, getToken, groupData?.id ?? '')
+      const formattedData = data.reduce((acc: Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>, item: { day: number; breakfast: boolean; lunch: boolean; dinner: boolean }) => {
         acc[item.day] = { breakfast: item.breakfast, lunch: item.lunch, dinner: item.dinner }
         return acc
-      }, {} as Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>)
+      }, {})
       setMealData(formattedData)
     } catch (error) {
       console.error("Failed to fetch meal data:", error)
@@ -88,8 +86,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
 
 
   const toggleMealStatus = async (day: number, mealType: "breakfast" | "lunch" | "dinner") => {
-    const token = await getToken();
-    if (!token || !groupData) return;
+    if (!groupData) return;
 
     const currentDayData = mealData[day] || { breakfast: false, lunch: false, dinner: false };
     const newStatus = !currentDayData[mealType];
@@ -104,7 +101,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
 
     try {
       const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      await saveMealSignupApi(dateStr, updatedDayData, groupData.id, token);
+      await saveMealSignupApi(dateStr, updatedDayData, groupData.id, getToken);
     } catch (error) {
       console.error("Failed to update meal status:", error);
       // エラー発生時はUIを元の状態に戻す
@@ -116,8 +113,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
   }
 
   const handleBulkUpdate = async (apply: boolean) => {
-    const token = await getToken();
-    if (!token || !groupData) return;
+    if (!groupData) return;
 
     const originalMealData = { ...mealData };
     setIsBulkUpdating(true);
@@ -132,7 +128,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     setMealData(newMealData);
 
     try {
-        await saveSelfMonthlyMealSignup(monthlySignupPayload, currentYear, currentMonth, groupData.id, token);
+        await saveSelfMonthlyMealSignup(monthlySignupPayload, currentYear, currentMonth, groupData.id, getToken);
     } catch (error) {
         console.error(`Failed to ${apply ? 'apply' : 'cancel'} all meals:`, error);
         // エラー発生時はUIを元の状態に戻す

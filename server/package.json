@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "MealSignup backend server",
   "main": "dist/app.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "start": "node dist/app.js",
     "dev": "nodemon --exec tsx src/app.ts",
+    "type-check": "tsc --noEmit",
+    "dev:safe": "npm run type-check && npm run dev",
+    "pre-commit": "npm run type-check",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
@@ -33,6 +37,7 @@
     "prisma": "^6.13.0"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/morgan": "^1.9.10",

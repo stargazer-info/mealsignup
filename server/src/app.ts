@@ -16,7 +16,14 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    const allowedOrigins = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : [];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(morgan('combined'));
@@ -36,11 +43,11 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-import authRoutes from './routes/auth';
-import mealsRoutes from './routes/meals';
-import organizationsRoutes from './routes/organizations';
-import testRoutes from './routes/test';
-import meRoutes from './routes/me';
+import authRoutes from './routes/auth.js';
+import mealsRoutes from './routes/meals.js';
+import organizationsRoutes from './routes/organizations.js';
+import testRoutes from './routes/test.js';
+import meRoutes from './routes/me.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/meals', mealsRoutes);

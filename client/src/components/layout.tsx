@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth, useUser } from '@clerk/clerk-react'
 import type { ReactNode } from 'react'
 import { UserRoundMinus } from 'lucide-react'
-import { fetchUserOrganizations, fetchOrganizationDetails, leaveOrganization, deleteOrganization } from '@/api/organizations'
+import { fetchUserOrganizations, fetchOrganizationDetails, leaveOrganization } from '@/api/organizations'
 import { useToast } from '@/components/ui/toast-provider'
 
 // const DotIcon = () => {
@@ -16,23 +16,20 @@ function Layout ({ children }: {
     children: ReactNode,
 }) {
   const { getToken } = useAuth()
-  const { user } = useUser()
+  const {} = useUser()
   const { showSuccess } = useToast()
 
   const handleOrgLeave = async () => {
     try {
-      const token = await getToken()
-      if (!token) return
-
       // 現在選択中のグループを取得
-      const { lastSelectedOrganization } = await fetchUserOrganizations(token)
+      const { lastSelectedOrganization } = await fetchUserOrganizations(getToken)
       if (!lastSelectedOrganization) {
         alert('現在参加中のグループが見つかりません。')
         return
       }
 
       const orgId = lastSelectedOrganization.id
-      const { memberCount } = await fetchOrganizationDetails(orgId, token)
+      const { memberCount } = await fetchOrganizationDetails(orgId, getToken)
 
       const confirmMsg =
         memberCount === 1
@@ -44,7 +41,7 @@ function Layout ({ children }: {
       }
 
       // グループ離脱（最後のメンバーの場合はサーバー側でグループも削除される）
-      await leaveOrganization(orgId, token)
+      await leaveOrganization(orgId, getToken)
 
       if (memberCount === 1) {
         showSuccess('グループを削除しました')
@@ -89,7 +86,6 @@ function Layout ({ children }: {
                   label="グループから抜ける"
                   labelIcon={<UserRoundMinus className="text-destructive" />}
                   onClick={handleOrgLeave}
-                  className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
                 />
               </UserButton.MenuItems>
             </UserButton>

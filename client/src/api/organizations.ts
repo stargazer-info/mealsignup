@@ -1,4 +1,4 @@
-import { apiUrl } from './index';
+import { apiUrl, fetchWithRefresh } from './index';
 
 // 組織関連のAPI関数群
 
@@ -20,10 +20,8 @@ export interface MyOrganizationsResponse {
   lastSelectedOrganization: Organization | null;
 }
 
-export const fetchUserOrganizations = async (token: string): Promise<MyOrganizationsResponse> => {
-  const response = await fetch(apiUrl.organizations.me(), {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
+export const fetchUserOrganizations = async (getToken: () => Promise<string | null>): Promise<MyOrganizationsResponse> => {
+  const response = await fetchWithRefresh(apiUrl.organizations.me(), {}, getToken);
   if (!response.ok) {
     throw new Error(`Error fetching organizations: ${response.statusText}`);
   }
@@ -31,59 +29,43 @@ export const fetchUserOrganizations = async (token: string): Promise<MyOrganizat
 };
 
 
-export const fetchOrganizationDetails = async (organizationId: string, token: string) => {
-  const response = await fetch(apiUrl.organizations.details(organizationId), {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
+export const fetchOrganizationDetails = async (organizationId: string, getToken: () => Promise<string | null>) => {
+  const response = await fetchWithRefresh(apiUrl.organizations.details(organizationId), {}, getToken);
   if (!response.ok) {
     throw new Error(`Error fetching organization details: ${response.statusText}`);
   }
   return response.json();
 };
 
-export const leaveOrganization = async (organizationId: string, token: string) => {
-  const response = await fetch(apiUrl.organizations.leave(organizationId), {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
+export const leaveOrganization = async (organizationId: string, getToken: () => Promise<string | null>) => {
+  const response = await fetchWithRefresh(apiUrl.organizations.leave(organizationId), { method: 'POST' }, getToken);
   if (!response.ok) {
     throw new Error('Failed to leave organization');
   }
 };
 
 
-export const createOrganization = async (name: string, token: string): Promise<Organization> => {
-  const response = await fetch(apiUrl.organizations.create(), {
+export const createOrganization = async (name: string, getToken: () => Promise<string | null>): Promise<Organization> => {
+  const response = await fetchWithRefresh(apiUrl.organizations.create(), {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({ name }),
-  });
+  }, getToken);
   if (!response.ok) { throw new Error('Failed to create organization'); }
   const data = await response.json();
   return data.organization as Organization;
 };
 
-export const joinOrganization = async (inviteCode: string, token: string): Promise<{ organization: Organization }> => {
-  const response = await fetch(apiUrl.organizations.join(), {
+export const joinOrganization = async (inviteCode: string, getToken: () => Promise<string | null>): Promise<{ organization: Organization }> => {
+  const response = await fetchWithRefresh(apiUrl.organizations.join(), {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({ inviteCode }),
-  });
+  }, getToken);
   if (!response.ok) { throw new Error('Failed to join organization'); }
   return response.json();
 };
 
-export const deleteOrganization = async (organizationId: string, token: string) => {
-  const response = await fetch(apiUrl.organizations.delete(organizationId), {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
+export const deleteOrganization = async (organizationId: string, getToken: () => Promise<string | null>) => {
+  const response = await fetchWithRefresh(apiUrl.organizations.delete(organizationId), { method: 'DELETE' }, getToken);
   if (!response.ok) {
     throw new Error(`Error deleting organization: ${response.statusText}`);
   }

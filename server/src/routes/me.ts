@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { clerkClient } from '@clerk/express'
-import { requireAuth } from '../middleware/auth'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = Router()
 

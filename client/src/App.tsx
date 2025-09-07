@@ -8,7 +8,7 @@ import Layout from "@/components/layout"
 import GroupSetup from "@/components/group-setup"
 import UserNameInput from '@/components/user-name-input'
 import { fetchUserOrganizations, type OrganizationWithRole } from './api/organizations'
-import { apiUrl } from './api/index'
+import { fetchWithRefresh, apiUrl } from './api/index'
 
 function App() {
   const { getToken } = useAuth()
@@ -21,16 +21,11 @@ function App() {
   const displayName = (user?.publicMetadata as any)?.displayName as string | undefined
 
   const fetchOrganizations = async () => {
-    const token = await getToken();
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
     try {
       setIsLoading(true)
-      const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(token);
+      const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(getToken);
       setOrganizations(organizations)
-      setLastSelectedOrganization(lastSelectedOrganization)
+      setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
     } catch (error) {
       console.error("Failed to fetch organizations:", error)
       setOrganizations([])
@@ -51,16 +46,11 @@ function App() {
   const handleSetDisplayName = async (name: string) => {
     if (!user) return
     try {
-      const token = await getToken()
-      if (!token) throw new Error('No auth token')
-      await fetch(apiUrl.me.updateDisplayName(), {
+      const response = await fetchWithRefresh(apiUrl.me.updateDisplayName(), {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify({ displayName: name.trim() }),
-      })
+      }, () => getToken())
+      if (!response.ok) throw new Error('Failed to update display name');
       await user.reload()
       // reload 後、displayName が反映され useEffect が fetchOrganizations を走らせる
     } catch (e) {

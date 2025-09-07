@@ -1,7 +1,10 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
-import { prisma } from '../app';
-import { clerkClient } from '@clerk/backend';
+import { requireAuth } from '../middleware/auth.js';
+import { prisma } from '../app.js';
+import { createClerkClient, type User } from '@clerk/backend';
+import type { OrganizationMembership, MealSignup } from '@prisma/client';
+
+const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
 
 const router = Router();
 
@@ -11,17 +14,18 @@ router.get('/', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
+    const currentUser = req.user;
 
     const { date, month, organizationId } = req.query;
 
-    const memberships = await prisma.organizationMembership.findMany({ 
-      where: { clerkId: req.user.id } 
+    const memberships: OrganizationMembership[] = await prisma.organizationMembership.findMany({ 
+      where: { clerkId: currentUser.id } 
     });
 
     // Determine which organization to use
     let targetOrganizationId = organizationId as string;
     if (!targetOrganizationId) {
-      const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+      const lastSelectedMembership = memberships.find((m: OrganizationMembership) => m.isLastSelected);
       targetOrganizationId = lastSelectedMembership?.organizationId || '';
     }
 
@@ -30,7 +34,7 @@ router.get('/', requireAuth, async (req, res) => {
     }
 
     // Verify user has access to this organization
-    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
+    const membership = memberships.find((m: OrganizationMembership) => m.organizationId === targetOrganizationId);
     if (!membership) {
       return res.status(403).json({ error: 'User does not have access to this organization' });
     }
@@ -62,7 +66,7 @@ router.get('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Either date (YYYY-MM-DD) or month (YYYY-MM) parameter is required' });
     }
 
-    const mealSignups = await prisma.mealSignup.findMany({
+    const mealSignups: MealSignup[] = await prisma.mealSignup.findMany({
       where: whereClause,
       orderBy: [
         { date: 'asc' },
@@ -74,10 +78,11 @@ router.get('/', requireAuth, async (req, res) => {
       return res.json({ mealSignups: [], date: date || null, month: month || null, organizationId: targetOrganizationId });
     }
 
-    const clerkIds = [...new Set(mealSignups.map(signup => signup.clerkId))];
-    const clerkUsers = await clerkClient.users.getUserList({ userId: clerkIds });
+    const clerkIds: string[] = Array.from(new Set(mealSignups.map((signup: MealSignup) => signup.clerkId)));
+    const clerkUsersResp = await clerk.users.getUserList({ userId: clerkIds });
+    const clerkUsers = (clerkUsersResp.data ?? []) as User[];
 
-    const usersMap = new Map(clerkUsers.map(user => [user.id, {
+    const usersMap = new Map(clerkUsers.map((user: User) => [user.id, {
       id: user.id,
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unknown User',
       email: user.emailAddresses[0]?.emailAddress || '',
@@ -107,6 +112,7 @@ router.post('/', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
+    const currentUser = req.user;
 
     const { date, breakfast, lunch, dinner, organizationId } = req.body;
 
@@ -120,14 +126,14 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    const memberships = await prisma.organizationMembership.findMany({ 
-      where: { clerkId: req.user.id } 
+    const memberships: OrganizationMembership[] = await prisma.organizationMembership.findMany({ 
+      where: { clerkId: currentUser.id } 
     });
 
     // Determine which organization to use
     let targetOrganizationId = organizationId;
     if (!targetOrganizationId) {
-      const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+      const lastSelectedMembership = memberships.find((m: OrganizationMembership) => m.isLastSelected);
       targetOrganizationId = lastSelectedMembership?.organizationId;
     }
 
@@ -135,16 +141,16 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'No organization selected' });
     }
 
-    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
+    const membership = memberships.find((m: OrganizationMembership) => m.organizationId === targetOrganizationId);
     if (!membership) {
       return res.status(403).json({ error: 'User does not have access to this organization' });
     }
 
     // Create or update meal signup
-    const mealSignup = await prisma.mealSignup.upsert({
+    const mealSignup: MealSignup = await prisma.mealSignup.upsert({
       where: {
         clerkId_organizationId_date: {
-          clerkId: req.user.id,
+          clerkId: currentUser.id,
           organizationId: targetOrganizationId,
           date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0)
         }
@@ -155,7 +161,7 @@ router.post('/', requireAuth, async (req, res) => {
         dinner: Boolean(dinner)
       },
       create: {
-        clerkId: req.user.id,
+        clerkId: currentUser.id,
         organizationId: targetOrganizationId,
         date: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
         breakfast: Boolean(breakfast),
@@ -184,6 +190,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
+    const currentUser = req.user;
     
     const { year, month, organizationId } = req.query;
     const yearNum = Number(year);
@@ -197,26 +204,26 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     const endDate = new Date(yearNum, monthNum, 1, 0, 0, 0, 0);
     
     // 対象組織を特定（クエリ優先、なければ isLastSelected → 先頭）
-    const memberships = await prisma.organizationMembership.findMany({
-      where: { clerkId: req.user.id },
+    const memberships: OrganizationMembership[] = await prisma.organizationMembership.findMany({
+      where: { clerkId: currentUser.id },
     });
 
     let targetOrganizationId: string | undefined = typeof organizationId === 'string' ? organizationId : undefined;
     if (!targetOrganizationId) {
-      const lastSelected = memberships.find(m => m.isLastSelected);
+      const lastSelected = memberships.find((m: OrganizationMembership) => m.isLastSelected);
       targetOrganizationId = lastSelected?.organizationId || memberships[0]?.organizationId;
     }
     if (!targetOrganizationId) {
       return res.status(400).json({ error: 'No organization selected' });
     }
-    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
+    const membership = memberships.find((m: OrganizationMembership) => m.organizationId === targetOrganizationId);
     if (!membership) {
       return res.status(403).json({ error: 'User does not have access to this organization' });
     }
 
-    const mealSignups = await prisma.mealSignup.findMany({
+    const mealSignups: MealSignup[] = await prisma.mealSignup.findMany({
       where: {
-        clerkId: req.user.id,
+        clerkId: currentUser.id,
         organizationId: targetOrganizationId,
         date: {
           gte: startDate,
@@ -227,19 +234,20 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     });
     
     // マッピング：各レコードの日付から「日」を抽出
-    const dailySignups = mealSignups.map(signup => ({
-      id: signup.id,
-      day: signup.date.getDate(),
-      breakfast: signup.breakfast,
-      lunch: signup.lunch,
-      dinner: signup.dinner,
-    }));
+    const dailySignups: { id: string; day: number; breakfast: boolean; lunch: boolean; dinner: boolean }[] = 
+      mealSignups.map((signup: MealSignup) => ({
+        id: signup.id,
+        day: signup.date.getDate(),
+        breakfast: signup.breakfast,
+        lunch: signup.lunch,
+        dinner: signup.dinner,
+      }));
     
     // 存在しない日があれば初期状態で埋める
     const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
     const finalResult = Array.from({ length: daysInMonth }, (_, i) => {
       const dayNumber = i + 1;
-      const existing = dailySignups.find(ds => ds.day === dayNumber);
+      const existing = dailySignups.find((ds) => ds.day === dayNumber);
       return existing || { id: null, day: dayNumber, breakfast: false, lunch: false, dinner: false };
     });
     
@@ -261,6 +269,7 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
+    const currentUser = req.user;
     
     const { monthlyMealSignup, year, month, organizationId } = req.body;
     if (!Array.isArray(monthlyMealSignup) || monthlyMealSignup.length === 0) {
@@ -273,14 +282,14 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid year or month' });
     }
 
-    const memberships = await prisma.organizationMembership.findMany({ 
-      where: { clerkId: req.user.id } 
+    const memberships: OrganizationMembership[] = await prisma.organizationMembership.findMany({ 
+      where: { clerkId: currentUser.id } 
     });
 
     // Determine which organization to use
     let targetOrganizationId = organizationId;
     if (!targetOrganizationId) {
-      const lastSelectedMembership = memberships.find(m => m.isLastSelected);
+      const lastSelectedMembership = memberships.find((m: OrganizationMembership) => m.isLastSelected);
       targetOrganizationId = lastSelectedMembership?.organizationId;
     }
 
@@ -288,12 +297,12 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'No organization selected' });
     }
 
-    const membership = memberships.find(m => m.organizationId === targetOrganizationId);
+    const membership = memberships.find((m: OrganizationMembership) => m.organizationId === targetOrganizationId);
     if (!membership) {
       return res.status(403).json({ error: 'User does not have access to this organization' });
     }
     
-    const operations = monthlyMealSignup.map(daySignup => {
+    const operations = monthlyMealSignup.map((daySignup: { day: number; breakfast: boolean; lunch: boolean; dinner: boolean }) => {
       const { day, breakfast, lunch, dinner } = daySignup;
       const targetDate = new Date(yearNum, monthNum - 1, day, 0, 0, 0, 0);
       
@@ -301,7 +310,7 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
       return prisma.mealSignup.upsert({
         where: {
           clerkId_organizationId_date: {
-            clerkId: req.user.id,
+            clerkId: currentUser.id,
             organizationId: targetOrganizationId,
             date: targetDate
           }
@@ -312,7 +321,7 @@ router.post('/self/bulk', requireAuth, async (req, res) => {
           dinner: Boolean(dinner),
         },
         create: {
-          clerkId: req.user.id,
+          clerkId: currentUser.id,
           organizationId: targetOrganizationId,
           date: targetDate,
           breakfast: Boolean(breakfast),
