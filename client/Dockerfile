@@ -27,6 +27,10 @@ RUN npm ci --include=dev
 # Copy application code
 COPY . .
 
+# Set build-time environment variables
+ARG VITE_API_BASE_URL=https://api.mealsignup.stargazer-info.com
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Build application
 RUN npm run build
 

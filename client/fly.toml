@@ -22,4 +22,3 @@ primary_region = 'nrt'
   cpus = 1
 
 [env]
-  VITE_API_BASE_URL = 'https://api.mealsignup.stargazer-info.com'
