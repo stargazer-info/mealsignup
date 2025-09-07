@@ -8,7 +8,7 @@ import Layout from "@/components/layout"
 import GroupSetup from "@/components/group-setup"
 import UserNameInput from '@/components/user-name-input'
 import { fetchUserOrganizations, type OrganizationWithRole } from './api/organizations'
-import { apiUrl } from './api/index'
+import { fetchWithRefresh, apiUrl } from './api/index'
 
 function App() {
   const { getToken } = useAuth()
