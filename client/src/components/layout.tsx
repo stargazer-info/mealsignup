@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth, useUser } from '@clerk/clerk-react'
 import type { ReactNode } from 'react'
 import { UserRoundMinus } from 'lucide-react'
-import { fetchUserOrganizations, fetchOrganizationDetails, leaveOrganization, deleteOrganization } from '@/api/organizations'
+import { fetchUserOrganizations, fetchOrganizationDetails, leaveOrganization } from '@/api/organizations'
 import { useToast } from '@/components/ui/toast-provider'
 
 // const DotIcon = () => {
@@ -16,7 +16,7 @@ function Layout ({ children }: {
     children: ReactNode,
 }) {
   const { getToken } = useAuth()
-  const { user } = useUser()
+  const {} = useUser()
   const { showSuccess } = useToast()
 
   const handleOrgLeave = async () => {
@@ -89,7 +89,6 @@ function Layout ({ children }: {
                   label="グループから抜ける"
                   labelIcon={<UserRoundMinus className="text-destructive" />}
                   onClick={handleOrgLeave}
-                  className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
                 />
               </UserButton.MenuItems>
             </UserButton>

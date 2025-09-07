@@ -30,7 +30,7 @@ function App() {
       setIsLoading(true)
       const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(token);
       setOrganizations(organizations)
-      setLastSelectedOrganization(lastSelectedOrganization)
+      setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
     } catch (error) {
       console.error("Failed to fetch organizations:", error)
       setOrganizations([])

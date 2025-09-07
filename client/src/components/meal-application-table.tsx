@@ -66,11 +66,11 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     const token = await getToken()
     if (!token) return
     try {
-      const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, token, groupData.id)
-      const formattedData = data.reduce((acc, item) => {
+      const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, token, groupData?.id ?? '')
+      const formattedData = data.reduce((acc: Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>, item: { day: number; breakfast: boolean; lunch: boolean; dinner: boolean }) => {
         acc[item.day] = { breakfast: item.breakfast, lunch: item.lunch, dinner: item.dinner }
         return acc
-      }, {} as Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>)
+      }, {})
       setMealData(formattedData)
     } catch (error) {
       console.error("Failed to fetch meal data:", error)
