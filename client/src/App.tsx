@@ -21,16 +21,22 @@ function App() {
   const displayName = (user?.publicMetadata as any)?.displayName as string | undefined
 
   const fetchOrganizations = async () => {
-    const token = await getToken();
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
     try {
       setIsLoading(true)
-      const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(token);
-      setOrganizations(organizations)
-      setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
+      let token = await getToken();
+      if (!token) throw new Error('No token available');
+      try {
+        const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(token);
+        setOrganizations(organizations)
+        setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
+      } catch (error) {
+        // トークン期限切れの場合、リフレッシュを試みる
+        console.warn('Token may be expired, refreshing...');
+        token = await getToken({ forceRefresh: true });
+        const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(token);
+        setOrganizations(organizations)
+        setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
+      }
     } catch (error) {
       console.error("Failed to fetch organizations:", error)
       setOrganizations([])
