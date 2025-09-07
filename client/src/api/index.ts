@@ -1,5 +1,3 @@
-import { useAuth } from '@clerk/clerk-react';
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const buildApiUrl = (path: string) => {
@@ -49,7 +47,7 @@ export const fetchWithRefresh = async (url: string, options: RequestInit = {}, g
     if (!response.ok) {
       if (response.status === 401) { // 認証エラー時リフレッシュ
         console.warn('Token may be expired, refreshing...');
-        token = await getToken({ forceRefresh: true });
+        token = await getToken();
         headers['Authorization'] = `Bearer ${token}`;
         return fetch(url, { ...options, headers });
       }
