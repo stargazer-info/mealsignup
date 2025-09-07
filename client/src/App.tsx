@@ -49,7 +49,7 @@ function App() {
       const response = await fetchWithRefresh(apiUrl.me.updateDisplayName(), {
         method: 'PATCH',
         body: JSON.stringify({ displayName: name.trim() }),
-      }, getToken)
+      }, () => getToken())
       if (!response.ok) throw new Error('Failed to update display name');
       await user.reload()
       // reload 後、displayName が反映され useEffect が fetchOrganizations を走らせる
