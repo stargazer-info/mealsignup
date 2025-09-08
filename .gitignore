@@ -52,3 +52,4 @@ Thumbs.db
 prisma/migrations/
 generated/
 /oauth_secret/
+.env.production
