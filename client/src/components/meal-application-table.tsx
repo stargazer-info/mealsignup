@@ -252,7 +252,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       <td className="p-2 sm:p-4 font-medium">
                         <div className="flex items-center gap-2">
                           <span className="text-base sm:text-lg">{day}日</span>
-                          <span className="hidden sm:inline text-sm text-muted-foreground">
+                          <span className="text-[11px] sm:text-sm text-muted-foreground">
                             (
                             {new Date(currentYear, currentMonth - 1, day).toLocaleDateString("ja-JP", {
                               weekday: "short",
