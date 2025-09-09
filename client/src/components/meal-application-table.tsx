@@ -172,6 +172,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                 setCurrentYear(y);
                 setCurrentMonth(m);
               }}
+              className="justify-center md:justify-start"
             />
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
