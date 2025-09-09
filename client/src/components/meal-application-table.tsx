@@ -208,26 +208,26 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs sm:text-sm">
+            <table className="w-full text-[11px] sm:text-sm leading-tight">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-2 sm:p-4 font-semibold text-foreground min-w-0 sm:min-w-[80px]">日付</th>
-                  <th className="text-center p-2 sm:p-4 font-semibold text-foreground min-w-0 sm:min-w-[120px]">
-                    <div className="flex items-center justify-center gap-2">
-                      <Sun className="h-4 w-4 text-amber-500" />
-                      朝食
+                  <th className="text-center p-1 sm:p-3 md:p-4 font-semibold text-foreground min-w-0">
+                    <div className="flex items-center justify-center gap-1 sm:gap-2">
+                      <Sun className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500" />
+                      <span className="text-[11px] sm:text-sm">朝食</span>
                     </div>
                   </th>
-                  <th className="text-center p-2 sm:p-4 font-semibold text-foreground min-w-0 sm:min-w-[120px]">
-                    <div className="flex items-center justify-center gap-2">
-                      <Utensils className="h-4 w-4 text-orange-500" />
-                      昼食
+                  <th className="text-center p-1 sm:p-3 md:p-4 font-semibold text-foreground min-w-0">
+                    <div className="flex items-center justify-center gap-1 sm:gap-2">
+                      <Utensils className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />
+                      <span className="text-[11px] sm:text-sm">昼食</span>
                     </div>
                   </th>
-                  <th className="text-center p-2 sm:p-4 font-semibold text-foreground min-w-0 sm:min-w-[120px]">
-                    <div className="flex items-center justify-center gap-2">
-                      <Moon className="h-4 w-4 text-blue-500" />
-                      夕食
+                  <th className="text-center p-1 sm:p-3 md:p-4 font-semibold text-foreground min-w-0">
+                    <div className="flex items-center justify-center gap-1 sm:gap-2">
+                      <Moon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+                      <span className="text-[11px] sm:text-sm">夕食</span>
                     </div>
                   </th>
                 </tr>
@@ -251,7 +251,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       <td className="p-2 sm:p-4 font-medium">
                         <div className="flex items-center gap-2">
                           <span className="text-base sm:text-lg">{day}日</span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="hidden sm:inline text-sm text-muted-foreground">
                             (
                             {new Date(currentYear, currentMonth - 1, day).toLocaleDateString("ja-JP", {
                               weekday: "short",
@@ -260,27 +260,27 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                           </span>
                         </div>
                       </td>
-                      <td className="p-2 sm:p-4 text-center">
+                      <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1.5 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
                           onClick={() => toggleMealStatus(day, "breakfast")}
                         >
                           {getMealStatusIcon(dayApplications.breakfast)}
                           {getMealStatusBadge(dayApplications.breakfast)}
                         </div>
                       </td>
-                      <td className="p-2 sm:p-4 text-center">
+                      <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1.5 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
                           onClick={() => toggleMealStatus(day, "lunch")}
                         >
                           {getMealStatusIcon(dayApplications.lunch)}
                           {getMealStatusBadge(dayApplications.lunch)}
                         </div>
                       </td>
-                      <td className="p-2 sm:p-4 text-center">
+                      <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1.5 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
                           onClick={() => toggleMealStatus(day, "dinner")}
                         >
                           {getMealStatusIcon(dayApplications.dinner)}
