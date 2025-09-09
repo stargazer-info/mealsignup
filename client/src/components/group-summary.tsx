@@ -64,7 +64,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
               <span className="font-semibold text-foreground">
                 グループ名: {displayGroupName || "N/A"}
               </span>
-              <Badge variant="outline" className="text-sm px-3 py-1">
+              <Badge variant="outline" className="text-sm px-3 py-1 break-all max-w-[200px] sm:max-w-none">
                 招待コード: {displayInviteCode || "N/A"}
               </Badge>
             </div>
@@ -100,14 +100,14 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2 font-medium">日付</th>
-                    <th className="text-center p-2 font-medium">朝食</th>
-                    <th className="text-center p-2 font-medium">昼食</th>
-                    <th className="text-center p-2 font-medium">夕食</th>
-                    <th className="text-center p-2 font-medium">合計</th>
+                    <th className="text-left p-2 sm:p-4 font-medium">日付</th>
+                    <th className="text-center p-2 sm:p-4 font-medium">朝食</th>
+                    <th className="text-center p-2 sm:p-4 font-medium">昼食</th>
+                    <th className="text-center p-2 sm:p-4 font-medium">夕食</th>
+                    <th className="text-center p-2 sm:p-4 font-medium">合計</th>
                   </tr>
                 </thead>
                 <tbody>

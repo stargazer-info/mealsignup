@@ -151,11 +151,11 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4">
         <div className="flex flex-col items-center gap-2 text-lg">
-          <div className="flex items-center gap-4">
-            <span className="font-semibold text-foreground">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <span className="font-semibold text-foreground text-sm sm:text-base">
               グループ名: {groupData?.name || "N/A"}
             </span>
-            <Badge variant="outline" className="text-sm px-3 py-1">
+            <Badge variant="outline" className="text-xs sm:text-sm px-2 py-0.5 break-all max-w-[200px] sm:max-w-none">
               招待コード: {groupData?.inviteCode || "N/A"}
             </Badge>
           </div>
@@ -173,12 +173,12 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                 setCurrentMonth(m);
               }}
             />
-            <div className="flex flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 variant="default"
                 size="sm"
                 onClick={applyAllMeals}
-                className="bg-chart-1 hover:bg-chart-1/90 text-white w-20 px-4 flex-shrink-0"
+                className="bg-chart-1 hover:bg-chart-1/90 text-white w-full sm:w-auto px-4 flex-shrink-0"
                 disabled={isBulkUpdating}
               >
                 全申込
@@ -187,7 +187,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                 variant="outline"
                 size="sm"
                 onClick={cancelAllMeals}
-                className="border-destructive text-destructive hover:bg-destructive hover:text-white bg-transparent w-20 px-4 flex-shrink-0"
+                className="border-destructive text-destructive hover:bg-destructive hover:text-white bg-transparent w-full sm:w-auto px-4 flex-shrink-0"
                 disabled={isBulkUpdating}
               >
                 全解除
@@ -196,7 +196,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                 variant="secondary"
                 size="sm"
                 onClick={navigateToStatistics}
-                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground px-3 flex-shrink-0"
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground px-3 w-full sm:w-auto flex-shrink-0"
               >
                 グループサマリー
               </Button>
@@ -208,23 +208,23 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-4 font-semibold text-foreground min-w-[80px]">日付</th>
-                  <th className="text-center p-4 font-semibold text-foreground min-w-[120px]">
+                  <th className="text-left p-2 sm:p-4 font-semibold text-foreground min-w-0 sm:min-w-[80px]">日付</th>
+                  <th className="text-center p-2 sm:p-4 font-semibold text-foreground min-w-0 sm:min-w-[120px]">
                     <div className="flex items-center justify-center gap-2">
                       <Sun className="h-4 w-4 text-amber-500" />
                       朝食
                     </div>
                   </th>
-                  <th className="text-center p-4 font-semibold text-foreground min-w-[120px]">
+                  <th className="text-center p-2 sm:p-4 font-semibold text-foreground min-w-0 sm:min-w-[120px]">
                     <div className="flex items-center justify-center gap-2">
                       <Utensils className="h-4 w-4 text-orange-500" />
                       昼食
                     </div>
                   </th>
-                  <th className="text-center p-4 font-semibold text-foreground min-w-[120px]">
+                  <th className="text-center p-2 sm:p-4 font-semibold text-foreground min-w-0 sm:min-w-[120px]">
                     <div className="flex items-center justify-center gap-2">
                       <Moon className="h-4 w-4 text-blue-500" />
                       夕食
@@ -248,9 +248,9 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
 
                   return (
                     <tr key={day} className="border-b hover:bg-muted/30 transition-colors">
-                      <td className="p-4 font-medium">
+                      <td className="p-2 sm:p-4 font-medium">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{day}日</span>
+                          <span className="text-base sm:text-lg">{day}日</span>
                           <span className="text-sm text-muted-foreground">
                             (
                             {new Date(currentYear, currentMonth - 1, day).toLocaleDateString("ja-JP", {
@@ -260,27 +260,27 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                           </span>
                         </div>
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="p-2 sm:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 rounded-md p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1.5 sm:p-2 transition-colors"
                           onClick={() => toggleMealStatus(day, "breakfast")}
                         >
                           {getMealStatusIcon(dayApplications.breakfast)}
                           {getMealStatusBadge(dayApplications.breakfast)}
                         </div>
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="p-2 sm:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 rounded-md p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1.5 sm:p-2 transition-colors"
                           onClick={() => toggleMealStatus(day, "lunch")}
                         >
                           {getMealStatusIcon(dayApplications.lunch)}
                           {getMealStatusBadge(dayApplications.lunch)}
                         </div>
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="p-2 sm:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 rounded-md p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1.5 sm:p-2 transition-colors"
                           onClick={() => toggleMealStatus(day, "dinner")}
                         >
                           {getMealStatusIcon(dayApplications.dinner)}
