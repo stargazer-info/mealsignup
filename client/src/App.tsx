@@ -86,33 +86,25 @@ function App() {
       </SignedOut>
       <SignedIn>
         {!displayName ? (
-          <main className="min-h-screen bg-background p-4 md:p-8">
-            <div className="mx-auto max-w-6xl">
-              <Layout children={
-                <div className="mx-auto max-w-md">
-                  <UserNameInput onUserNameSet={handleSetDisplayName} initialValue={user?.fullName || ""} />
-                </div>
-              } />
+          <Layout children={
+            <div className="mx-auto max-w-md p-2 sm:p-0">
+              <UserNameInput onUserNameSet={handleSetDisplayName} initialValue={user?.fullName || ""} />
             </div>
-          </main>
+          } />
         ) : isLoading ? (
           <Layout children={<div>Loading...</div>} />
         ) : (
-          <main className="min-h-screen bg-background p-4 md:p-8">
-            <div className="mx-auto max-w-6xl">
-              <Layout children={
-                organizations.length === 0 ? (
-                  <GroupSetup onGroupSetup={fetchOrganizations} />
-                ) : (
-                  currentView === "application" ? (
-                    <MealApplicationTable onNavigateToSummary={() => setCurrentView("summary")} groupData={groupData} />
-                  ) : (
-                    <GroupSummary onBack={() => setCurrentView("application")} groupData={groupData} />
-                  )
-                )
-              } />
-            </div>
-          </main>
+          <Layout children={
+            organizations.length === 0 ? (
+              <GroupSetup onGroupSetup={fetchOrganizations} />
+            ) : (
+              currentView === "application" ? (
+                <MealApplicationTable onNavigateToSummary={() => setCurrentView("summary")} groupData={groupData} />
+              ) : (
+                <GroupSummary onBack={() => setCurrentView("application")} groupData={groupData} />
+              )
+            )
+          } />
         )}
       </SignedIn>
     </>

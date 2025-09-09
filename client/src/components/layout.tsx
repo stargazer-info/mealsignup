@@ -62,8 +62,8 @@ function Layout ({ children }: {
     <main className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-6xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">ごはんお願い</h1>
-          <p className="text-lg text-muted-foreground">家族の食事申し込みを簡単管理</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-2">ごはんお願い</h1>
+          <p className="text-base sm:text-lg text-muted-foreground">家族の食事申し込みを簡単管理</p>
         </div>
         <SignedOut>
 	  <div className="flex justify-center mb-4">
