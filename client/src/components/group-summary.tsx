@@ -83,7 +83,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
 
         {/* 月選択 */}
         <Card>
-          <CardHeader className="pb-4">
+          <CardHeader className="px-2 sm:px-6 pb-4">
             <MonthNavigator
               year={currentDate.getFullYear()}
               month={currentDate.getMonth() + 1}
@@ -95,10 +95,10 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
 
         {/* 日別サマリーテーブル */}
         <Card>
-          <CardHeader>
+          <CardHeader className="px-2 sm:px-6">
             <CardTitle className="text-primary">日別申込数</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-xs sm:text-sm">
                 <thead>

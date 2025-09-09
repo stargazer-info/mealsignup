@@ -163,7 +163,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
       </div>
 
       <Card className="bg-card">
-        <CardHeader className="pb-4">
+        <CardHeader className="px-2 sm:px-6 pb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <MonthNavigator
               year={currentYear}
