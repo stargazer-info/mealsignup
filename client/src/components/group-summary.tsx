@@ -120,7 +120,20 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                   ) : Object.keys(dailySummary).length > 0 ? (
                     Object.entries(dailySummary).map(([day, meals]) => (
                       <tr key={day} className="border-b hover:bg-muted/50">
-                        <td className="p-2">{day}日</td>
+                        <td className="p-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base sm:text-lg">{day}日</span>
+                            <span className="text-[11px] sm:text-sm text-muted-foreground">
+                              (
+                              {new Date(
+                                currentDate.getFullYear(),
+                                currentDate.getMonth(),
+                                Number(day)
+                              ).toLocaleDateString("ja-JP", { weekday: "short" })}
+                              )
+                            </span>
+                          </div>
+                        </td>
                         <td className="text-center p-2">
                           <Badge variant={meals.breakfast > 0 ? "default" : "secondary"}>{meals.breakfast}</Badge>
                         </td>
