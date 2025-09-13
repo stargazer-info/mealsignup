@@ -256,26 +256,44 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
       }
     });
 
-    // 今月の日数分の日別データを作成 (デフォルトは予約数 0)
+    // ユーザープロファイルを取得
+    const clerkIds = Array.from(new Set(mealSignups.map(s => s.clerkId)));
+    const profiles = await prisma.userProfile.findMany({
+      where: { clerkId: { in: clerkIds } }
+    });
+    const nameById = new Map(profiles.map(p => [p.clerkId, p.displayName]));
+
+    // 今月の日数分の日別データを作成
     const lastDay = new Date(targetYear, targetMonth, 0).getDate();
     const dailyData = Array.from({ length: lastDay }, (_, idx) => ({
       day: idx + 1,
-      breakfast: 0,
-      lunch: 0,
-      dinner: 0
+      breakfast: { count: 0, users: [] as string[] },
+      lunch: { count: 0, users: [] as string[] },
+      dinner: { count: 0, users: [] as string[] }
     }));
 
-    // 各日の予約数を更新（各登録が true ならカウントをインクリメント）
+    // 各日の予約数とユーザー一覧を更新
     mealSignups.forEach((signup: MealSignup) => {
       const signupDate = new Date(signup.date);
       const day = signupDate.getDate();
       const idx = day - 1;
       if (idx >= 0 && idx < dailyData.length) {
         const dayData = dailyData[idx]!;
-        if (signup.breakfast) dayData.breakfast += 1;
-        if (signup.lunch)     dayData.lunch += 1;
-        if (signup.dinner)    dayData.dinner += 1;
+        const name = nameById.get(signup.clerkId) ?? '不明ユーザー';
+        if (signup.breakfast) dayData.breakfast.users.push(name);
+        if (signup.lunch) dayData.lunch.users.push(name);
+        if (signup.dinner) dayData.dinner.users.push(name);
       }
+    });
+
+    // ユーザー一覧をソートし、カウントを設定
+    dailyData.forEach(dayData => {
+      dayData.breakfast.users.sort();
+      dayData.breakfast.count = dayData.breakfast.users.length;
+      dayData.lunch.users.sort();
+      dayData.lunch.count = dayData.lunch.users.length;
+      dayData.dinner.users.sort();
+      dayData.dinner.count = dayData.dinner.users.length;
     });
 
     res.json({ year: targetYear, month: targetMonth, dailyData });

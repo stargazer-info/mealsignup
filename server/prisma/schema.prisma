@@ -58,3 +58,12 @@ model MealSignup {
   @@unique([clerkId, organizationId, date])
   @@map("meal_signups")
 }
+
+model UserProfile {
+  clerkId     String   @id
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_profiles")
+}
