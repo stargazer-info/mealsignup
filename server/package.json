@@ -14,6 +14,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
+    "backfill:display-names": "node dist/scripts/backfill-display-names.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
