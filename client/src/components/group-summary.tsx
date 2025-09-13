@@ -26,7 +26,6 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
   const [dailySummary, setDailySummary] = useState<Record<string, DailyData>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [hoverCell, setHoverCell] = useState<{ day: number; meal: 'breakfast'|'lunch'|'dinner' } | null>(null)
-  const [modalCell, setModalCell] = useState<{ day: number; meal: 'breakfast'|'lunch'|'dinner' } | null>(null)
 
   const displayGroupName = groupData?.name
   const displayInviteCode = groupData?.inviteCode
@@ -140,7 +139,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           className="relative text-center p-2"
                           onMouseEnter={() => setHoverCell({ day: Number(day), meal: 'breakfast' })}
                           onMouseLeave={() => setHoverCell(null)}
-                          onClick={() => setModalCell({ day: Number(day), meal: 'breakfast' })}
+                          onClick={() => setHoverCell({ day: Number(day), meal: 'breakfast' })}
                         >
                           <Badge variant={meals.breakfast.count > 0 ? "default" : "secondary"}>{meals.breakfast.count}</Badge>
                           {hoverCell?.day === Number(day) && hoverCell.meal === 'breakfast' && (
@@ -159,7 +158,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           className="relative text-center p-2"
                           onMouseEnter={() => setHoverCell({ day: Number(day), meal: 'lunch' })}
                           onMouseLeave={() => setHoverCell(null)}
-                          onClick={() => setModalCell({ day: Number(day), meal: 'lunch' })}
+                          onClick={() => setHoverCell({ day: Number(day), meal: 'lunch' })}
                         >
                           <Badge variant={meals.lunch.count > 0 ? "default" : "secondary"}>{meals.lunch.count}</Badge>
                           {hoverCell?.day === Number(day) && hoverCell.meal === 'lunch' && (
@@ -178,7 +177,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           className="relative text-center p-2"
                           onMouseEnter={() => setHoverCell({ day: Number(day), meal: 'dinner' })}
                           onMouseLeave={() => setHoverCell(null)}
-                          onClick={() => setModalCell({ day: Number(day), meal: 'dinner' })}
+                          onClick={() => setHoverCell({ day: Number(day), meal: 'dinner' })}
                         >
                           <Badge variant={meals.dinner.count > 0 ? "default" : "secondary"}>{meals.dinner.count}</Badge>
                           {hoverCell?.day === Number(day) && hoverCell.meal === 'dinner' && (
@@ -213,30 +212,6 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
           </CardContent>
         </Card>
 
-        {/* スマホ用ボトムシート */}
-        {modalCell && (
-          <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setModalCell(null)}>
-            <div className="absolute bottom-0 left-0 right-0 bg-background rounded-t-xl p-4 max-h-[70vh] overflow-auto" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm">
-                  {currentDate.getFullYear()}年{currentDate.getMonth()+1}月{modalCell.day}日・{
-                    modalCell.meal === 'breakfast' ? '朝食' : modalCell.meal === 'lunch' ? '昼食' : '夕食'
-                  }
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setModalCell(null)}>閉じる</Button>
-              </div>
-              {(() => {
-                const users =
-                  modalCell.meal === 'breakfast' ? dailySummary[modalCell.day]?.breakfast.users :
-                  modalCell.meal === 'lunch'     ? dailySummary[modalCell.day]?.lunch.users     :
-                                                   dailySummary[modalCell.day]?.dinner.users
-                return users?.length
-                  ? <div className="flex flex-wrap gap-1">{users.map((n,i)=><span key={`${n}-${i}`} className="bg-muted rounded px-2 py-0.5 text-sm break-words">{n}</span>)}</div>
-                  : <span className="text-sm text-muted-foreground">申込者なし</span>
-              })()}
-            </div>
-          </div>
-        )}
     </div>
   )
 }
