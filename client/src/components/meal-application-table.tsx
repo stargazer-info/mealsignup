@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import MonthNavigator from "@/components/month-navigator"
 import { Sun, Utensils, Moon, Check, X } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@clerk/clerk-react"
 import { saveMealSignupApi } from "@/api/meals"
 import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup } from "@/api/mealSignup"
@@ -62,7 +62,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
   const [mealData, setMealData] = useState<Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>>({})
   const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
-  const fetchMealData = async () => {
+  const fetchMealData = useCallback(async () => {
     try {
       const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, getToken, groupData?.id ?? '')
       const formattedData = data.reduce((acc: Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>, item: { day: number; breakfast: boolean; lunch: boolean; dinner: boolean }) => {
@@ -73,14 +73,13 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     } catch (error) {
       console.error("Failed to fetch meal data:", error)
     }
-  }
+  }, [currentYear, currentMonth, groupData?.id, getToken])
 
   useEffect(() => {
-    if (groupData) {
+    if (groupData?.id) {
       fetchMealData()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentYear, currentMonth, groupData])
+  }, [fetchMealData, groupData?.id])
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
 
