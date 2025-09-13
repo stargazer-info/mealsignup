@@ -17,7 +17,7 @@ interface GroupSetupProps {
 export default function GroupSetup({ onGroupSetup }: GroupSetupProps) {
   const { getToken } = useAuth()
   const {} = useUser()
-  const [activeTab, setActiveTab] = useState("create")
+  const [activeTab, setActiveTab] = useState("join")
   const [groupName, setGroupName] = useState("")
   const [inviteCode, setInviteCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
