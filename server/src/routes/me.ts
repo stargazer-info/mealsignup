@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { clerkClient } from '@clerk/express'
 import { requireAuth } from '../middleware/auth.js'
+import { prisma } from '../app.js'
 
 const router = Router()
 
@@ -22,8 +22,11 @@ router.patch('/display-name', requireAuth, async (req, res) => {
     if (!displayName) return res.status(400).json({ error: 'displayName is required' })
     if (displayName.length > 50) displayName = displayName.slice(0, 50)
 
-    await clerkClient.users.updateUserMetadata(userId, {
-      publicMetadata: { displayName },
+    // DB（user_profiles）に表示名を保存（ソースオブトゥルースはDB）
+    await prisma.userProfile.upsert({
+      where: { clerkId: userId },
+      create: { clerkId: userId, displayName },
+      update: { displayName },
     })
 
     return res.json({ ok: true, displayName })
