@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut, SignInButton, useAuth, useUser } from '@clerk/clerk-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { Button } from "@/components/ui/button"
 import { MealApplicationTable } from "@/components/meal-application-table"
@@ -18,12 +18,19 @@ function App() {
   const [lastSelectedOrganization, setLastSelectedOrganization] = useState<OrganizationWithRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const displayName = (user?.publicMetadata as any)?.displayName as string | undefined
+  // DB一本化: 表示名はDBから取得・管理
+  const [displayName, setDisplayName] = useState<string>('')
+
+  // getToken を安定参照に
+  const getTokenRef = useRef(getToken)
+  useEffect(() => {
+    getTokenRef.current = getToken
+  }, [getToken])
 
   const fetchOrganizations = async () => {
     try {
       setIsLoading(true)
-      const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(getToken);
+      const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(getTokenRef.current);
       setOrganizations(organizations)
       setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
     } catch (error) {
@@ -34,14 +41,35 @@ function App() {
     }
   }
 
+  // DBからdisplayNameを取得（Clerkに依存しない）
+  useEffect(() => {
+    const loadDisplayName = async () => {
+      try {
+        const resp = await fetchWithRefresh(apiUrl.me.getDisplayName(), {}, getTokenRef.current)
+        if (resp.ok) {
+          const json = await resp.json()
+          setDisplayName(json.displayName || '')
+        }
+      } catch (e) {
+        console.error('Failed to fetch displayName from DB', e)
+      } finally {
+        // displayName 未設定でも入力カードを出せるようロードを解除
+        if (isLoaded && isSignedIn) setIsLoading(false)
+      }
+    }
+    if (isLoaded && isSignedIn) {
+      loadDisplayName()
+    } else if (isLoaded) {
+      setIsLoading(false)
+    }
+  }, [isLoaded, isSignedIn])
+
+  // displayName が取得できたら組織を読み込む
   useEffect(() => {
     if (isLoaded && isSignedIn && displayName) {
       fetchOrganizations()
-    } else if (isLoaded) {
-      // サインイン済みでも displayName 未設定ならローディングを解除して入力カードを表示
-      setIsLoading(false)
     }
-  }, [isLoaded, isSignedIn, displayName, getToken])
+  }, [isLoaded, isSignedIn, displayName])
 
   const handleSetDisplayName = async (name: string) => {
     if (!user) return
@@ -49,10 +77,10 @@ function App() {
       const response = await fetchWithRefresh(apiUrl.me.updateDisplayName(), {
         method: 'PATCH',
         body: JSON.stringify({ displayName: name.trim() }),
-      }, () => getToken())
+      }, getTokenRef.current)
       if (!response.ok) throw new Error('Failed to update display name');
-      await user.reload()
-      // reload 後、displayName が反映され useEffect が fetchOrganizations を走らせる
+      // DBに保存済み。Clerkのreloadは不要
+      setDisplayName(name.trim())
     } catch (e) {
       console.error('Failed to save displayName:', e)
       alert('表示名の保存に失敗しました。時間をおいて再度お試しください。')
@@ -88,7 +116,7 @@ function App() {
         {!displayName ? (
           <Layout children={
             <div className="mx-auto max-w-md p-2 sm:p-0">
-              <UserNameInput onUserNameSet={handleSetDisplayName} initialValue={user?.fullName || ""} />
+              <UserNameInput onUserNameSet={handleSetDisplayName} initialValue="" />
             </div>
           } />
         ) : isLoading ? (

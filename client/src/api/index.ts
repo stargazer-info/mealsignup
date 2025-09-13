@@ -29,6 +29,7 @@ export const apiUrl = {
   },
   me: {
     updateDisplayName: () => buildApiUrl('/api/me/display-name'),
+    getDisplayName: () => buildApiUrl('/api/me/display-name'),
   }
 };
 
