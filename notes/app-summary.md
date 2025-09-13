@@ -7,7 +7,7 @@
 - サーバー: server/
 - 共有設定/ドキュメント: shared/, notes/
 
-注意: 本まとめはチャットで共有された最新のコード断片を信頼ソースとして記載しています。
+注意: 本まとめはチャットで共有された最新のコード断片を基にし、内部調査ノートの要点も取り込み済みです。
 
 ## 主なユースフロー
 1. サインイン（Clerk）
@@ -52,6 +52,11 @@
   - types/DailyData.ts: { day, breakfast, lunch, dinner }（それぞれ { count, users }）
 
 ## バックエンド（server）概要
+- サーバー構成/運用補足
+  - clerkMiddleware を全 API ルートの前に適用（server/src/app.ts）
+  - CORS: CLIENT_URL（カンマ区切り複数可）を許可し、credentials: true
+  - ヘルスチェック: GET /health（status/timestamp/service を返却）
+  - Graceful shutdown: SIGINT/SIGTERM で Prisma を切断
 - ルーティング（例）
   - /api/auth, /api/me, /api/meals, /api/organizations
 - 認証
@@ -101,4 +106,4 @@
   - inviteCode/name の trim と長さ制限を API 層で一貫適用
 
 ## 参考
-- 詳細は notes/investigation-summary-2025-09-06.md を参照
+- 内部調査の要点は本ファイルに統合済みです
