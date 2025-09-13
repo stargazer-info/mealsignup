@@ -143,7 +143,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                         >
                           <Badge variant={meals.breakfast.count > 0 ? "default" : "secondary"}>{meals.breakfast.count}</Badge>
                           {hoverCell?.day === Number(day) && hoverCell.meal === 'breakfast' && (
-                            <div className="absolute z-50 top-full mt-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
+                            <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
                               {(meals.breakfast.users?.length ?? 0) > 0
                                 ? <div className="flex flex-wrap gap-1">
                                     {meals.breakfast.users.map((name, i) => (
@@ -162,7 +162,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                         >
                           <Badge variant={meals.lunch.count > 0 ? "default" : "secondary"}>{meals.lunch.count}</Badge>
                           {hoverCell?.day === Number(day) && hoverCell.meal === 'lunch' && (
-                            <div className="absolute z-50 top-full mt-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
+                            <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
                               {(meals.lunch.users?.length ?? 0) > 0
                                 ? <div className="flex flex-wrap gap-1">
                                     {meals.lunch.users.map((name, i) => (
@@ -181,7 +181,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                         >
                           <Badge variant={meals.dinner.count > 0 ? "default" : "secondary"}>{meals.dinner.count}</Badge>
                           {hoverCell?.day === Number(day) && hoverCell.meal === 'dinner' && (
-                            <div className="absolute z-50 top-full mt-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
+                            <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
                               {(meals.dinner.users?.length ?? 0) > 0
                                 ? <div className="flex flex-wrap gap-1">
                                     {meals.dinner.users.map((name, i) => (
