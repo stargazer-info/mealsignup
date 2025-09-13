@@ -5,6 +5,25 @@ import { prisma } from '../app.js'
 const router = Router()
 
 /**
+ * Get displayName from DB (user_profiles)
+ */
+router.get('/display-name', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user?.id
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' })
+
+    const profile = await prisma.userProfile.findUnique({
+      where: { clerkId: userId },
+    })
+
+    return res.json({ displayName: profile?.displayName ?? null })
+  } catch (e) {
+    console.error('Failed to get displayName', e)
+    return res.status(500).json({ error: 'Failed to get displayName' })
+  }
+})
+
+/**
  * Update displayName in Clerk public_metadata
  */
 router.patch('/display-name', requireAuth, async (req, res) => {
