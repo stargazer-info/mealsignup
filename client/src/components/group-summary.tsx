@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@clerk/clerk-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -27,32 +27,38 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [hoverCell, setHoverCell] = useState<{ day: number; meal: 'breakfast'|'lunch'|'dinner' } | null>(null)
 
+  const getTokenRef = useRef(getToken)
+  useEffect(() => {
+    getTokenRef.current = getToken
+  }, [getToken])
+
   const displayGroupName = groupData?.name
   const displayInviteCode = groupData?.inviteCode
 
-  useEffect(() => {
-    const loadSummary = async () => {
-      if (!groupData) return
-      setIsLoading(true)
-      try {
-        const summaryResponse = await fetchMonthlySummary({ id: groupData.id }, currentDate, getToken)
-        const summaryMap = summaryResponse.dailyData.reduce(
-          (acc, item) => {
-            acc[item.day] = item
-            return acc
-          },
-          {} as Record<string, DailyData>
-        )
-        setDailySummary(summaryMap)
-      } catch (error) {
-        console.error("Failed to fetch monthly summary:", error)
-        setDailySummary({})
-      } finally {
-        setIsLoading(false)
-      }
+  const loadSummary = useCallback(async () => {
+    if (!groupData) return
+    setIsLoading(true)
+    try {
+      const summaryResponse = await fetchMonthlySummary({ id: groupData.id }, currentDate, getTokenRef.current)
+      const summaryMap = summaryResponse.dailyData.reduce(
+        (acc, item) => {
+          acc[item.day] = item
+          return acc
+        },
+        {} as Record<string, DailyData>
+      )
+      setDailySummary(summaryMap)
+    } catch (error) {
+      console.error("Failed to fetch monthly summary:", error)
+      setDailySummary({})
+    } finally {
+      setIsLoading(false)
     }
+  }, [currentDate, groupData?.id])
+
+  useEffect(() => {
     loadSummary()
-  }, [currentDate, groupData, getToken])
+  }, [loadSummary])
 
 
 
