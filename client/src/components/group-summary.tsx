@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ChevronLeft } from "lucide-react"
 import MonthNavigator from "@/components/month-navigator"
 import { fetchMonthlySummary } from "@/api/monthlySummary"
-import type { DailyData, MealUsers } from "../types/DailyData"
+import type { DailyData } from "../types/DailyData"
 
 interface GroupSummaryProps {
   onBack: () => void
