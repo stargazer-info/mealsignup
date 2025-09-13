@@ -116,7 +116,7 @@ function App() {
         {!displayName ? (
           <Layout children={
             <div className="mx-auto max-w-md p-2 sm:p-0">
-              <UserNameInput onUserNameSet={handleSetDisplayName} initialValue={user?.fullName || ""} />
+              <UserNameInput onUserNameSet={handleSetDisplayName} initialValue="" />
             </div>
           } />
         ) : isLoading ? (
