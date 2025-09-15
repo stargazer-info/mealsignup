@@ -126,7 +126,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                     </tr>
                   ) : Object.keys(dailySummary).length > 0 ? (
                     Object.entries(dailySummary).map(([day, meals]) => (
-                      <tr key={day} className="border-b hover:bg-muted/50">
+                      <tr key={day} className="border-b">
                         <td className="p-2">
                           <div className="flex items-center gap-2">
                             <span className="text-base sm:text-lg">{day}日</span>
