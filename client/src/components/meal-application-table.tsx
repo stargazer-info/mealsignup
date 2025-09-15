@@ -250,8 +250,18 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                     <tr key={day} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="p-2 sm:p-4 font-medium">
                         <div className="flex items-center gap-2">
-                          <span className="text-base sm:text-lg">{day}日</span>
-                          <span className="text-[11px] sm:text-sm text-muted-foreground">
+                          <span className={`text-base sm:text-lg ${(() => {
+                            const weekday = new Date(currentYear, currentMonth - 1, day).getDay()
+                            if (weekday === 0) return 'text-red-600' // 日曜
+                            if (weekday === 6) return 'text-blue-600' // 土曜
+                            return ''
+                          })()}`}>{day}日</span>
+                          <span className={`text-[11px] sm:text-sm ${(() => {
+                            const weekday = new Date(currentYear, currentMonth - 1, day).getDay()
+                            if (weekday === 0) return 'text-red-600' // 日曜
+                            if (weekday === 6) return 'text-blue-600' // 土曜
+                            return 'text-muted-foreground'
+                          })()}`}>
                             (
                             {new Date(currentYear, currentMonth - 1, day).toLocaleDateString("ja-JP", {
                               weekday: "short",
