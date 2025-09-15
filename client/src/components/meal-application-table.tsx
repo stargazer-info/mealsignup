@@ -247,7 +247,15 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                   }
 
                   return (
-                    <tr key={day} className="border-b hover:bg-muted/30 transition-colors">
+                    <tr key={day} className={`border-b hover:bg-muted/30 transition-colors ${(() => {
+                      const now = new Date()
+                      const d = new Date(currentYear, currentMonth - 1, day)
+                      return d.getFullYear() === now.getFullYear()
+                        && d.getMonth() === now.getMonth()
+                        && d.getDate() === now.getDate()
+                        ? 'bg-muted/20'
+                        : ''
+                    })()}`}>
                       <td className="p-2 sm:p-4 font-medium">
                         <div className="flex items-center gap-2">
                           <span className={`text-base sm:text-lg ${(() => {

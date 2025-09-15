@@ -126,7 +126,15 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                     </tr>
                   ) : Object.keys(dailySummary).length > 0 ? (
                     Object.entries(dailySummary).map(([day, meals]) => (
-                      <tr key={day} className="border-b">
+                      <tr key={day} className={`border-b ${(() => {
+                        const now = new Date()
+                        const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), Number(day))
+                        return d.getFullYear() === now.getFullYear()
+                          && d.getMonth() === now.getMonth()
+                          && d.getDate() === now.getDate()
+                          ? 'bg-muted/20'
+                          : ''
+                      })()}`}>
                         <td className="p-2">
                           <div className="flex items-center gap-2">
                             <span className={`text-base sm:text-lg ${(() => {
