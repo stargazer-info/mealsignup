@@ -253,7 +253,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       return d.getFullYear() === now.getFullYear()
                         && d.getMonth() === now.getMonth()
                         && d.getDate() === now.getDate()
-                        ? 'bg-muted/30'
+                        ? 'bg-accent/10'
                         : ''
                     })()}`}>
                       <td className="p-2 sm:p-4 font-medium">
