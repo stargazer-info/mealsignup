@@ -126,11 +126,37 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                     </tr>
                   ) : Object.keys(dailySummary).length > 0 ? (
                     Object.entries(dailySummary).map(([day, meals]) => (
-                      <tr key={day} className="border-b">
+                      <tr key={day} className={`border-b ${(() => {
+                        const now = new Date()
+                        const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), Number(day))
+                        return d.getFullYear() === now.getFullYear()
+                          && d.getMonth() === now.getMonth()
+                          && d.getDate() === now.getDate()
+                          ? 'bg-accent/10'
+                          : ''
+                      })()}`}>
                         <td className="p-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-base sm:text-lg">{day}日</span>
-                            <span className="text-[11px] sm:text-sm text-muted-foreground">
+                            <span className={`text-base sm:text-lg ${(() => {
+                              const weekday = new Date(
+                                currentDate.getFullYear(),
+                                currentDate.getMonth(),
+                                Number(day)
+                              ).getDay()
+                              if (weekday === 0) return 'text-red-600' // 日曜
+                              if (weekday === 6) return 'text-blue-600' // 土曜
+                              return ''
+                            })()}`}>{day}日</span>
+                            <span className={`text-[11px] sm:text-sm ${(() => {
+                              const weekday = new Date(
+                                currentDate.getFullYear(),
+                                currentDate.getMonth(),
+                                Number(day)
+                              ).getDay()
+                              if (weekday === 0) return 'text-red-600' // 日曜
+                              if (weekday === 6) return 'text-blue-600' // 土曜
+                              return 'text-muted-foreground'
+                            })()}`}>
                               (
                               {new Date(
                                 currentDate.getFullYear(),

@@ -247,11 +247,29 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                   }
 
                   return (
-                    <tr key={day} className="border-b hover:bg-muted/30 transition-colors">
+                    <tr key={day} className={`border-b ${(() => {
+                      const now = new Date()
+                      const d = new Date(currentYear, currentMonth - 1, day)
+                      return d.getFullYear() === now.getFullYear()
+                        && d.getMonth() === now.getMonth()
+                        && d.getDate() === now.getDate()
+                        ? 'bg-accent/10'
+                        : ''
+                    })()}`}>
                       <td className="p-2 sm:p-4 font-medium">
                         <div className="flex items-center gap-2">
-                          <span className="text-base sm:text-lg">{day}日</span>
-                          <span className="text-[11px] sm:text-sm text-muted-foreground">
+                          <span className={`text-base sm:text-lg ${(() => {
+                            const weekday = new Date(currentYear, currentMonth - 1, day).getDay()
+                            if (weekday === 0) return 'text-red-600' // 日曜
+                            if (weekday === 6) return 'text-blue-600' // 土曜
+                            return ''
+                          })()}`}>{day}日</span>
+                          <span className={`text-[11px] sm:text-sm ${(() => {
+                            const weekday = new Date(currentYear, currentMonth - 1, day).getDay()
+                            if (weekday === 0) return 'text-red-600' // 日曜
+                            if (weekday === 6) return 'text-blue-600' // 土曜
+                            return 'text-muted-foreground'
+                          })()}`}>
                             (
                             {new Date(currentYear, currentMonth - 1, day).toLocaleDateString("ja-JP", {
                               weekday: "short",
@@ -262,7 +280,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       </td>
                       <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer rounded-md p-1 sm:p-2"
                           onClick={() => toggleMealStatus(day, "breakfast")}
                         >
                           {getMealStatusIcon(dayApplications.breakfast)}
@@ -271,7 +289,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       </td>
                       <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer rounded-md p-1 sm:p-2"
                           onClick={() => toggleMealStatus(day, "lunch")}
                         >
                           {getMealStatusIcon(dayApplications.lunch)}
@@ -280,7 +298,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       </td>
                       <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer rounded-md p-1 sm:p-2"
                           onClick={() => toggleMealStatus(day, "dinner")}
                         >
                           {getMealStatusIcon(dayApplications.dinner)}
