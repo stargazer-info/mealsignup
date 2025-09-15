@@ -142,7 +142,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           </div>
                         </td>
                         <td 
-                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'breakfast' ? 'bg-accent/50' : ''} ${meals.breakfast.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'breakfast' ? 'bg-accent/20' : ''} ${meals.breakfast.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
                           onMouseEnter={() => {
                             if (meals.breakfast.count > 0) setHoverCell({ day: Number(day), meal: 'breakfast' })
                           }}
@@ -170,7 +170,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           )}
                         </td>
                         <td 
-                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'lunch' ? 'bg-accent/50' : ''} ${meals.lunch.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'lunch' ? 'bg-accent/20' : ''} ${meals.lunch.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
                           onMouseEnter={() => {
                             if (meals.lunch.count > 0) setHoverCell({ day: Number(day), meal: 'lunch' })
                           }}
@@ -198,7 +198,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           )}
                         </td>
                         <td 
-                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'dinner' ? 'bg-accent/50' : ''} ${meals.dinner.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'dinner' ? 'bg-accent/20' : ''} ${meals.dinner.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
                           onMouseEnter={() => {
                             if (meals.dinner.count > 0) setHoverCell({ day: Number(day), meal: 'dinner' })
                           }}
