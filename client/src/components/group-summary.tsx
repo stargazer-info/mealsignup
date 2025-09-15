@@ -132,7 +132,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                         return d.getFullYear() === now.getFullYear()
                           && d.getMonth() === now.getMonth()
                           && d.getDate() === now.getDate()
-                          ? 'bg-muted/20'
+                          ? 'bg-muted/30'
                           : ''
                       })()}`}>
                         <td className="p-2">
