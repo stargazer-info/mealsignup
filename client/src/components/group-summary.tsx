@@ -142,13 +142,22 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           </div>
                         </td>
                         <td 
-                          className="relative text-center p-2"
-                          onMouseEnter={() => setHoverCell({ day: Number(day), meal: 'breakfast' })}
+                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'breakfast' ? 'bg-muted/30' : ''} ${meals.breakfast.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                          onMouseEnter={() => {
+                            if (meals.breakfast.count > 0) setHoverCell({ day: Number(day), meal: 'breakfast' })
+                          }}
                           onMouseLeave={() => setHoverCell(null)}
-                          onClick={() => setHoverCell({ day: Number(day), meal: 'breakfast' })}
+                          onClick={() => {
+                            if (meals.breakfast.count === 0) return
+                            setHoverCell(prev =>
+                              prev && prev.day === Number(day) && prev.meal === 'breakfast'
+                                ? null
+                                : { day: Number(day), meal: 'breakfast' }
+                            )
+                          }}
                         >
                           <Badge variant={meals.breakfast.count > 0 ? "default" : "secondary"}>{meals.breakfast.count}</Badge>
-                          {hoverCell?.day === Number(day) && hoverCell.meal === 'breakfast' && (
+                          {hoverCell?.day === Number(day) && hoverCell.meal === 'breakfast' && meals.breakfast.count > 0 && (
                             <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
                               {(meals.breakfast.users?.length ?? 0) > 0
                                 ? <div className="flex flex-wrap gap-1">
@@ -161,13 +170,22 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           )}
                         </td>
                         <td 
-                          className="relative text-center p-2"
-                          onMouseEnter={() => setHoverCell({ day: Number(day), meal: 'lunch' })}
+                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'lunch' ? 'bg-muted/30' : ''} ${meals.lunch.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                          onMouseEnter={() => {
+                            if (meals.lunch.count > 0) setHoverCell({ day: Number(day), meal: 'lunch' })
+                          }}
                           onMouseLeave={() => setHoverCell(null)}
-                          onClick={() => setHoverCell({ day: Number(day), meal: 'lunch' })}
+                          onClick={() => {
+                            if (meals.lunch.count === 0) return
+                            setHoverCell(prev =>
+                              prev && prev.day === Number(day) && prev.meal === 'lunch'
+                                ? null
+                                : { day: Number(day), meal: 'lunch' }
+                            )
+                          }}
                         >
                           <Badge variant={meals.lunch.count > 0 ? "default" : "secondary"}>{meals.lunch.count}</Badge>
-                          {hoverCell?.day === Number(day) && hoverCell.meal === 'lunch' && (
+                          {hoverCell?.day === Number(day) && hoverCell.meal === 'lunch' && meals.lunch.count > 0 && (
                             <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
                               {(meals.lunch.users?.length ?? 0) > 0
                                 ? <div className="flex flex-wrap gap-1">
@@ -180,13 +198,22 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                           )}
                         </td>
                         <td 
-                          className="relative text-center p-2"
-                          onMouseEnter={() => setHoverCell({ day: Number(day), meal: 'dinner' })}
+                          className={`relative text-center p-2 ${hoverCell?.day === Number(day) && hoverCell.meal === 'dinner' ? 'bg-muted/30' : ''} ${meals.dinner.count > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                          onMouseEnter={() => {
+                            if (meals.dinner.count > 0) setHoverCell({ day: Number(day), meal: 'dinner' })
+                          }}
                           onMouseLeave={() => setHoverCell(null)}
-                          onClick={() => setHoverCell({ day: Number(day), meal: 'dinner' })}
+                          onClick={() => {
+                            if (meals.dinner.count === 0) return
+                            setHoverCell(prev =>
+                              prev && prev.day === Number(day) && prev.meal === 'dinner'
+                                ? null
+                                : { day: Number(day), meal: 'dinner' }
+                            )
+                          }}
                         >
                           <Badge variant={meals.dinner.count > 0 ? "default" : "secondary"}>{meals.dinner.count}</Badge>
-                          {hoverCell?.day === Number(day) && hoverCell.meal === 'dinner' && (
+                          {hoverCell?.day === Number(day) && hoverCell.meal === 'dinner' && meals.dinner.count > 0 && (
                             <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
                               {(meals.dinner.users?.length ?? 0) > 0
                                 ? <div className="flex flex-wrap gap-1">
