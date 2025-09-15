@@ -113,14 +113,14 @@ function App() {
         </div>
       </SignedOut>
       <SignedIn>
-        {!displayName ? (
+        {isLoading ? (
+          <Layout children={<div>Loading...</div>} />
+        ) : !displayName ? (
           <Layout children={
             <div className="mx-auto max-w-md p-2 sm:p-0">
               <UserNameInput onUserNameSet={handleSetDisplayName} initialValue="" />
             </div>
           } />
-        ) : isLoading ? (
-          <Layout children={<div>Loading...</div>} />
         ) : (
           <Layout children={
             organizations.length === 0 ? (
