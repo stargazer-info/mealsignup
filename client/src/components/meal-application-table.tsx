@@ -247,7 +247,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                   }
 
                   return (
-                    <tr key={day} className={`border-b hover:bg-muted/30 transition-colors ${(() => {
+                    <tr key={day} className={`border-b ${(() => {
                       const now = new Date()
                       const d = new Date(currentYear, currentMonth - 1, day)
                       return d.getFullYear() === now.getFullYear()
@@ -280,7 +280,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       </td>
                       <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer rounded-md p-1 sm:p-2"
                           onClick={() => toggleMealStatus(day, "breakfast")}
                         >
                           {getMealStatusIcon(dayApplications.breakfast)}
@@ -289,7 +289,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       </td>
                       <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer rounded-md p-1 sm:p-2"
                           onClick={() => toggleMealStatus(day, "lunch")}
                         >
                           {getMealStatusIcon(dayApplications.lunch)}
@@ -298,7 +298,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                       </td>
                       <td className="p-1.5 sm:p-3 md:p-4 text-center">
                         <div
-                          className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded-md p-1 sm:p-2 transition-colors"
+                          className="flex items-center justify-center gap-1 cursor-pointer rounded-md p-1 sm:p-2"
                           onClick={() => toggleMealStatus(day, "dinner")}
                         >
                           {getMealStatusIcon(dayApplications.dinner)}
