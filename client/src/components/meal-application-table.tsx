@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@clerk/clerk-react"
 import { saveMealSignupApi } from "@/api/meals"
 import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup } from "@/api/mealSignup"
+import { isJapaneseHoliday } from "@/lib/holidays"
 
 type MealStatus = "applied" | "not-applied"
 
@@ -82,67 +83,63 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
   }, [fetchMealData, groupData?.id])
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
-
+  const today = new Date()
 
   const toggleMealStatus = async (day: number, mealType: "breakfast" | "lunch" | "dinner") => {
-    if (!groupData) return;
+    if (!groupData) return
 
-    const currentDayData = mealData[day] || { breakfast: false, lunch: false, dinner: false };
-    const newStatus = !currentDayData[mealType];
+    const currentDayData = mealData[day] || { breakfast: false, lunch: false, dinner: false }
+    const newStatus = !currentDayData[mealType]
 
     const updatedDayData = {
       ...currentDayData,
       [mealType]: newStatus,
-    };
+    }
 
-    // UIを即時反映 (楽観的更新)
-    setMealData(prevData => ({ ...prevData, [day]: updatedDayData }));
+    setMealData(prevData => ({ ...prevData, [day]: updatedDayData }))
 
     try {
-      const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      await saveMealSignupApi(dateStr, updatedDayData, groupData.id, getToken);
+      const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      await saveMealSignupApi(dateStr, updatedDayData, groupData.id, getToken)
     } catch (error) {
-      console.error("Failed to update meal status:", error);
-      // エラー発生時はUIを元の状態に戻す
+      console.error("Failed to update meal status:", error)
       setMealData(prevData => ({
         ...prevData,
         [day]: currentDayData
-      }));
+      }))
     }
   }
 
   const handleBulkUpdate = async (apply: boolean) => {
-    if (!groupData) return;
+    if (!groupData) return
 
-    const originalMealData = { ...mealData };
-    setIsBulkUpdating(true);
+    const originalMealData = { ...mealData }
+    setIsBulkUpdating(true)
 
-    const daysInMonthValue = getDaysInMonth(currentYear, currentMonth);
-    const newMealData: typeof mealData = {};
-    const monthlySignupPayload = [];
+    const daysInMonthValue = getDaysInMonth(currentYear, currentMonth)
+    const newMealData: typeof mealData = {}
+    const monthlySignupPayload = []
     for (let day = 1; day <= daysInMonthValue; day++) {
-        newMealData[day] = { breakfast: apply, lunch: apply, dinner: apply };
-        monthlySignupPayload.push({ day, breakfast: apply, lunch: apply, dinner: apply });
+      newMealData[day] = { breakfast: apply, lunch: apply, dinner: apply }
+      monthlySignupPayload.push({ day, breakfast: apply, lunch: apply, dinner: apply })
     }
-    setMealData(newMealData);
+    setMealData(newMealData)
 
     try {
-        await saveSelfMonthlyMealSignup(monthlySignupPayload, currentYear, currentMonth, groupData.id, getToken);
+      await saveSelfMonthlyMealSignup(monthlySignupPayload, currentYear, currentMonth, groupData.id, getToken)
     } catch (error) {
-        console.error(`Failed to ${apply ? 'apply' : 'cancel'} all meals:`, error);
-        // エラー発生時はUIを元の状態に戻す
-        setMealData(originalMealData);
+      console.error(`Failed to ${apply ? 'apply' : 'cancel'} all meals:`, error)
+      setMealData(originalMealData)
     } finally {
-        setIsBulkUpdating(false);
+      setIsBulkUpdating(false)
     }
-  };
+  }
 
-  const applyAllMeals = () => handleBulkUpdate(true);
-  const cancelAllMeals = () => handleBulkUpdate(false);
+  const applyAllMeals = () => handleBulkUpdate(true)
+  const cancelAllMeals = () => handleBulkUpdate(false)
 
   const navigateToStatistics = () => {
     console.log("[v0] 統計画面に移動")
-    // 実際のアプリケーションでは、ここでルーティングを行う
     onNavigateToSummary()
   }
 
@@ -168,8 +165,8 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
               year={currentYear}
               month={currentMonth}
               onChange={(y, m) => {
-                setCurrentYear(y);
-                setCurrentMonth(m);
+                setCurrentYear(y)
+                setCurrentMonth(m)
               }}
               className="justify-center md:justify-start"
             />
@@ -245,33 +242,30 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                     lunch: (dayBooleans.lunch ? "applied" : "not-applied") as MealStatus,
                     dinner: (dayBooleans.dinner ? "applied" : "not-applied") as MealStatus,
                   }
+                  const dateObj = new Date(currentYear, currentMonth - 1, day)
+                  const weekday = dateObj.getDay()
+                  const isHoliday = isJapaneseHoliday(dateObj)
+                  const isSunday = weekday === 0
+                  const isSaturday = weekday === 6
+                  const isHolidayOrSunday = isHoliday || isSunday
+                  const dayNumberClass = isHolidayOrSunday ? 'text-red-600' : isSaturday ? 'text-blue-600' : ''
+                  const weekdayLabelClass = isHolidayOrSunday ? 'text-red-600' : isSaturday ? 'text-blue-600' : 'text-muted-foreground'
+                  const isToday =
+                    dateObj.getFullYear() === today.getFullYear() &&
+                    dateObj.getMonth() === today.getMonth() &&
+                    dateObj.getDate() === today.getDate()
 
                   return (
-                    <tr key={day} className={`border-b ${(() => {
-                      const now = new Date()
-                      const d = new Date(currentYear, currentMonth - 1, day)
-                      return d.getFullYear() === now.getFullYear()
-                        && d.getMonth() === now.getMonth()
-                        && d.getDate() === now.getDate()
-                        ? 'bg-accent/10'
-                        : ''
-                    })()}`}>
+                    <tr
+                      key={day}
+                      className={`border-b ${isToday ? 'bg-accent/10' : ''}`}
+                    >
                       <td className="p-2 sm:p-4 font-medium">
                         <div className="flex items-center gap-2">
-                          <span className={`text-base sm:text-lg ${(() => {
-                            const weekday = new Date(currentYear, currentMonth - 1, day).getDay()
-                            if (weekday === 0) return 'text-red-600' // 日曜
-                            if (weekday === 6) return 'text-blue-600' // 土曜
-                            return ''
-                          })()}`}>{day}日</span>
-                          <span className={`text-[11px] sm:text-sm ${(() => {
-                            const weekday = new Date(currentYear, currentMonth - 1, day).getDay()
-                            if (weekday === 0) return 'text-red-600' // 日曜
-                            if (weekday === 6) return 'text-blue-600' // 土曜
-                            return 'text-muted-foreground'
-                          })()}`}>
+                          <span className={`text-base sm:text-lg ${dayNumberClass}`}>{day}日</span>
+                          <span className={`text-[11px] sm:text-sm ${weekdayLabelClass}`}>
                             (
-                            {new Date(currentYear, currentMonth - 1, day).toLocaleDateString("ja-JP", {
+                            {dateObj.toLocaleDateString("ja-JP", {
                               weekday: "short",
                             })}
                             )
