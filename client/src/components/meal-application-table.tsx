@@ -60,7 +60,7 @@ export function MealApplicationTable({
 
   const fetchMealData = useCallback(async () => {
     try {
-      const data = await fetchSelfMonthlyMealSignup(year, month, getToken, groupData?.id ?? '')
+      const data = await fetchSelfMonthlyMealSignup(year, month, getToken, groupData?.id ?? "")
       const formattedData = data.reduce((acc: Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>, item: { day: number; breakfast: boolean; lunch: boolean; dinner: boolean }) => {
         acc[item.day] = { breakfast: item.breakfast, lunch: item.lunch, dinner: item.dinner }
         return acc
@@ -88,13 +88,13 @@ export function MealApplicationTable({
 
     const updatedDayData = {
       ...currentDayData,
-      [mealType]: newStatus,
+      [mealType]: newStatus
     }
 
     setMealData(prevData => ({ ...prevData, [day]: updatedDayData }))
 
     try {
-      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
       await saveMealSignupApi(dateStr, updatedDayData, groupData.id, getToken)
     } catch (error) {
       console.error("Failed to update meal status:", error)
@@ -123,7 +123,7 @@ export function MealApplicationTable({
     try {
       await saveSelfMonthlyMealSignup(monthlySignupPayload, year, month, groupData.id, getToken)
     } catch (error) {
-      console.error(`Failed to ${apply ? 'apply' : 'cancel'} all meals:`, error)
+      console.error(`Failed to ${apply ? "apply" : "cancel"} all meals:`, error)
       setMealData(originalMealData)
     } finally {
       setIsBulkUpdating(false)
@@ -192,8 +192,8 @@ export function MealApplicationTable({
                 const isSunday = weekday === 0
                 const isSaturday = weekday === 6
                 const isHolidayOrSunday = isHoliday || isSunday
-                const dayNumberClass = isHolidayOrSunday ? 'text-red-600' : isSaturday ? 'text-blue-600' : ''
-                const weekdayLabelClass = isHolidayOrSunday ? 'text-red-600' : isSaturday ? 'text-blue-600' : 'text-muted-foreground'
+                const dayNumberClass = isHolidayOrSunday ? "text-red-600" : isSaturday ? "text-blue-600" : ""
+                const weekdayLabelClass = isHolidayOrSunday ? "text-red-600" : isSaturday ? "text-blue-600" : "text-muted-foreground"
                 const isToday =
                   dateObj.getFullYear() === today.getFullYear() &&
                   dateObj.getMonth() === today.getMonth() &&
@@ -204,7 +204,7 @@ export function MealApplicationTable({
                 return (
                   <tr
                     key={day}
-                    className={`border-b ${isToday ? 'bg-accent/10' : ''}`}
+                    className={`border-b ${isToday ? "bg-accent/10" : ""}`}
                   >
                     <td className="p-2">
                       <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export function MealApplicationTable({
                         aria-pressed={dayData.breakfast}
                       >
                         {getMealStatusIcon(dayData.breakfast ? "applied" : "not-applied")}
-                        <span className="hidden sm:inline">
+                        <span className="inline-block">
                           {getMealStatusBadge(dayData.breakfast ? "applied" : "not-applied")}
                         </span>
                       </button>
@@ -235,7 +235,7 @@ export function MealApplicationTable({
                         aria-pressed={dayData.lunch}
                       >
                         {getMealStatusIcon(dayData.lunch ? "applied" : "not-applied")}
-                        <span className="hidden sm:inline">
+                        <span className="inline-block">
                           {getMealStatusBadge(dayData.lunch ? "applied" : "not-applied")}
                         </span>
                       </button>
@@ -247,7 +247,7 @@ export function MealApplicationTable({
                         aria-pressed={dayData.dinner}
                       >
                         {getMealStatusIcon(dayData.dinner ? "applied" : "not-applied")}
-                        <span className="hidden sm:inline">
+                        <span className="inline-block">
                           {getMealStatusBadge(dayData.dinner ? "applied" : "not-applied")}
                         </span>
                       </button>
