@@ -33,7 +33,7 @@ export default function GroupSummary({
 }: GroupSummaryProps) {
   const { getToken } = useAuth()
   const [dailySummary, setDailySummary] = useState<Record<string, DailyData>>({})
-  the [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
   const [hoverCell, setHoverCell] = useState<{ day: number; meal: 'breakfast' | 'lunch' | 'dinner' } | null>(null)
 
   const getTokenRef = useRef(getToken)
