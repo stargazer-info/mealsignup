@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft } from "lucide-react"
-import MonthNavigator from "@/components/month-navigator"
+import MonthSelectorHeader from "@/components/month-selector-header"
 import { fetchMonthlySummary } from "@/api/monthlySummary"
 import type { DailyData } from "../types/DailyData"
 import { isJapaneseHoliday } from "@/lib/holidays"
@@ -19,11 +19,19 @@ interface GroupSummaryProps {
     userName: string
     inviteCode: string
   } | null
+  year: number
+  month: number
+  onYearMonthChange: (year: number, month: number) => void
 }
 
-export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
+export default function GroupSummary({
+  onBack,
+  groupData,
+  year,
+  month,
+  onYearMonthChange
+}: GroupSummaryProps) {
   const { getToken } = useAuth()
-  const [currentDate, setCurrentDate] = useState(new Date())
   const [dailySummary, setDailySummary] = useState<Record<string, DailyData>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [hoverCell, setHoverCell] = useState<{ day: number; meal: 'breakfast' | 'lunch' | 'dinner' } | null>(null)
@@ -40,6 +48,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
     if (!groupData) return
     setIsLoading(true)
     try {
+      const currentDate = new Date(year, month - 1, 1)
       const summaryResponse = await fetchMonthlySummary({ id: groupData.id }, currentDate, getTokenRef.current)
       const summaryMap = summaryResponse.dailyData.reduce(
         (acc, item) => {
@@ -55,7 +64,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [currentDate, groupData?.id])
+  }, [year, month, groupData?.id])
 
   useEffect(() => {
     loadSummary()
@@ -92,10 +101,10 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
       {/* 月選択 */}
       <Card>
         <CardHeader className="px-2 sm:px-6 pb-4">
-          <MonthNavigator
-            year={currentDate.getFullYear()}
-            month={currentDate.getMonth() + 1}
-            onChange={(y, m) => setCurrentDate(new Date(y, m - 1, 1))}
+          <MonthSelectorHeader
+            year={year}
+            month={month}
+            onChange={onYearMonthChange}
             className="justify-center"
           />
         </CardHeader>
@@ -128,7 +137,7 @@ export default function GroupSummary({ onBack, groupData }: GroupSummaryProps) {
                 ) : Object.keys(dailySummary).length > 0 ? (
                   Object.entries(dailySummary).map(([day, meals]) => {
                     const numericDay = Number(day)
-                    const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), numericDay)
+                    const dateObj = new Date(year, month - 1, numericDay)
                     const weekday = dateObj.getDay()
                     const isHoliday = isJapaneseHoliday(dateObj)
                     const isSunday = weekday === 0

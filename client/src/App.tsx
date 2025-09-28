@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut, SignInButton, useAuth, useUser } from '@clerk/clerk-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import { Button } from "@/components/ui/button"
 import { MealApplicationTable } from "@/components/meal-application-table"
@@ -21,6 +21,16 @@ function App() {
   // DB一本化: 表示名はDBから取得・管理
   const [displayName, setDisplayName] = useState<string>('')
 
+  // 共通の年月 state
+  const now = new Date()
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
+
+  const handleYearMonthChange = useCallback((year: number, month: number) => {
+    setSelectedYear(year)
+    setSelectedMonth(month)
+  }, [])
+
   // getToken を安定参照に
   const getTokenRef = useRef(getToken)
   useEffect(() => {
@@ -30,7 +40,7 @@ function App() {
   const fetchOrganizations = async () => {
     try {
       setIsLoading(true)
-      const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(getTokenRef.current);
+      const { organizations, lastSelectedOrganization } = await fetchUserOrganizations(getTokenRef.current)
       setOrganizations(organizations)
       setLastSelectedOrganization(lastSelectedOrganization as OrganizationWithRole | null)
     } catch (error) {
@@ -78,7 +88,7 @@ function App() {
         method: 'PATCH',
         body: JSON.stringify({ displayName: name.trim() }),
       }, getTokenRef.current)
-      if (!response.ok) throw new Error('Failed to update display name');
+      if (!response.ok) throw new Error('Failed to update display name')
       // DBに保存済み。Clerkのreloadは不要
       setDisplayName(name.trim())
     } catch (e) {
@@ -127,9 +137,21 @@ function App() {
               <GroupSetup onGroupSetup={fetchOrganizations} />
             ) : (
               currentView === "application" ? (
-                <MealApplicationTable onNavigateToSummary={() => setCurrentView("summary")} groupData={groupData} />
+                <MealApplicationTable
+                  onNavigateToSummary={() => setCurrentView("summary")}
+                  groupData={groupData}
+                  year={selectedYear}
+                  month={selectedMonth}
+                  onYearMonthChange={handleYearMonthChange}
+                />
               ) : (
-                <GroupSummary onBack={() => setCurrentView("application")} groupData={groupData} />
+                <GroupSummary
+                  onBack={() => setCurrentView("application")}
+                  groupData={groupData}
+                  year={selectedYear}
+                  month={selectedMonth}
+                  onYearMonthChange={handleYearMonthChange}
+                />
               )
             )
           } />
