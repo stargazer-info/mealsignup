@@ -9,15 +9,9 @@ import { useAuth } from "@clerk/clerk-react"
 import { saveMealSignupApi } from "@/api/meals"
 import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup } from "@/api/mealSignup"
 import { isJapaneseHoliday } from "@/lib/holidays"
+import type { GroupData } from "@/types/GroupData"
 
 type MealStatus = "applied" | "not-applied"
-
-interface GroupData {
-  id: string
-  name: string
-  userName: string
-  inviteCode: string
-}
 
 const getMealStatusIcon = (status: MealStatus) => {
   switch (status) {

@@ -11,6 +11,7 @@ import { fetchUserOrganizations, type OrganizationWithRole } from './api/organiz
 import { fetchWithRefresh, apiUrl } from './api/index'
 import GroupContextHeader from "@/components/group-context-header"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import type { GroupData } from "@/types/GroupData"
 
 function App() {
   const { getToken } = useAuth()
@@ -108,7 +109,7 @@ function App() {
   }
 
   const orgToDisplay = lastSelectedOrganization || organizations[0]
-  const groupData = orgToDisplay && user ? {
+  const groupData: GroupData | null = orgToDisplay && user ? {
     id: orgToDisplay.id,
     name: orgToDisplay.name,
     userName: (displayName || user.fullName || ""),

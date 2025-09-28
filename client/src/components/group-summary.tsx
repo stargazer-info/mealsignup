@@ -3,33 +3,22 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@clerk/clerk-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft } from "lucide-react"
-import MonthSelectorHeader from "@/components/month-selector-header"
 import { fetchMonthlySummary } from "@/api/monthlySummary"
 import type { DailyData } from "../types/DailyData"
+import type { GroupData } from "@/types/GroupData"
 import { isJapaneseHoliday } from "@/lib/holidays"
 
 interface GroupSummaryProps {
-  onBack: () => void
-  groupData?: {
-    id: string
-    name: string
-    userName: string
-    inviteCode: string
-  } | null
+  groupData?: GroupData | null
   year: number
   month: number
-  onYearMonthChange: (year: number, month: number) => void
 }
 
 export default function GroupSummary({
-  onBack,
   groupData,
   year,
-  month,
-  onYearMonthChange
+  month
 }: GroupSummaryProps) {
   const { getToken } = useAuth()
   const [dailySummary, setDailySummary] = useState<Record<string, DailyData>>({})
@@ -40,9 +29,6 @@ export default function GroupSummary({
   useEffect(() => {
     getTokenRef.current = getToken
   }, [getToken])
-
-  const displayGroupName = groupData?.name
-  const displayInviteCode = groupData?.inviteCode
 
   const loadSummary = useCallback(async () => {
     if (!groupData) return
@@ -72,46 +58,7 @@ export default function GroupSummary({
 
   const today = new Date()
 
-  return (
-    <div className="space-y-6">
-      {/* グループ情報 */}
-      <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-col items-center gap-2 text-lg">
-          <div className="flex items-center gap-4">
-            <span className="font-semibold text-foreground">
-              グループ名: {displayGroupName || "N/A"}
-            </span>
-            <Badge variant="outline" className="text-sm px-3 py-1 break-all max-w-[200px] sm:max-w-none">
-              招待コード: {displayInviteCode || "N/A"}
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      {/* ヘッダー */}
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={onBack} className="flex items-center gap-2 bg-transparent">
-          <ChevronLeft className="h-4 w-4" />
-          戻る
-        </Button>
-        <h1 className="text-2xl font-bold text-primary">グループサマリー</h1>
-        <div></div>
-      </div>
-
-      {/* 月選択 */}
-      <Card>
-        <CardHeader className="px-2 sm:px-6 pb-4">
-          <MonthSelectorHeader
-            year={year}
-            month={month}
-            onChange={onYearMonthChange}
-            className="justify-center"
-          />
-        </CardHeader>
-      </Card>
-
-      {/* 日別サマリーテーブル */}
-      <Card>
+    <Card>
         <CardHeader className="px-2 sm:px-6">
           <CardTitle className="text-primary">日別申込数</CardTitle>
         </CardHeader>

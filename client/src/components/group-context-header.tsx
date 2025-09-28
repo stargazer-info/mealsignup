@@ -2,13 +2,7 @@ import type { ReactNode } from "react"
 import MonthSelectorHeader from "@/components/month-selector-header"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader } from "@/components/ui/card"
-
-interface GroupData {
-  id: string
-  name: string
-  userName: string
-  inviteCode: string
-}
+import type { GroupData } from "@/types/GroupData"
 
 interface GroupContextHeaderProps {
   groupData: GroupData
