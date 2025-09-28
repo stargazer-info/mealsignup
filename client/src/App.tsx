@@ -21,10 +21,8 @@ function App() {
   const [lastSelectedOrganization, setLastSelectedOrganization] = useState<OrganizationWithRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // DB一本化: 表示名はDBから取得・管理
   const [displayName, setDisplayName] = useState<string>('')
 
-  // 共通の年月 state
   const now = new Date()
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
@@ -34,7 +32,6 @@ function App() {
     setSelectedMonth(month)
   }, [])
 
-  // getToken を安定参照に
   const getTokenRef = useRef(getToken)
   useEffect(() => {
     getTokenRef.current = getToken
@@ -54,7 +51,6 @@ function App() {
     }
   }
 
-  // DBからdisplayNameを取得（Clerkに依存しない）
   useEffect(() => {
     const loadDisplayName = async () => {
       try {
@@ -66,7 +62,6 @@ function App() {
       } catch (e) {
         console.error('Failed to fetch displayName from DB', e)
       } finally {
-        // displayName 未設定でも入力カードを出せるようロードを解除
         if (isLoaded && isSignedIn) setIsLoading(false)
       }
     }
@@ -77,7 +72,6 @@ function App() {
     }
   }, [isLoaded, isSignedIn])
 
-  // displayName が取得できたら組織を読み込む
   useEffect(() => {
     if (isLoaded && isSignedIn && displayName) {
       fetchOrganizations()
@@ -92,7 +86,6 @@ function App() {
         body: JSON.stringify({ displayName: name.trim() }),
       }, getTokenRef.current)
       if (!response.ok) throw new Error('Failed to update display name')
-      // DBに保存済み。Clerkのreloadは不要
       setDisplayName(name.trim())
     } catch (e) {
       console.error('Failed to save displayName:', e)
@@ -158,7 +151,7 @@ function App() {
                 >
                   <TabsList className="grid w-full grid-cols-2 sm:w-auto">
                     <TabsTrigger value="application">注文</TabsTrigger>
-                    <TabsTrigger value="summary">グループサマリ</TabsTrigger>
+                    <TabsTrigger value="summary">集計</TabsTrigger>
                   </TabsList>
                   <TabsContent value="application" className="mt-6">
                     <MealApplicationTable
