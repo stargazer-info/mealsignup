@@ -16,7 +16,7 @@ import type { GroupData } from "@/types/GroupData"
 function App() {
   const { getToken } = useAuth()
   const { isLoaded, isSignedIn, user } = useUser()
-  const [activeTab, setActiveTab] = useState<"application" | "summary">("application")
+  const [activeTab, setActiveTab] = useState<"application" | "summary">("summary")
   const [organizations, setOrganizations] = useState<OrganizationWithRole[]>([])
   const [lastSelectedOrganization, setLastSelectedOrganization] = useState<OrganizationWithRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -150,18 +150,18 @@ function App() {
                   className="w-full"
                 >
                   <TabsList className="grid w-full grid-cols-2 sm:w-auto">
-                    <TabsTrigger value="application">注文</TabsTrigger>
                     <TabsTrigger value="summary">集計</TabsTrigger>
+                    <TabsTrigger value="application">注文</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="application" className="mt-6">
-                    <MealApplicationTable
+                  <TabsContent value="summary" className="mt-6">
+                    <GroupSummary
                       groupData={groupData}
                       year={selectedYear}
                       month={selectedMonth}
                     />
                   </TabsContent>
-                  <TabsContent value="summary" className="mt-6">
-                    <GroupSummary
+                  <TabsContent value="application" className="mt-6">
+                    <MealApplicationTable
                       groupData={groupData}
                       year={selectedYear}
                       month={selectedMonth}
