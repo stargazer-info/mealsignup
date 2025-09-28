@@ -177,4 +177,88 @@ export function MealApplicationTable({
                 </th>
                 <th className="text-center p-1 sm:p-3 md:p-4 font-semibold text-foreground min-w-0">
                   <div className="flex items-center justify-center gap-1 sm:gap-2">
-                    <Moon classNameを```
+                    <Moon className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-500" />
+                    <span className="text-[11px] sm:text-sm">夕食</span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: daysInMonth }, (_, i) => {
+                const day = i + 1
+                const dateObj = new Date(year, month - 1, day)
+                const weekday = dateObj.getDay()
+                const isHoliday = isJapaneseHoliday(dateObj)
+                const isSunday = weekday === 0
+                const isSaturday = weekday === 6
+                const isHolidayOrSunday = isHoliday || isSunday
+                const dayNumberClass = isHolidayOrSunday ? 'text-red-600' : isSaturday ? 'text-blue-600' : ''
+                const weekdayLabelClass = isHolidayOrSunday ? 'text-red-600' : isSaturday ? 'text-blue-600' : 'text-muted-foreground'
+                const isToday =
+                  dateObj.getFullYear() === today.getFullYear() &&
+                  dateObj.getMonth() === today.getMonth() &&
+                  dateObj.getDate() === today.getDate()
+
+                const dayData = mealData[day] || { breakfast: false, lunch: false, dinner: false }
+
+                return (
+                  <tr
+                    key={day}
+                    className={`border-b ${isToday ? 'bg-accent/10' : ''}`}
+                  >
+                    <td className="p-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-base sm:text-lg ${dayNumberClass}`}>{day}日</span>
+                        <span className={`text-[11px] sm:text-sm ${weekdayLabelClass}`}>
+                          (
+                          {dateObj.toLocaleDateString("ja-JP", { weekday: "short" })}
+                          )
+                        </span>
+                      </div>
+                    </td>
+                    <td className="text-center p-1 sm:p-3 md:p-4">
+                      <button
+                        onClick={() => toggleMealStatus(day, "breakfast")}
+                        className="flex items-center justify-center gap-1 sm:gap-2 w-full"
+                        aria-pressed={dayData.breakfast}
+                      >
+                        {getMealStatusIcon(dayData.breakfast ? "applied" : "not-applied")}
+                        <span className="hidden sm:inline">
+                          {getMealStatusBadge(dayData.breakfast ? "applied" : "not-applied")}
+                        </span>
+                      </button>
+                    </td>
+                    <td className="text-center p-1 sm:p-3 md:p-4">
+                      <button
+                        onClick={() => toggleMealStatus(day, "lunch")}
+                        className="flex items-center justify-center gap-1 sm:gap-2 w-full"
+                        aria-pressed={dayData.lunch}
+                      >
+                        {getMealStatusIcon(dayData.lunch ? "applied" : "not-applied")}
+                        <span className="hidden sm:inline">
+                          {getMealStatusBadge(dayData.lunch ? "applied" : "not-applied")}
+                        </span>
+                      </button>
+                    </td>
+                    <td className="text-center p-1 sm:p-3 md:p-4">
+                      <button
+                        onClick={() => toggleMealStatus(day, "dinner")}
+                        className="flex items-center justify-center gap-1 sm:gap-2 w-full"
+                        aria-pressed={dayData.dinner}
+                      >
+                        {getMealStatusIcon(dayData.dinner ? "applied" : "not-applied")}
+                        <span className="hidden sm:inline">
+                          {getMealStatusBadge(dayData.dinner ? "applied" : "not-applied")}
+                        </span>
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
