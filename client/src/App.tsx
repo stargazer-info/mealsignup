@@ -9,19 +9,20 @@ import GroupSetup from "@/components/group-setup"
 import UserNameInput from '@/components/user-name-input'
 import { fetchUserOrganizations, type OrganizationWithRole } from './api/organizations'
 import { fetchWithRefresh, apiUrl } from './api/index'
+import GroupContextHeader from "@/components/group-context-header"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import type { GroupData } from "@/types/GroupData"
 
 function App() {
   const { getToken } = useAuth()
   const { isLoaded, isSignedIn, user } = useUser()
-  const [currentView, setCurrentView] = useState<"application" | "summary">("application")
+  const [activeTab, setActiveTab] = useState<"application" | "summary">("summary")
   const [organizations, setOrganizations] = useState<OrganizationWithRole[]>([])
   const [lastSelectedOrganization, setLastSelectedOrganization] = useState<OrganizationWithRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // DB一本化: 表示名はDBから取得・管理
   const [displayName, setDisplayName] = useState<string>('')
 
-  // 共通の年月 state
   const now = new Date()
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
@@ -31,7 +32,6 @@ function App() {
     setSelectedMonth(month)
   }, [])
 
-  // getToken を安定参照に
   const getTokenRef = useRef(getToken)
   useEffect(() => {
     getTokenRef.current = getToken
@@ -51,7 +51,6 @@ function App() {
     }
   }
 
-  // DBからdisplayNameを取得（Clerkに依存しない）
   useEffect(() => {
     const loadDisplayName = async () => {
       try {
@@ -63,7 +62,6 @@ function App() {
       } catch (e) {
         console.error('Failed to fetch displayName from DB', e)
       } finally {
-        // displayName 未設定でも入力カードを出せるようロードを解除
         if (isLoaded && isSignedIn) setIsLoading(false)
       }
     }
@@ -74,7 +72,6 @@ function App() {
     }
   }, [isLoaded, isSignedIn])
 
-  // displayName が取得できたら組織を読み込む
   useEffect(() => {
     if (isLoaded && isSignedIn && displayName) {
       fetchOrganizations()
@@ -89,7 +86,6 @@ function App() {
         body: JSON.stringify({ displayName: name.trim() }),
       }, getTokenRef.current)
       if (!response.ok) throw new Error('Failed to update display name')
-      // DBに保存済み。Clerkのreloadは不要
       setDisplayName(name.trim())
     } catch (e) {
       console.error('Failed to save displayName:', e)
@@ -98,11 +94,15 @@ function App() {
   }
 
   if (!isLoaded) {
-    return <Layout children={<div>Loading...</div>} />
+    return (
+      <Layout>
+        <div>Loading...</div>
+      </Layout>
+    )
   }
 
   const orgToDisplay = lastSelectedOrganization || organizations[0]
-  const groupData = orgToDisplay && user ? {
+  const groupData: GroupData | null = orgToDisplay && user ? {
     id: orgToDisplay.id,
     name: orgToDisplay.name,
     userName: (displayName || user.fullName || ""),
@@ -124,37 +124,55 @@ function App() {
       </SignedOut>
       <SignedIn>
         {isLoading ? (
-          <Layout children={<div>Loading...</div>} />
+          <Layout>
+            <div>Loading...</div>
+          </Layout>
         ) : !displayName ? (
-          <Layout children={
+          <Layout>
             <div className="mx-auto max-w-md p-2 sm:p-0">
               <UserNameInput onUserNameSet={handleSetDisplayName} initialValue="" />
             </div>
-          } />
+          </Layout>
         ) : (
-          <Layout children={
-            organizations.length === 0 ? (
+          <Layout>
+            {organizations.length === 0 ? (
               <GroupSetup onGroupSetup={fetchOrganizations} />
+            ) : groupData ? (
+              <GroupContextHeader
+                groupData={groupData}
+                year={selectedYear}
+                month={selectedMonth}
+                onYearMonthChange={handleYearMonthChange}
+              >
+                <Tabs
+                  value={activeTab}
+                  onValueChange={(value) => setActiveTab(value as "application" | "summary")}
+                  className="w-full"
+                >
+                  <TabsList className="grid w-full grid-cols-2 sm:w-auto">
+                    <TabsTrigger value="summary">集計</TabsTrigger>
+                    <TabsTrigger value="application">注文</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="summary" className="mt-6">
+                    <GroupSummary
+                      groupData={groupData}
+                      year={selectedYear}
+                      month={selectedMonth}
+                    />
+                  </TabsContent>
+                  <TabsContent value="application" className="mt-6">
+                    <MealApplicationTable
+                      groupData={groupData}
+                      year={selectedYear}
+                      month={selectedMonth}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </GroupContextHeader>
             ) : (
-              currentView === "application" ? (
-                <MealApplicationTable
-                  onNavigateToSummary={() => setCurrentView("summary")}
-                  groupData={groupData}
-                  year={selectedYear}
-                  month={selectedMonth}
-                  onYearMonthChange={handleYearMonthChange}
-                />
-              ) : (
-                <GroupSummary
-                  onBack={() => setCurrentView("application")}
-                  groupData={groupData}
-                  year={selectedYear}
-                  month={selectedMonth}
-                  onYearMonthChange={handleYearMonthChange}
-                />
-              )
-            )
-          } />
+              <div className="text-center text-muted-foreground">所属グループが見つかりません。</div>
+            )}
+          </Layout>
         )}
       </SignedIn>
     </>
