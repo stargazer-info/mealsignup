@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import MonthNavigator from "@/components/month-navigator"
+import MonthSelectorHeader from "@/components/month-selector-header"
 import { Sun, Utensils, Moon, Check, X } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@clerk/clerk-react"
@@ -53,19 +53,25 @@ const getDaysInMonth = (year: number, month: number) => {
 interface MealApplicationTableProps {
   onNavigateToSummary: () => void
   groupData?: GroupData | null
+  year: number
+  month: number
+  onYearMonthChange: (year: number, month: number) => void
 }
 
-export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApplicationTableProps) {
+export function MealApplicationTable({
+  onNavigateToSummary,
+  groupData,
+  year,
+  month,
+  onYearMonthChange
+}: MealApplicationTableProps) {
   const { getToken } = useAuth()
-  const now = new Date()
-  const [currentYear, setCurrentYear] = useState(now.getFullYear())
-  const [currentMonth, setCurrentMonth] = useState(now.getMonth() + 1)
   const [mealData, setMealData] = useState<Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>>({})
   const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
   const fetchMealData = useCallback(async () => {
     try {
-      const data = await fetchSelfMonthlyMealSignup(currentYear, currentMonth, getToken, groupData?.id ?? '')
+      const data = await fetchSelfMonthlyMealSignup(year, month, getToken, groupData?.id ?? '')
       const formattedData = data.reduce((acc: Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>, item: { day: number; breakfast: boolean; lunch: boolean; dinner: boolean }) => {
         acc[item.day] = { breakfast: item.breakfast, lunch: item.lunch, dinner: item.dinner }
         return acc
@@ -74,7 +80,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     } catch (error) {
       console.error("Failed to fetch meal data:", error)
     }
-  }, [currentYear, currentMonth, groupData?.id, getToken])
+  }, [year, month, groupData?.id, getToken])
 
   useEffect(() => {
     if (groupData?.id) {
@@ -82,7 +88,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     }
   }, [fetchMealData, groupData?.id])
 
-  const daysInMonth = getDaysInMonth(currentYear, currentMonth)
+  const daysInMonth = getDaysInMonth(year, month)
   const today = new Date()
 
   const toggleMealStatus = async (day: number, mealType: "breakfast" | "lunch" | "dinner") => {
@@ -99,7 +105,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     setMealData(prevData => ({ ...prevData, [day]: updatedDayData }))
 
     try {
-      const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       await saveMealSignupApi(dateStr, updatedDayData, groupData.id, getToken)
     } catch (error) {
       console.error("Failed to update meal status:", error)
@@ -116,7 +122,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     const originalMealData = { ...mealData }
     setIsBulkUpdating(true)
 
-    const daysInMonthValue = getDaysInMonth(currentYear, currentMonth)
+    const daysInMonthValue = getDaysInMonth(year, month)
     const newMealData: typeof mealData = {}
     const monthlySignupPayload = []
     for (let day = 1; day <= daysInMonthValue; day++) {
@@ -126,7 +132,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
     setMealData(newMealData)
 
     try {
-      await saveSelfMonthlyMealSignup(monthlySignupPayload, currentYear, currentMonth, groupData.id, getToken)
+      await saveSelfMonthlyMealSignup(monthlySignupPayload, year, month, groupData.id, getToken)
     } catch (error) {
       console.error(`Failed to ${apply ? 'apply' : 'cancel'} all meals:`, error)
       setMealData(originalMealData)
@@ -160,45 +166,38 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
 
       <Card className="bg-card">
         <CardHeader className="px-2 sm:px-6 pb-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <MonthNavigator
-              year={currentYear}
-              month={currentMonth}
-              onChange={(y, m) => {
-                setCurrentYear(y)
-                setCurrentMonth(m)
-              }}
-              className="justify-center md:justify-start"
-            />
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={applyAllMeals}
-                className="bg-chart-1 hover:bg-chart-1/90 text-white w-full sm:w-auto px-4 flex-shrink-0"
-                disabled={isBulkUpdating}
-              >
-                全申込
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={cancelAllMeals}
-                className="border-destructive text-destructive hover:bg-destructive hover:text-white bg-transparent w-full sm:w-auto px-4 flex-shrink-0"
-                disabled={isBulkUpdating}
-              >
-                全解除
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={navigateToStatistics}
-                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground px-3 w-full sm:w-auto flex-shrink-0"
-              >
-                グループサマリー
-              </Button>
-            </div>
-          </div>
+          <MonthSelectorHeader
+            year={year}
+            month={month}
+            onChange={onYearMonthChange}
+          >
+            <Button
+              variant="default"
+              size="sm"
+              onClick={applyAllMeals}
+              className="bg-chart-1 hover:bg-chart-1/90 text-white w-full sm:w-auto px-4 flex-shrink-0"
+              disabled={isBulkUpdating}
+            >
+              全申込
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={cancelAllMeals}
+              className="border-destructive text-destructive hover:bg-destructive hover:text-white bg-transparent w-full sm:w-auto px-4 flex-shrink-0"
+              disabled={isBulkUpdating}
+            >
+              全解除
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={navigateToStatistics}
+              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground px-3 w-full sm:w-auto flex-shrink-0"
+            >
+              グループサマリー
+            </Button>
+          </MonthSelectorHeader>
         </CardHeader>
       </Card>
 
@@ -242,7 +241,7 @@ export function MealApplicationTable({ onNavigateToSummary, groupData }: MealApp
                     lunch: (dayBooleans.lunch ? "applied" : "not-applied") as MealStatus,
                     dinner: (dayBooleans.dinner ? "applied" : "not-applied") as MealStatus,
                   }
-                  const dateObj = new Date(currentYear, currentMonth - 1, day)
+                  const dateObj = new Date(year, month - 1, day)
                   const weekday = dateObj.getDay()
                   const isHoliday = isJapaneseHoliday(dateObj)
                   const isSunday = weekday === 0
