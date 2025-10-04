@@ -1,10 +1,11 @@
 import { apiUrl, fetchWithRefresh } from './index';
+import type { MealOrderTypeId } from './mealSignup';
 
 // 食事予約関連のAPI関数群
 
 export const saveMealSignupApi = async (
   dateStr: string,
-  mealSignup: { breakfast: boolean; lunch: boolean; dinner: boolean },
+  mealSignup: { breakfast: MealOrderTypeId; lunch: MealOrderTypeId; dinner: MealOrderTypeId },
   organizationId: string,
   getToken: () => Promise<string | null>
 ) => {
