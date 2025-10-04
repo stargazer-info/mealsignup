@@ -267,9 +267,18 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
     const lastDay = new Date(targetYear, targetMonth, 0).getDate();
     const dailyData = Array.from({ length: lastDay }, (_, idx) => ({
       day: idx + 1,
-      breakfast: { count: 0, users: [] as string[] },
-      lunch: { count: 0, users: [] as string[] },
-      dinner: { count: 0, users: [] as string[] }
+      breakfast: {
+        normal: { count: 0, users: [] as string[] },
+        takeout: { count: 0, users: [] as string[] }
+      },
+      lunch: {
+        normal: { count: 0, users: [] as string[] },
+        takeout: { count: 0, users: [] as string[] }
+      },
+      dinner: {
+        normal: { count: 0, users: [] as string[] },
+        takeout: { count: 0, users: [] as string[] }
+      }
     }));
 
     // 各日の予約数とユーザー一覧を更新
@@ -280,20 +289,40 @@ router.get('/:organizationId/monthly-summary', requireAuth, async (req, res) => 
       if (idx >= 0 && idx < dailyData.length) {
         const dayData = dailyData[idx]!;
         const name = nameById.get(signup.clerkId) ?? '不明ユーザー';
-        if (signup.breakfast) dayData.breakfast.users.push(name);
-        if (signup.lunch) dayData.lunch.users.push(name);
-        if (signup.dinner) dayData.dinner.users.push(name);
+        if (signup.breakfastOrderTypeId === 'NORMAL') {
+          dayData.breakfast.normal.users.push(name);
+        } else if (signup.breakfastOrderTypeId === 'TAKEOUT') {
+          dayData.breakfast.takeout.users.push(name);
+        }
+        if (signup.lunchOrderTypeId === 'NORMAL') {
+          dayData.lunch.normal.users.push(name);
+        } else if (signup.lunchOrderTypeId === 'TAKEOUT') {
+          dayData.lunch.takeout.users.push(name);
+        }
+        if (signup.dinnerOrderTypeId === 'NORMAL') {
+          dayData.dinner.normal.users.push(name);
+        } else if (signup.dinnerOrderTypeId === 'TAKEOUT') {
+          dayData.dinner.takeout.users.push(name);
+        }
       }
     });
 
     // ユーザー一覧をソートし、カウントを設定
     dailyData.forEach(dayData => {
-      dayData.breakfast.users.sort();
-      dayData.breakfast.count = dayData.breakfast.users.length;
-      dayData.lunch.users.sort();
-      dayData.lunch.count = dayData.lunch.users.length;
-      dayData.dinner.users.sort();
-      dayData.dinner.count = dayData.dinner.users.length;
+      dayData.breakfast.normal.users.sort();
+      dayData.breakfast.normal.count = dayData.breakfast.normal.users.length;
+      dayData.breakfast.takeout.users.sort();
+      dayData.breakfast.takeout.count = dayData.breakfast.takeout.users.length;
+
+      dayData.lunch.normal.users.sort();
+      dayData.lunch.normal.count = dayData.lunch.normal.users.length;
+      dayData.lunch.takeout.users.sort();
+      dayData.lunch.takeout.count = dayData.lunch.takeout.users.length;
+
+      dayData.dinner.normal.users.sort();
+      dayData.dinner.normal.count = dayData.dinner.normal.users.length;
+      dayData.dinner.takeout.users.sort();
+      dayData.dinner.takeout.count = dayData.dinner.takeout.users.length;
     });
 
     res.json({ year: targetYear, month: targetMonth, dailyData });

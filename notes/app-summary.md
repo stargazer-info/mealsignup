@@ -1,5 +1,5 @@
 # アプリまとめ
-最終更新: 2025-09-15
+最終更新: 2025-10-04
 
 このアプリは、組織（グループ）単位でユーザーが日別の食事申込み（朝・昼・夕）を行い、月次の集計を確認できるフルスタックアプリです。認証には Clerk を用い、フロントエンドは React/TypeScript（Vite + Tailwind + shadcn/ui）、バックエンドは Express + Prisma で構成されています。
 
@@ -16,7 +16,7 @@
    - 未所属なら GroupSetup で「新規作成」または「招待コードで参加」
    - 所属済みなら最後に選択した組織（isLastSelected）を使用
 4. 食事申込み（MealApplicationTable）
-   - 日付ごとに朝/昼/夕をトグル
+   - 日付ごとに朝/昼/夕をトグル（未申込→申込→弁当）して保存（POST /api/meals）
    - 自分の月次申込みを取得/保存（GET /api/meals/self/monthly, POST /api/meals/self/bulk）
    - 月移動（MonthNavigator、month は 1-12）
 5. グループ集計（GroupSummary）
@@ -33,7 +33,7 @@
     - displayName 取得後に組織一覧をロード（GET /api/organizations/me）
     - GroupSetup/MealApplicationTable/GroupSummary を切り替え
   - MealApplicationTable
-    - 月間の申込みを日×朝/昼/夕でトグル（POST /api/meals）
+    - 月間の申込みを日×朝/昼/夕でトグル（未申込→申込→弁当）して保存（POST /api/meals）
     - 自分の月次データの一括取得・保存（/api/meals/self/monthly, /api/meals/self/bulk）
   - GroupSummary
     - 組織の月次サマリー表示（/api/organizations/:id/monthly-summary）
@@ -49,7 +49,7 @@
     - fetchMonthlySummary({ id }, currentDate, getToken)
   - organizations.ts で組織関連 API、index.ts で apiUrl と fetchWithRefresh を集中管理
 - 型
-  - types/DailyData.ts: { day, breakfast, lunch, dinner }（それぞれ { count, users }）
+  - types/DailyData.ts: { day, breakfast, lunch, dinner }（各 meal に normal/takeout の { count, users } を保持）
 
 ## バックエンド（server）概要
 - サーバー構成/運用補足
@@ -64,50 +64,4 @@
 - データモデル（Prisma: server/prisma/schema.prisma）
   - Organization（招待コード inviteCode）
   - OrganizationMembership（clerkId, role, isLastSelected）
-  - MealSignup（clerkId, organizationId, date, breakfast/lunch/dinner）
-    - 複合ユニークキー: (clerkId, organizationId, date)
-  - UserProfile（clerkId, displayName）… 表示名のソース・オブ・トゥルース
-
-## 主要 API（要点）
-- 組織
-  - GET /api/organizations/me: 自分の所属一覧 + lastSelectedOrganization
-  - POST /api/organizations, POST /api/organizations/join
-  - GET /api/organizations/:organizationId/monthly-summary?year&month: 組織の月次サマリー（日別の人数とユーザー名）
-- 自分の申込み
-  - GET /api/meals/self/monthly?year&month&organizationId: 自分の月次申込み（未登録日は false で初期化）
-  - POST /api/meals/self/bulk: 月次申込みの一括 upsert
-- 個別申込み
-  - POST /api/meals: { date, breakfast, lunch, dinner, organizationId } を upsert（"YYYY-MM-DD" 送信）
-
-## 実装上のポイント
-- 月移動は 1-12 を維持し、年は適宜繰り上げ/下げ
-- App.tsx: displayName（DB: user_profiles）取得後に組織一覧をロードし、ローディング中は表示名入力を出さないよう判定順序を修正してフリッカー解消
-- fetchWithRefresh 経由で Authorization: Bearer <token> を一貫付与
-- グループサマリー: セル単位の一時ハイライト（hover/tap）。注文数0のセルは非活性で、ユーザー一覧ポップアップは表示しない
-- グループサマリー/注文画面: 土曜は青（text-blue-600）、日曜は赤（text-red-600）で日付数字と曜日の色分け
-- グループサマリー/注文画面: 当日行を弱めにハイライト（bg-accent/10）
-- 注文画面: 行やセルのホバーハイライトを撤去し、クリック操作のみで状態変更
-
-## セットアップ/起動（ローカル開発）
-- 環境変数（server）
-  - DATABASE_URL（PostgreSQL）
-  - CLERK_SECRET_KEY
-  - CLIENT_URL（例: http://localhost:5173）
-- 環境変数（client）
-  - VITE_API_BASE_URL（既定: http://localhost:3001）
-- Prisma マイグレーション
-  - migrations に沿ってデータベースを作成・適用（deploy/migrate を使用）
-
-## 改善アイデア（任意）
-- 日付パース/タイムゾーン
-  - "YYYY-MM-DD" を new Date(date) で直接パースすると環境で日付ずれの恐れ
-  - 対策: "YYYY-MM-DD" を分解して new Date(y, m-1, d, 0, 0, 0, 0) を共通化
-- 集計パフォーマンス
-  - 月次サマリーは将来データ増に備え、DB 側の groupBy とインデックス（@@index([organizationId, date])）検討
-- アクセシビリティ
-  - 申込みセルを button 要素化、aria-pressed などの付与
-- バリデーション
-  - inviteCode/name の trim と長さ制限を API 層で一貫適用
-
-## 参考
-- 内部調査の要点は本ファイルに統合済みです
+  - MealOrderType（id: "NONE
