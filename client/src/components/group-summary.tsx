@@ -121,9 +121,9 @@ export default function GroupSummary({
           >
             <Badge
               variant={normalCount > 0 ? "default" : "secondary"}
-              className="text-xs px-2 py-0 flex items-center gap-1"
+              className="text-xs px-2 py-0 flex items-center"
             >
-              通常 <span className="font-semibold">{normalCount}</span>
+              <span className="font-semibold">{normalCount}</span>
             </Badge>
           </button>
           {isNormalHovered && normalCount > 0 && (
