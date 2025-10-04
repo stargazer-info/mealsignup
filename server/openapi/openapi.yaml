@@ -3,7 +3,7 @@ info:
   title: MealSignup API
   version: 1.0.0
   description: |
-    給食申込管理サービスのサーバー API 仕様です。Clerk 認証を前提としています。
+    食事申込管理サービスのサーバー API 仕様です。Clerk 認証を前提としています。
 servers:
   - url: https://api.example.com
     description: 本番環境（例）
@@ -483,7 +483,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/meals:
     get:
-      summary: 給食申込一覧取得（日付または月単位）
+      summary: 食事申込一覧取得（日付または月単位）
       operationId: getMeals
       tags:
         - Meals
@@ -557,7 +557,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     post:
-      summary: 給食申込の作成・更新
+      summary: 食事申込の作成・更新
       operationId: postMeals
       tags:
         - Meals
@@ -625,7 +625,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/meals/self/monthly:
     get:
-      summary: 自分の月次給食申込一覧
+      summary: 自分の月次食事申込一覧
       operationId: getMealsSelfMonthly
       tags:
         - Meals
@@ -684,7 +684,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/meals/self/bulk:
     post:
-      summary: 自分の月次給食申込一括更新
+      summary: 自分の月次食事申込一括更新
       operationId: postMealsSelfBulk
       tags:
         - Meals
@@ -890,3 +890,187 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations/{organizationId}:
+    get:
+      summary: 組織詳細取得
+      operationId: getOrganizationById
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationDetail'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織メンバーでない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: 組織削除（最後のメンバーのみ）
+      operationId: deleteOrganizationById
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 他メンバーが存在／アクセス権なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations/{organizationId}/monthly-summary:
+    get:
+      summary: 組織の月次食事サマリー
+      operationId: getOrganizationMonthlySummary
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: year
+          schema:
+            type: integer
+          description: 指定しない場合は現在年
+        - in: query
+          name: month
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: 指定しない場合は現在月
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  year:
+                    type: integer
+                  month:
+                    type: integer
+                  dailyData:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonthlySummaryDay'
+                required:
+                  - year
+                  - month
+                  - dailyData
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織メンバーでない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations/{organizationId}/leave:
+    post:
+      summary: 組織から離脱
+      operationId: postOrganizationLeave
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '204':
+          description: 離脱成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: メンバーシップが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+security:
+  - BearerAuth: []
+tags:
+  - name: System
+  - name: Auth
+  - name: Me
+  - name: Meals
+  - name: Organizations
