@@ -1,0 +1,1076 @@
+openapi: 3.1.0
+info:
+  title: MealSignup API
+  version: 1.0.0
+  description: |
+    食事申込管理サービスのサーバー API 仕様です。Clerk 認証を前提としています。
+servers:
+  - url: https://api.example.com
+    description: 本番環境（例）
+  - url: http://localhost:3001
+    description: 開発環境
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        inviteCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - inviteCode
+        - createdAt
+        - updatedAt
+    OrganizationWithRole:
+      allOf:
+        - $ref: '#/components/schemas/Organization'
+        - type: object
+          properties:
+            role:
+              type: string
+              enum:
+                - ADMIN
+                - MEMBER
+            joinedAt:
+              type: string
+              format: date-time
+          required:
+            - role
+            - joinedAt
+    OrganizationDetail:
+      type: object
+      properties:
+        organization:
+          $ref: '#/components/schemas/Organization'
+        userRole:
+          type: string
+          enum:
+            - ADMIN
+            - MEMBER
+        memberCount:
+          type: integer
+          minimum: 0
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              clerkId:
+                type: string
+              role:
+                type: string
+                enum:
+                  - ADMIN
+                  - MEMBER
+              joinedAt:
+                type: string
+                format: date-time
+            required:
+              - clerkId
+              - role
+              - joinedAt
+      required:
+        - organization
+        - userRole
+        - memberCount
+        - members
+    MealOrderTypeId:
+      type: string
+      enum:
+        - NONE
+        - NORMAL
+        - TAKEOUT
+    MealSignup:
+      type: object
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        organizationId:
+          type: string
+        date:
+          type: string
+          format: date-time
+        breakfastOrderTypeId:
+          $ref: '#/components/schemas/MealOrderTypeId'
+        lunchOrderTypeId:
+          $ref: '#/components/schemas/MealOrderTypeId'
+        dinnerOrderTypeId:
+          $ref: '#/components/schemas/MealOrderTypeId'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clerkId
+        - organizationId
+        - date
+        - breakfastOrderTypeId
+        - lunchOrderTypeId
+        - dinnerOrderTypeId
+    MealSignupUser:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          nullable: true
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+      required:
+        - id
+        - name
+    MealSignupWithUser:
+      allOf:
+        - $ref: '#/components/schemas/MealSignup'
+        - type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/MealSignupUser'
+          required:
+            - user
+    SelfMonthlyMealSignup:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        day:
+          type: integer
+          minimum: 1
+          maximum: 31
+        breakfast:
+          $ref: '#/components/schemas/MealOrderTypeId'
+        lunch:
+          $ref: '#/components/schemas/MealOrderTypeId'
+        dinner:
+          $ref: '#/components/schemas/MealOrderTypeId'
+      required:
+        - day
+        - breakfast
+        - lunch
+        - dinner
+    MonthlyMealSignupRequestItem:
+      type: object
+      properties:
+        day:
+          type: integer
+          minimum: 1
+          maximum: 31
+        breakfast:
+          $ref: '#/components/schemas/MealOrderTypeId'
+        lunch:
+          $ref: '#/components/schemas/MealOrderTypeId'
+        dinner:
+          $ref: '#/components/schemas/MealOrderTypeId'
+      required:
+        - day
+        - breakfast
+        - lunch
+        - dinner
+    MealSummaryMealTypeData:
+      type: object
+      properties:
+        normal:
+          type: object
+          properties:
+            count:
+              type: integer
+              minimum: 0
+            users:
+              type: array
+              items:
+                type: string
+          required:
+            - count
+            - users
+        takeout:
+          type: object
+          properties:
+            count:
+              type: integer
+              minimum: 0
+            users:
+              type: array
+              items:
+                type: string
+          required:
+            - count
+            - users
+      required:
+        - normal
+        - takeout
+    MonthlySummaryDay:
+      type: object
+      properties:
+        day:
+          type: integer
+          minimum: 1
+          maximum: 31
+        breakfast:
+          $ref: '#/components/schemas/MealSummaryMealTypeData'
+        lunch:
+          $ref: '#/components/schemas/MealSummaryMealTypeData'
+        dinner:
+          $ref: '#/components/schemas/MealSummaryMealTypeData'
+      required:
+        - day
+        - breakfast
+        - lunch
+        - dinner
+paths:
+  /health:
+    get:
+      summary: ヘルスチェック
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: 稼働中
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  service:
+                    type: string
+                required:
+                  - status
+                  - timestamp
+                  - service
+  /api/auth/me:
+    get:
+      summary: 現在のユーザープロファイル取得
+      operationId: getAuthMe
+      tags:
+        - Auth
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clerkId:
+                    type: string
+                  email:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+                  memberships:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        clerkId:
+                          type: string
+                        organizationId:
+                          type: string
+                        role:
+                          type: string
+                          enum:
+                            - ADMIN
+                            - MEMBER
+                        isLastSelected:
+                          type: boolean
+                        joinedAt:
+                          type: string
+                          format: date-time
+                        organization:
+                          $ref: '#/components/schemas/Organization'
+                      required:
+                        - id
+                        - clerkId
+                        - organizationId
+                        - role
+                        - isLastSelected
+                        - joinedAt
+                        - organization
+                  lastSelectedOrganization:
+                    oneOf:
+                      - $ref: '#/components/schemas/Organization'
+                      - type: 'null'
+                required:
+                  - clerkId
+                  - email
+                  - name
+                  - memberships
+                  - lastSelectedOrganization
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/select-organization/{organizationId}:
+    put:
+      summary: 最後に選択した組織の更新
+      operationId: putAuthSelectOrganization
+      tags:
+        - Auth
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+          description: 組織ID
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required:
+                  - success
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織メンバーでない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/me/display-name:
+    get:
+      summary: 表示名取得
+      operationId: getMeDisplayName
+      tags:
+        - Me
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  displayName:
+                    type: string
+                    nullable: true
+                required:
+                  - displayName
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: 表示名更新
+      operationId: patchMeDisplayName
+      tags:
+        - Me
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+              required:
+                - displayName
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  displayName:
+                    type: string
+                required:
+                  - ok
+                  - displayName
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/meals:
+    get:
+      summary: 食事申込一覧取得（日付または月単位）
+      operationId: getMeals
+      tags:
+        - Meals
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          description: 取得対象日（YYYY-MM-DD）。month との併用不可。
+        - in: query
+          name: month
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+          description: 取得対象月（YYYY-MM）。date との併用不可。
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          description: 指定しない場合は最後に選択した組織を使用。
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mealSignups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MealSignupWithUser'
+                  date:
+                    type: string
+                    nullable: true
+                  month:
+                    type: string
+                    nullable: true
+                  organizationId:
+                    type: string
+                required:
+                  - mealSignups
+                  - date
+                  - month
+                  - organizationId
+        '400':
+          description: パラメータ不正・組織未選択など
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織アクセス権なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: 食事申込の作成・更新
+      operationId: postMeals
+      tags:
+        - Meals
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+                breakfast:
+                  $ref: '#/components/schemas/MealOrderTypeId'
+                lunch:
+                  $ref: '#/components/schemas/MealOrderTypeId'
+                dinner:
+                  $ref: '#/components/schemas/MealOrderTypeId'
+                organizationId:
+                  type: string
+                  nullable: true
+              required:
+                - date
+                - breakfast
+                - lunch
+                - dinner
+      responses:
+        '200':
+          description: 作成または更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mealSignup:
+                    $ref: '#/components/schemas/MealSignupWithUser'
+                required:
+                  - mealSignup
+        '400':
+          description: バリデーションエラー・組織未選択など
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織アクセス権なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/meals/self/monthly:
+    get:
+      summary: 自分の月次食事申込一覧
+      operationId: getMealsSelfMonthly
+      tags:
+        - Meals
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: year
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: month
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SelfMonthlyMealSignup'
+        '400':
+          description: パラメータ不正・組織未選択など
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織アクセス権なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/meals/self/bulk:
+    post:
+      summary: 自分の月次食事申込一括更新
+      operationId: postMealsSelfBulk
+      tags:
+        - Meals
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                monthlyMealSignup:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/MonthlyMealSignupRequestItem'
+                year:
+                  type: integer
+                month:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+                organizationId:
+                  type: string
+                  nullable: true
+              required:
+                - monthlyMealSignup
+                - year
+                - month
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        '400':
+          description: バリデーションエラー・組織未選択など
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織アクセス権なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations/me:
+    get:
+      summary: 自分の所属組織一覧
+      operationId: getOrganizationsMe
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organizations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrganizationWithRole'
+                  lastSelectedOrganization:
+                    oneOf:
+                      - $ref: '#/components/schemas/Organization'
+                      - type: 'null'
+                required:
+                  - organizations
+                  - lastSelectedOrganization
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations:
+    post:
+      summary: 組織作成
+      operationId: postOrganizations
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+                - name
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organization:
+                    $ref: '#/components/schemas/Organization'
+                required:
+                  - organization
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations/join:
+    post:
+      summary: 招待コードによる組織参加
+      operationId: postOrganizationsJoin
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inviteCode:
+                  type: string
+              required:
+                - inviteCode
+      responses:
+        '200':
+          description: 参加成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organization:
+                    $ref: '#/components/schemas/Organization'
+                required:
+                  - organization
+        '400':
+          description: 招待コード不備／既存メンバー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 招待コードが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations/{organizationId}:
+    get:
+      summary: 組織詳細取得
+      operationId: getOrganizationById
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationDetail'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織メンバーでない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: 組織削除（最後のメンバーのみ）
+      operationId: deleteOrganizationById
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 他メンバーが存在／アクセス権なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations/{organizationId}/monthly-summary:
+    get:
+      summary: 組織の月次食事サマリー
+      operationId: getOrganizationMonthlySummary
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: year
+          schema:
+            type: integer
+          description: 指定しない場合は現在年
+        - in: query
+          name: month
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: 指定しない場合は現在月
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  year:
+                    type: integer
+                  month:
+                    type: integer
+                  dailyData:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonthlySummaryDay'
+                required:
+                  - year
+                  - month
+                  - dailyData
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 組織メンバーでない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/organizations/{organizationId}/leave:
+    post:
+      summary: 組織から離脱
+      operationId: postOrganizationLeave
+      tags:
+        - Organizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '204':
+          description: 離脱成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: メンバーシップが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+security:
+  - BearerAuth: []
+tags:
+  - name: System
+  - name: Auth
+  - name: Me
+  - name: Meals
+  - name: Organizations
