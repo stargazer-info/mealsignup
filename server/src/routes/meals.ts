@@ -217,7 +217,7 @@ router.get('/self/monthly', requireAuth, async (req, res) => {
     const startDate = new Date(yearNum, monthNum - 1, 1, 0, 0, 0, 0);
     const endDate = new Date(yearNum, monthNum, 1, 0, 0, 0, 0);
 
-    const memberships: OrganizationMembership[] = await prisma.organizationMembership.FindMany({
+    const memberships: OrganizationMembership[] = await prisma.organizationMembership.findMany({
       where: { clerkId: currentUser.id },
     });
 
