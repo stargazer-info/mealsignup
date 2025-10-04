@@ -3,39 +3,67 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Sun, Utensils, Moon, Check, X } from "lucide-react"
+import { Sun, Utensils, Moon, Check, X, Package } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@clerk/clerk-react"
 import { saveMealSignupApi } from "@/api/meals"
-import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup } from "@/api/mealSignup"
+import { fetchSelfMonthlyMealSignup, saveSelfMonthlyMealSignup, type MealOrderTypeId, type MonthlyMealSignupItem } from "@/api/mealSignup"
 import { isJapaneseHoliday } from "@/lib/holidays"
 import type { GroupData } from "@/types/GroupData"
 
-type MealStatus = "applied" | "not-applied"
+type MealType = "breakfast" | "lunch" | "dinner"
 
-const getMealStatusIcon = (status: MealStatus) => {
+interface DayMealStatus {
+  breakfast: MealOrderTypeId
+  lunch: MealOrderTypeId
+  dinner: MealOrderTypeId
+}
+
+const getMealStatusIcon = (status: MealOrderTypeId) => {
   switch (status) {
-    case "applied":
+    case "NORMAL":
       return <Check className="h-3 w-3 text-chart-1" />
-    case "not-applied":
-      return <X className="h-3 w-3 text-destructive" />
+    case "TAKEOUT":
+      return <Package className="h-3 w-3 text-amber-500" />
+    case "NONE":
+    default:
+      return <X className="h-3 w-3 text-muted-foreground" />
   }
 }
 
-const getMealStatusBadge = (status: MealStatus) => {
+const getMealStatusBadge = (status: MealOrderTypeId) => {
   switch (status) {
-    case "applied":
+    case "NORMAL":
       return (
         <Badge variant="default" className="bg-chart-1 text-white text-xs px-1 py-0">
-          申込済
+          申込
         </Badge>
       )
-    case "not-applied":
+    case "TAKEOUT":
       return (
-        <Badge variant="destructive" className="text-xs px-1 py-0">
+        <Badge variant="default" className="bg-amber-500 text-white text-xs px-1 py-0">
+          弁当
+        </Badge>
+      )
+    case "NONE":
+    default:
+      return (
+        <Badge variant="secondary" className="text-muted-foreground text-xs px-1 py-0">
           未申込
         </Badge>
       )
+  }
+}
+
+const getNextStatus = (current: MealOrderTypeId): MealOrderTypeId => {
+  switch (current) {
+    case "NONE":
+      return "NORMAL"
+    case "NORMAL":
+      return "TAKEOUT"
+    case "TAKEOUT":
+    default:
+      return "NONE"
   }
 }
 
@@ -55,40 +83,51 @@ export function MealApplicationTable({
   month
 }: MealApplicationTableProps) {
   const { getToken } = useAuth()
-  const [mealData, setMealData] = useState<Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>>({})
+  const [mealData, setMealData] = useState<Record<number, DayMealStatus>>({})
   const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
   const fetchMealData = useCallback(async () => {
+    if (!groupData?.id) {
+      setMealData({})
+      return
+    }
     try {
-      const data = await fetchSelfMonthlyMealSignup(year, month, getToken, groupData?.id ?? "")
-      const formattedData = data.reduce((acc: Record<number, { breakfast: boolean; lunch: boolean; dinner: boolean }>, item: { day: number; breakfast: boolean; lunch: boolean; dinner: boolean }) => {
-        acc[item.day] = { breakfast: item.breakfast, lunch: item.lunch, dinner: item.dinner }
+      const data = await fetchSelfMonthlyMealSignup(year, month, getToken, groupData.id)
+      const formattedData = data.reduce((acc: Record<number, DayMealStatus>, item: MonthlyMealSignupItem) => {
+        acc[item.day] = {
+          breakfast: item.breakfast,
+          lunch: item.lunch,
+          dinner: item.dinner
+        }
         return acc
       }, {})
       setMealData(formattedData)
     } catch (error) {
       console.error("Failed to fetch meal data:", error)
+      setMealData({})
     }
   }, [year, month, groupData?.id, getToken])
 
   useEffect(() => {
-    if (groupData?.id) {
-      fetchMealData()
-    }
-  }, [fetchMealData, groupData?.id])
+    fetchMealData()
+  }, [fetchMealData])
 
   const daysInMonth = getDaysInMonth(year, month)
   const today = new Date()
 
-  const toggleMealStatus = async (day: number, mealType: "breakfast" | "lunch" | "dinner") => {
+  const toggleMealStatus = async (day: number, mealType: MealType) => {
     if (!groupData) return
 
-    const currentDayData = mealData[day] || { breakfast: false, lunch: false, dinner: false }
-    const newStatus = !currentDayData[mealType]
+    const currentDayData: DayMealStatus = mealData[day] || {
+      breakfast: "NONE",
+      lunch: "NONE",
+      dinner: "NONE"
+    }
+    const nextStatus = getNextStatus(currentDayData[mealType])
 
-    const updatedDayData = {
+    const updatedDayData: DayMealStatus = {
       ...currentDayData,
-      [mealType]: newStatus
+      [mealType]: nextStatus
     }
 
     setMealData(prevData => ({ ...prevData, [day]: updatedDayData }))
@@ -105,7 +144,7 @@ export function MealApplicationTable({
     }
   }
 
-  const handleBulkUpdate = async (apply: boolean) => {
+  const handleBulkUpdate = async (targetStatus: MealOrderTypeId) => {
     if (!groupData) return
 
     const originalMealData = { ...mealData }
@@ -113,25 +152,31 @@ export function MealApplicationTable({
 
     const daysInMonthValue = getDaysInMonth(year, month)
     const newMealData: typeof mealData = {}
-    const monthlySignupPayload = []
+    const monthlySignupPayload: MonthlyMealSignupItem[] = []
+
     for (let day = 1; day <= daysInMonthValue; day++) {
-      newMealData[day] = { breakfast: apply, lunch: apply, dinner: apply }
-      monthlySignupPayload.push({ day, breakfast: apply, lunch: apply, dinner: apply })
+      newMealData[day] = { breakfast: targetStatus, lunch: targetStatus, dinner: targetStatus }
+      monthlySignupPayload.push({
+        day,
+        breakfast: targetStatus,
+        lunch: targetStatus,
+        dinner: targetStatus
+      })
     }
     setMealData(newMealData)
 
     try {
       await saveSelfMonthlyMealSignup(monthlySignupPayload, year, month, groupData.id, getToken)
     } catch (error) {
-      console.error(`Failed to ${apply ? "apply" : "cancel"} all meals:`, error)
+      console.error(`Failed to set meals to ${targetStatus}:`, error)
       setMealData(originalMealData)
     } finally {
       setIsBulkUpdating(false)
     }
   }
 
-  const applyAllMeals = () => handleBulkUpdate(true)
-  const cancelAllMeals = () => handleBulkUpdate(false)
+  const applyAllMeals = () => handleBulkUpdate("NORMAL")
+  const cancelAllMeals = () => handleBulkUpdate("NONE")
 
   return (
     <Card>
@@ -199,13 +244,10 @@ export function MealApplicationTable({
                   dateObj.getMonth() === today.getMonth() &&
                   dateObj.getDate() === today.getDate()
 
-                const dayData = mealData[day] || { breakfast: false, lunch: false, dinner: false }
+                const dayData = mealData[day] || { breakfast: "NONE", lunch: "NONE", dinner: "NONE" }
 
                 return (
-                  <tr
-                    key={day}
-                    className={`border-b ${isToday ? "bg-accent/10" : ""}`}
-                  >
+                  <tr key={day} className={`border-b ${isToday ? "bg-accent/10" : ""}`}>
                     <td className="p-2">
                       <div className="flex items-center gap-2">
                         <span className={`text-base sm:text-lg ${dayNumberClass}`}>{day}日</span>
@@ -220,11 +262,11 @@ export function MealApplicationTable({
                       <button
                         onClick={() => toggleMealStatus(day, "breakfast")}
                         className="flex items-center justify-center gap-1 sm:gap-2 w-full"
-                        aria-pressed={dayData.breakfast}
+                        aria-pressed={dayData.breakfast !== "NONE"}
                       >
-                        {getMealStatusIcon(dayData.breakfast ? "applied" : "not-applied")}
+                        {getMealStatusIcon(dayData.breakfast)}
                         <span className="inline-block">
-                          {getMealStatusBadge(dayData.breakfast ? "applied" : "not-applied")}
+                          {getMealStatusBadge(dayData.breakfast)}
                         </span>
                       </button>
                     </td>
@@ -232,11 +274,11 @@ export function MealApplicationTable({
                       <button
                         onClick={() => toggleMealStatus(day, "lunch")}
                         className="flex items-center justify-center gap-1 sm:gap-2 w-full"
-                        aria-pressed={dayData.lunch}
+                        aria-pressed={dayData.lunch !== "NONE"}
                       >
-                        {getMealStatusIcon(dayData.lunch ? "applied" : "not-applied")}
+                        {getMealStatusIcon(dayData.lunch)}
                         <span className="inline-block">
-                          {getMealStatusBadge(dayData.lunch ? "applied" : "not-applied")}
+                          {getMealStatusBadge(dayData.lunch)}
                         </span>
                       </button>
                     </td>
@@ -244,11 +286,11 @@ export function MealApplicationTable({
                       <button
                         onClick={() => toggleMealStatus(day, "dinner")}
                         className="flex items-center justify-center gap-1 sm:gap-2 w-full"
-                        aria-pressed={dayData.dinner}
+                        aria-pressed={dayData.dinner !== "NONE"}
                       >
-                        {getMealStatusIcon(dayData.dinner ? "applied" : "not-applied")}
+                        {getMealStatusIcon(dayData.dinner)}
                         <span className="inline-block">
-                          {getMealStatusBadge(dayData.dinner ? "applied" : "not-applied")}
+                          {getMealStatusBadge(dayData.dinner)}
                         </span>
                       </button>
                     </td>

@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/clerk-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { fetchMonthlySummary } from "@/api/monthlySummary"
-import type { DailyData } from "../types/DailyData"
+import type { DailyData, MealTypeData } from "../types/DailyData"
 import type { GroupData } from "@/types/GroupData"
 import { isJapaneseHoliday } from "@/lib/holidays"
 
@@ -15,6 +15,9 @@ interface GroupSummaryProps {
   month: number
 }
 
+type MealType = "breakfast" | "lunch" | "dinner"
+type OrderVariant = "normal" | "takeout"
+
 export default function GroupSummary({
   groupData,
   year,
@@ -23,7 +26,7 @@ export default function GroupSummary({
   const { getToken } = useAuth()
   const [dailySummary, setDailySummary] = useState<Record<string, DailyData>>({})
   const [isLoading, setIsLoading] = useState(true)
-  const [hoverCell, setHoverCell] = useState<{ day: number; meal: "breakfast" | "lunch" | "dinner" } | null>(null)
+  const [hoverCell, setHoverCell] = useState<{ day: number; meal: MealType; orderType: OrderVariant } | null>(null)
 
   const getTokenRef = useRef(getToken)
   useEffect(() => {
@@ -56,6 +59,106 @@ export default function GroupSummary({
     loadSummary()
   }, [loadSummary])
 
+  const renderUserChips = (users: string[]) => {
+    if (!users || users.length === 0) {
+      return <span className="text-xs text-muted-foreground">申込者なし</span>
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {users.map((name, index) => (
+          <span key={`${name}-${index}`} className="bg-muted rounded px-2 py-0.5 text-xs break-words">
+            {name}
+          </span>
+        ))}
+      </div>
+    )
+  }
+
+  const renderMealCell = (day: number, mealType: MealType, mealData: MealTypeData) => {
+    const normalCount = mealData.normal.count
+    const takeoutCount = mealData.takeout.count
+    const normalUsers = mealData.normal.users ?? []
+    const takeoutUsers = mealData.takeout.users ?? []
+
+    const isHovered = hoverCell?.day === day && hoverCell.meal === mealType
+    const isNormalHovered = isHovered && hoverCell?.orderType === "normal"
+    const isTakeoutHovered = isHovered && hoverCell?.orderType === "takeout"
+
+    const handleMouseEnter = (orderType: OrderVariant, count: number) => {
+      if (count > 0) setHoverCell({ day, meal: mealType, orderType })
+    }
+
+    const handleMouseLeave = (orderType: OrderVariant) => {
+      setHoverCell(prev =>
+        prev && prev.day === day && prev.meal === mealType && prev.orderType === orderType
+          ? null
+          : prev
+      )
+    }
+
+    const handleClick = (orderType: OrderVariant, count: number) => {
+      if (count === 0) return
+      setHoverCell(prev =>
+        prev &&
+        prev.day === day &&
+        prev.meal === mealType &&
+        prev.orderType === orderType
+          ? null
+          : { day, meal: mealType, orderType }
+      )
+    }
+
+    return (
+      <td className={`relative text-center p-2 ${isHovered ? "bg-accent/20" : ""}`}>
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <button
+            type="button"
+            className={`relative ${normalCount > 0 ? "cursor-pointer" : "cursor-default"}`}
+            onMouseEnter={() => handleMouseEnter("normal", normalCount)}
+            onMouseLeave={() => handleMouseLeave("normal")}
+            onClick={() => handleClick("normal", normalCount)}
+          >
+            <Badge
+              variant={normalCount > 0 ? "default" : "secondary"}
+              className="text-xs px-2 py-0 flex items-center"
+            >
+              <span className="font-semibold">{normalCount}</span>
+            </Badge>
+          </button>
+          {isNormalHovered && normalCount > 0 && (
+            <div className="absolute z-50 bottom-full mb-1 left-1/2 -translate-x-1/2 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
+              {renderUserChips(normalUsers)}
+            </div>
+          )}
+          {takeoutCount > 0 && (
+            <>
+              <button
+                type="button"
+                className="relative cursor-pointer"
+                onMouseEnter={() => handleMouseEnter("takeout", takeoutCount)}
+                onMouseLeave={() => handleMouseLeave("takeout")}
+                onClick={() => handleClick("takeout", takeoutCount)}
+              >
+                <Badge
+                  variant="outline"
+                  className="text-xs px-2 py-0 flex items-center gap-1 border-amber-500 text-amber-600 bg-amber-50"
+                >
+                  弁当 <span className="font-semibold">{takeoutCount}</span>
+                </Badge>
+              </button>
+              {isTakeoutHovered && (
+                <div className="absolute z-50 bottom-full mb-1 left-1/2 -translate-x-1/2 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
+                  {renderUserChips(takeoutUsers)}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </td>
+    )
+  }
+
   const today = new Date()
 
   if (!groupData) {
@@ -86,13 +189,12 @@ export default function GroupSummary({
                 <th className="text-center p-2 sm:p-4 font-medium">朝食</th>
                 <th className="text-center p-2 sm:p-4 font-medium">昼食</th>
                 <th className="text-center p-2 sm:p-4 font-medium">夕食</th>
-                <th className="text-center p-2 sm:p-4 font-medium">合計</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="text-center p-4">
+                  <td colSpan={4} className="text-center p-4">
                     読み込み中...
                   </td>
                 </tr>
@@ -113,10 +215,7 @@ export default function GroupSummary({
                     dateObj.getDate() === today.getDate()
 
                   return (
-                    <tr
-                      key={day}
-                      className={`border-b ${isToday ? "bg-accent/10" : ""}`}
-                    >
+                    <tr key={day} className={`border-b ${isToday ? "bg-accent/10" : ""}`}>
                       <td className="p-2">
                         <div className="flex items-center gap-2">
                           <span className={`text-base sm:text-lg ${dayNumberClass}`}>{day}日</span>
@@ -127,101 +226,15 @@ export default function GroupSummary({
                           </span>
                         </div>
                       </td>
-                      <td
-                        className={`relative text-center p-2 ${hoverCell?.day === numericDay && hoverCell.meal === "breakfast" ? "bg-accent/20" : ""} ${meals.breakfast.count > 0 ? "cursor-pointer" : "cursor-default"}`}
-                        onMouseEnter={() => {
-                          if (meals.breakfast.count > 0) setHoverCell({ day: numericDay, meal: "breakfast" })
-                        }}
-                        onMouseLeave={() => setHoverCell(null)}
-                        onClick={() => {
-                          if (meals.breakfast.count === 0) return
-                          setHoverCell(prev =>
-                            prev && prev.day === numericDay && prev.meal === "breakfast"
-                              ? null
-                              : { day: numericDay, meal: "breakfast" }
-                          )
-                        }}
-                      >
-                        <Badge variant={meals.breakfast.count > 0 ? "default" : "secondary"}>{meals.breakfast.count}</Badge>
-                        {hoverCell?.day === numericDay && hoverCell.meal === "breakfast" && meals.breakfast.count > 0 && (
-                          <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
-                            {(meals.breakfast.users?.length ?? 0) > 0
-                              ? <div className="flex flex-wrap gap-1">
-                                  {meals.breakfast.users.map((name, i) => (
-                                    <span key={`${name}-${i}`} className="bg-muted rounded px-2 py-0.5 text-xs break-words">{name}</span>
-                                  ))}
-                                </div>
-                              : <span className="text-xs text-muted-foreground">申込者なし</span>}
-                          </div>
-                        )}
-                      </td>
-                      <td
-                        className={`relative text-center p-2 ${hoverCell?.day === numericDay && hoverCell.meal === "lunch" ? "bg-accent/20" : ""} ${meals.lunch.count > 0 ? "cursor-pointer" : "cursor-default"}`}
-                        onMouseEnter={() => {
-                          if (meals.lunch.count > 0) setHoverCell({ day: numericDay, meal: "lunch" })
-                        }}
-                        onMouseLeave={() => setHoverCell(null)}
-                        onClick={() => {
-                          if (meals.lunch.count === 0) return
-                          setHoverCell(prev =>
-                            prev && prev.day === numericDay && prev.meal === "lunch"
-                              ? null
-                              : { day: numericDay, meal: "lunch" }
-                          )
-                        }}
-                      >
-                        <Badge variant={meals.lunch.count > 0 ? "default" : "secondary"}>{meals.lunch.count}</Badge>
-                        {hoverCell?.day === numericDay && hoverCell.meal === "lunch" && meals.lunch.count > 0 && (
-                          <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
-                            {(meals.lunch.users?.length ?? 0) > 0
-                              ? <div className="flex flex-wrap gap-1">
-                                  {meals.lunch.users.map((name, i) => (
-                                    <span key={`${name}-${i}`} className="bg-muted rounded px-2 py-0.5 text-xs break-words">{name}</span>
-                                  ))}
-                                </div>
-                              : <span className="text-xs text-muted-foreground">申込者なし</span>}
-                          </div>
-                        )}
-                      </td>
-                      <td
-                        className={`relative text-center p-2 ${hoverCell?.day === numericDay && hoverCell.meal === "dinner" ? "bg-accent/20" : ""} ${meals.dinner.count > 0 ? "cursor-pointer" : "cursor-default"}`}
-                        onMouseEnter={() => {
-                          if (meals.dinner.count > 0) setHoverCell({ day: numericDay, meal: "dinner" })
-                        }}
-                        onMouseLeave={() => setHoverCell(null)}
-                        onClick={() => {
-                          if (meals.dinner.count === 0) return
-                          setHoverCell(prev =>
-                            prev && prev.day === numericDay && prev.meal === "dinner"
-                              ? null
-                              : { day: numericDay, meal: "dinner" }
-                          )
-                        }}
-                      >
-                        <Badge variant={meals.dinner.count > 0 ? "default" : "secondary"}>{meals.dinner.count}</Badge>
-                        {hoverCell?.day === numericDay && hoverCell.meal === "dinner" && meals.dinner.count > 0 && (
-                          <div className="absolute z-50 bottom-full mb-1 right-0 bg-popover border rounded-md p-2 shadow-lg max-h-60 overflow-auto min-w-max max-w-xs text-left">
-                            {(meals.dinner.users?.length ?? 0) > 0
-                              ? <div className="flex flex-wrap gap-1">
-                                  {meals.dinner.users.map((name, i) => (
-                                    <span key={`${name}-${i}`} className="bg-muted rounded px-2 py-0.5 text-xs break-words">{name}</span>
-                                  ))}
-                                </div>
-                              : <span className="text-xs text-muted-foreground">申込者なし</span>}
-                          </div>
-                        )}
-                      </td>
-                      <td className="text-center p-2">
-                        <Badge variant="outline" className="font-semibold">
-                          {meals.breakfast.count + meals.lunch.count + meals.dinner.count}
-                        </Badge>
-                      </td>
+                      {renderMealCell(numericDay, "breakfast", meals.breakfast)}
+                      {renderMealCell(numericDay, "lunch", meals.lunch)}
+                      {renderMealCell(numericDay, "dinner", meals.dinner)}
                     </tr>
                   )
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="text-center p-4">
+                  <td colSpan={4} className="text-center p-4">
                     表示するデータがありません。
                   </td>
                 </tr>

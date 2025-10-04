@@ -41,19 +41,37 @@ model OrganizationMembership {
   @@map("organization_memberships")
 }
 
-model MealSignup {
-  id             String   @id @default(cuid())
-  date           DateTime
-  breakfast      Boolean  @default(false)
-  lunch          Boolean  @default(false)
-  dinner         Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  clerkId        String
-  organizationId String
+// 食事注文種別マスタ
+// NONE: 未申込
+// NORMAL: 通常申込（自宅で食べる）
+// TAKEOUT: 持ち出し申込（弁当など）
+model MealOrderType {
+  id String @id
 
   // Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  breakfastSignups MealSignup[] @relation("BreakfastOrderType")
+  lunchSignups     MealSignup[] @relation("LunchOrderType")
+  dinnerSignups    MealSignup[] @relation("DinnerOrderType")
+
+  @@map("meal_order_types")
+}
+
+model MealSignup {
+  id                    String   @id @default(cuid())
+  date                  DateTime
+  breakfastOrderTypeId  String
+  lunchOrderTypeId      String
+  dinnerOrderTypeId     String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  clerkId               String
+  organizationId        String
+
+  // Relations
+  organization         Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  breakfastOrderType   MealOrderType @relation("BreakfastOrderType", fields: [breakfastOrderTypeId], references: [id])
+  lunchOrderType       MealOrderType @relation("LunchOrderType", fields: [lunchOrderTypeId], references: [id])
+  dinnerOrderType      MealOrderType @relation("DinnerOrderType", fields: [dinnerOrderTypeId], references: [id])
 
   @@unique([clerkId, organizationId, date])
   @@map("meal_signups")

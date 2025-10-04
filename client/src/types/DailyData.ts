@@ -3,9 +3,14 @@ export interface MealUsers {
   users: string[];
 }
 
+export interface MealTypeData {
+  normal: MealUsers;
+  takeout: MealUsers;
+}
+
 export interface DailyData {
   day: number;
-  breakfast: MealUsers;
-  lunch: MealUsers;
-  dinner: MealUsers;
+  breakfast: MealTypeData;
+  lunch: MealTypeData;
+  dinner: MealTypeData;
 }
