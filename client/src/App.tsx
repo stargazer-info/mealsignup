@@ -1,12 +1,12 @@
-import { SignedIn, SignedOut, SignInButton, useAuth, useUser } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, useAuth, useUser } from '@clerk/clerk-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
-import { Button } from "@/components/ui/button"
 import { MealApplicationTable } from "@/components/meal-application-table"
 import GroupSummary from "@/components/group-summary"
 import Layout from "@/components/layout"
 import GroupSetup from "@/components/group-setup"
 import UserNameInput from '@/components/user-name-input'
+import LandingPage from '@/components/landing-page'
 import { fetchUserOrganizations, type OrganizationWithRole } from './api/organizations'
 import { fetchWithRefresh, apiUrl } from './api/index'
 import GroupContextHeader from "@/components/group-context-header"
@@ -112,15 +112,7 @@ function App() {
   return (
     <>
       <SignedOut>
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-primary mb-2">ごはんお願い</h1>
-            <p className="text-lg text-muted-foreground mb-8">家族の食事申し込みを簡単管理</p>
-            <SignInButton mode="modal">
-              <Button>サインイン</Button>
-            </SignInButton>
-          </div>
-        </div>
+        <LandingPage />
       </SignedOut>
       <SignedIn>
         {isLoading ? (
