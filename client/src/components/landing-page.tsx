@@ -8,28 +8,21 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background">
       {/* ヒーローセクション */}
       <section className="container mx-auto px-4 py-12 md:py-20">
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-          <div className="text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-4">
-              ごはんお願い
-            </h1>
-            <h2 className="text-2xl md:text-3xl font-semibold mb-4">
-              食事の申込み管理を、もっとシンプルに
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              誰でも、どこからでも申込み・確認が可能
-            </p>
-            <SignInButton mode="modal">
-              <Button size="lg" className="text-lg px-8 py-6">
-                新規登録/サインイン
-              </Button>
-            </SignInButton>
-          </div>
-          <div className="flex justify-center">
-            <div className="w-full max-w-md aspect-square bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl flex items-center justify-center">
-              <Utensils className="w-32 h-32 text-primary/30" />
-            </div>
-          </div>
+        <div className="max-w-3xl mx-auto text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-4">
+            ごはんお願い
+          </h1>
+          <h2 className="text-2xl md:text-3xl font-semibold mb-4">
+            食事の申込み管理を、もっとシンプルに
+          </h2>
+          <p className="text-lg text-muted-foreground mb-8">
+            誰でも、どこからでも申込み・確認が可能
+          </p>
+          <SignInButton mode="modal">
+            <Button size="lg" className="text-lg px-8 py-6">
+              新規登録/サインイン
+            </Button>
+          </SignInButton>
         </div>
       </section>
 
