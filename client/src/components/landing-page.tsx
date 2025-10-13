@@ -17,7 +17,7 @@ export default function LandingPage() {
               食事の申込み管理を、もっとシンプルに
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              管理者はどこからでも確認、メンバーはどこからでも申込み
+              誰でも、どこからでも申込み・確認が可能
             </p>
             <SignInButton mode="modal">
               <Button size="lg" className="text-lg px-8 py-6">
