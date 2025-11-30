@@ -62,7 +62,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">簡単な招待機能</h3>
                 <p className="text-muted-foreground">
-                  招待コードを共有するだけで、メンバーを簡単に組織に追加できます
+                  招待コードを共有するだけで、メンバーを簡単にグループに追加できます
                 </p>
               </CardContent>
             </Card>
@@ -102,10 +102,10 @@ export default function LandingPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Building2 className="w-5 h-5 text-primary" />
-                    <h3 className="text-xl font-semibold">組織を作成 or 参加</h3>
+                    <h3 className="text-xl font-semibold">グループを作成 or 参加</h3>
                   </div>
                   <p className="text-muted-foreground">
-                    新しい組織を作成するか、招待コードで既存の組織に参加します
+                    新しいグループを作成するか、招待コードで既存のグループに参加します
                   </p>
                 </div>
               </div>
@@ -139,7 +139,7 @@ export default function LandingPage() {
                     <h3 className="text-xl font-semibold">集計を確認</h3>
                   </div>
                   <p className="text-muted-foreground">
-                    組織全体の申込み状況を月次サマリーで確認できます
+                    グループ全体の申込み状況を月次サマリーで確認できます
                   </p>
                 </div>
               </div>
