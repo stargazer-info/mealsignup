@@ -82,8 +82,4 @@ API クライアント生成やドキュメント閲覧に利用できます。S
 
 ## ライセンス
 
-未指定。必要に応じて LICENSE を追加してください。
-
-## 貢献
-
-Issue/PR 歓迎です。既存のコードスタイル・コンポーネント設計・API 仕様に沿ってご提案ください。
+Copyright © 2023 Stargazer Information. All rights reserved.
