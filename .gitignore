@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
+# 各ワークスペースの package-lock.json は Dockerfile の npm ci で使うため追跡する
+# （リポジトリ直下のものは package.json を持たない残骸なので無視したまま）
 package-lock.json
+!client/package-lock.json
+!server/package-lock.json
+!shared/package-lock.json
 yarn.lock
 
 # Environment variables
